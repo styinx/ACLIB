@@ -53,6 +53,8 @@ class SESSION:
 
 
 class Car:
+    player_name = ""
+    player_nick = ""
     position = 0  # standings
     benefit = 0  # position gain/loss per lap
     location = 0.0  # track position from 0 to 1
@@ -60,6 +62,7 @@ class Car:
     fuel = 0.0  # in l
     flag = 0
     penalty = False
+    penalty_time = 0.0
     abs = 0.0
     tc = 0.0
     drs = False
@@ -107,8 +110,9 @@ class Car:
 
 
 class ACLIB:
+    CARS = [Car] * ac.getCarsCount()
+    
     def __init__(self):
-        self.CARS = [Car] * self.getCarsCount()
         self.car = None  # use focused car
         self.car_index = -1  # use focused car
         self.priority = 10  # more means a higher effort to compute
@@ -117,7 +121,7 @@ class ACLIB:
         self.max_delta = 0.1
 
     def init(self):
-        for car in self.CARS:
+        for car in ACLIB.CARS:
             car.drs = self.hasDRS()
             car.ers = self.hasERS()
             car.kers = self.hasKERS()
@@ -130,7 +134,7 @@ class ACLIB:
             car.lap_fuel = car.fuel
             
     def reset(self):
-        car = self.CARS[self.car_index]
+        car = ACLIB.CARS[self.car_index]
         
         car.position = 0
         car.benefit = 0
@@ -185,7 +189,7 @@ class ACLIB:
         car.tyre_pressure = [0.0] * 4
 
     def updateAll(self):
-        for i in range(0, len(self.CARS)):
+        for i in range(0, len(ACLIB.CARS)):
             self.update(0, i)
 
     def update(self, delta, car=-1):
@@ -198,12 +202,18 @@ class ACLIB:
         else:
             self.car_index = self.getFocusedCar()
 
-        self.car = self.CARS[self.car_index]
+        self.car = ACLIB.CARS[self.car_index]
 
         self.car.location = round(self.getLocation(self.car_index), 4)
         self.car.traveled_distance = self.getTraveledDistance()
         self.car.fuel = round(self.getFuel(), 2)
         self.car.diff = self.getLapDeltaTime(self.car_index)
+        self.car.penalty_time = self.getPenaltyTime()
+
+        if self.car.penalty_time > 0:
+            self.car.penalty = True
+        else:
+            self.car.penalty = False
 
         # Time and Distance to next and previous car
         both = 0

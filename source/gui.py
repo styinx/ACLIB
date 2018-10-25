@@ -521,6 +521,9 @@ class ACGrid(ACLayout):
         if isinstance(parent, ACApp):
             self.setPos((0, 0))
 
+    def getWidget(self, x, y):
+        return self._children[y][x]
+
     def addWidget(self, widget, x, y, w=1, h=1):
         self._children[y][x] = widget
 
