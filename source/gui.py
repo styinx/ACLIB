@@ -31,10 +31,9 @@ class ACWidget(object):
         self._size = (0, 0)
         self._visible = True
         self._background_texture = None
-        self._background = False
+        self._background = 0
         self._background_color = Color(0, 0, 0, 0)
-        self._background_opacity = 0
-        self._border = True
+        self._border = 0
         self._border_color = Color(1, 1, 1, 1)
         self._render_callback = None
         self._animation = None
@@ -133,10 +132,10 @@ class ACWidget(object):
 
         return self
 
-    def getBackground(self):
+    def isBackgroundDrawn(self):
         return self._background
 
-    def setBackground(self, background):
+    def drawBackground(self, background):
         self._background = background
 
         if self._ac_obj is not None:
@@ -149,6 +148,7 @@ class ACWidget(object):
 
     def setBackgroundColor(self, background_color):
         self._background_color = background_color
+        self.drawBackground(1)
 
         if self._ac_obj is not None:
             col = self._background_color
@@ -158,13 +158,13 @@ class ACWidget(object):
         return self
 
     def getBackgroundOpacity(self):
-        return self._background_opacity
+        return self._background_color.a
 
     def setBackgroundOpacity(self, background_opacity):
-        self._background_opacity = background_opacity
+        self._background_color.a = background_opacity
 
         if self._ac_obj is not None:
-            ac.setBackgroundOpacity(self._ac_obj, background_opacity)
+            ac.setBackgroundOpacity(self._ac_obj, self._background_color.a)
 
         return self
 
@@ -172,18 +172,20 @@ class ACWidget(object):
         return self._border
 
     def drawBorder(self, border):
-        if isinstance(border, bool):
-            self._border = border
+        self._border = border
 
         if self._ac_obj is not None:
             ac.drawBorder(self._ac_obj, self._border)
+
+        return self
 
     def getBorderColor(self):
         return self._border_color
 
     def setBorderColor(self, border_color):
-        if isinstance(border_color, Color):
-            self._border_color = border_color
+        self._border_color = border_color
+
+        self.drawBorder(1)
 
         return self
 
@@ -201,7 +203,7 @@ class ACWidget(object):
         else:
             self._animation_queue.append({"var": var, "start": start, "middle": middle, "stop": stop, "step": step})
 
-    def update(self):
+    def update(self, delta):
         if self._animation is None:
             if len(self._animation_queue) > 0:
                 self._animation = self._animation_queue.pop(0)
@@ -219,20 +221,24 @@ class ACWidget(object):
                     self._animation = None
 
         if self._child is not None:
-            self._child.update()
+            self._child.update(delta)
 
         if self._background:
             col = self._background_color
             if self._ac_obj is not None:
                 ac.setBackgroundColor(self._ac_obj, col.r, col.g, col.b)
-                ac.setBackgroundOpacity(self._ac_obj, self._background_opacity)
+                ac.setBackgroundOpacity(self._ac_obj, col.a)
 
-    def render(self):
-        if self._child is not None:
-            self._child.render()
+        return self
 
+    def render(self, delta):
         if self._border:
             rect(self._pos[0], self._pos[1], self._size[0], self._size[1], self._border_color, False)
+
+        if self._child is not None:
+            self._child.render(delta)
+
+        return self
 
 
 class ACApp(ACWidget):
@@ -270,7 +276,7 @@ class ACApp(ACWidget):
         self.activated_callback = self._activated
         self.dismissed_callback = self._dismissed
 
-        self.update()
+        self.drawBorder(0)
 
     def isMainApp(self):
         return self._main_app
@@ -417,8 +423,8 @@ class ACApp(ACWidget):
     def dismiss(self, val):
         self._suspended = True
 
-    def update(self):
-        super().update()
+    def update(self, delta):
+        super().update(delta)
 
         self._position_changed = False
         col = self._background_color
@@ -435,9 +441,12 @@ class ACApp(ACWidget):
 
         return self
 
-    def render(self):
+    def render(self, delta):
         if self._border:
             rect(0, 0, self._size[0], self._size[1], self._border_color, False)
+
+        if self._child is not None:
+            self._child.render(delta)
 
         return self
 
@@ -461,17 +470,17 @@ class ACBox(ACLayout):
         self._children.append(widget)
         self._children_count += 1
 
-    def update(self):
-        super().update()
+    def update(self, delta):
+        super().update(delta)
 
         for child in self._children:
-            child.update()
+            child.update(delta)
 
-    def render(self):
-        super().render()
+    def render(self, delta):
+        super().render(delta)
 
         for child in self._children:
-            child.render()
+            child.render(delta)
 
 
 class ACHBox(ACBox):
@@ -512,9 +521,9 @@ class ACGrid(ACLayout):
     def __init__(self, parent, cols, rows):
         super().__init__(parent)
 
-        self._children = [x[:] for x in [[0] * cols] * rows]
-        self._cols = cols
-        self._rows = rows
+        self._cols = max(cols, 1)
+        self._rows = max(rows, 1)
+        self._children = [x[:] for x in [[0] * self._cols] * self._rows]
         self._cell_width = round(self._size[0] / self._cols)
         self._cell_height = round(self._size[1] / self._rows)
 
@@ -538,19 +547,23 @@ class ACGrid(ACLayout):
 
         return self
 
-    def update(self):
+    def update(self, delta):
+        super().update(delta)
+
         for row in self._children:
             for cell in row:
                 if isinstance(cell, ACWidget):
-                    cell.update()
+                    cell.update(delta)
 
         return self
 
-    def render(self):
+    def render(self, delta):
+        super().render(delta)
+
         for row in self._children:
             for cell in row:
                 if isinstance(cell, ACWidget):
-                    cell.update()
+                    cell.update(delta)
 
         return self
 
@@ -572,6 +585,8 @@ class ACTextWidget(ACWidget):
         return self._text
 
     def setText(self, text):
+        if not isinstance(text, str):
+            text = str(text)
         self._text = text
 
         if self._ac_obj is not None:
@@ -612,7 +627,7 @@ class ACTextWidget(ACWidget):
         if text_v_alignment == "top":
             y = self._pos[1]
         elif text_v_alignment == "middle":
-            y = int(self._pos[1] + self._size[1] / 2)
+            y = int(self._pos[1] + self._size[1] * 2)
         elif text_v_alignment == "bottom":
             y = self._pos[1] + self._size[1]
 
@@ -697,12 +712,22 @@ class ACTextWidget(ACWidget):
 
 
 class ACLabel(ACTextWidget):
-    def __init__(self, text, app, parent=None):
+    def __init__(self, text, app, parent=None, font_size=12, bold=0, italic=0,
+                 text_h_alignment="left", text_v_alignment="top",
+                 text_color=Color(1, 1, 1, 1), background_color=Color(0, 0, 0, 0)):
         super().__init__(parent)
 
         self._ac_obj = ac.addLabel(app.app(), text)
         self._text = text
+        self._font_size = font_size
+        self._font_bold = bold
+        self._font_italic = italic
+        self._text_h_alignment = text_h_alignment
+        self._text_v_alignment = text_v_alignment
+        self._text_color = text_color
+        self._background_color = background_color
 
+        self.setBackgroundColor(self._background_color)
         self.setTextAlignment(self._text_h_alignment, self._text_h_alignment)
         self.setTextColor(self._text_color)
         self.setFontSize(self._font_size)
@@ -735,7 +760,7 @@ class ACProgressBar(ACLabel):
             self.h_margin = 0.05
             self.v_margin = 1
 
-    def render(self):
+    def render(self, delta):
         if self._orientation == 0:
             v_margin = self._size[1] * self.v_margin
             ratio = self._size[0] * (self._value / self._max_val)

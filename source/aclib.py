@@ -42,7 +42,6 @@ def formatGear(gear):
 
 
 class SESSION:
-    car = 0
     air_temp = 0
     track_temp = 0
     track_length = 0
@@ -53,283 +52,319 @@ class SESSION:
 
 
 class Car:
-    player_name = ""
-    player_nick = ""
-    position = 0  # standings
-    benefit = 0  # position gain/loss per lap
-    location = 0.0  # track position from 0 to 1
-    traveled_distance = 0.0  # in m
-    fuel = 0.0  # in l
-    flag = 0
-    penalty = False
-    penalty_time = 0.0
-    abs = 0.0
-    tc = 0.0
-    drs = False
-    ers = False
-    kers = False
-
-    next = 0
-    next_dist = 0
-    next_time = 0
-
-    prev = 0
-    prev_dist = 0
-    prev_time = 0
-
-    lap = 0  # current lap
-    lap_diff = 0.0  # performance meter
-    lap_time = 0.0  # last lap time
-    lap_fuel = 0.0  # fuel consumption in l
-    lap_fuel_range = 0.0  # number of laps with current fuel
-    lap_fuel_level = 0.0  # fuel level from last lap
-
-    sector = 0
-    sector_time = [0.0] * 3
-    sector_fuel = 0.0
-    sector_fuel_range = 0.0
-    sector_fuel_level = 0.0
-
-    mini_sector = 0
-    mini_sector_time = [0.0] * 12
-    mini_sector_fuel = 0.0
-    mini_sector_fuel_range = 0.0
-    mini_sector_fuel_level = 0.0
-
-    km = 0
-    km_time = [0.0] * 1
-    km_fuel = 0.0
-    km_fuel_range = 0.0
-    km_fuel_level = 0.0
-
-    damage = [0.0] * 4  # 0: front, 1: rear, 2: left, 3: right
-    tyre_temp = [0.0] * 4
-    tyre_dirt = [0.0] * 4
-    tyre_wear = [0.0] * 4  # 0: FL, 1: FR, 2: RL, 3: RR
-    tyre_pressure = [0.0] * 4
-
-
-class ACLIB:
-    CARS = [Car] * ac.getCarsCount()
-    
-    def __init__(self):
-        self.car = None  # use focused car
-        self.car_index = -1  # use focused car
-        self.priority = 10  # more means a higher effort to compute
+    def __init__(self, number):
+        self.priority = 10  # more means a higher effort to compute but more precise results
         self.loops = 0
         self.initialized = False
         self.max_delta = 0.1
 
-    def init(self):
-        for car in ACLIB.CARS:
-            car.drs = self.hasDRS()
-            car.ers = self.hasERS()
-            car.kers = self.hasKERS()
+        self.number = number
+        self.player_name = ""
+        self.player_nick = ""
+        self.drs = False
+        self.ers = False
+        self.kers = False
 
-            car.km_time = [0.0] * int(self.getTrackLength() / 1000)
+        self.speed = 0.0  # standings
+        self.position = 0  # standings
+        self.benefit = 0  # position gain/loss per lap
+        self.location = 0.0  # track position from 0 to 1
+        self.traveled_distance = 0.0  # in m
+        self.lap_performance = 0.0  # current lap
+        self.fuel = 0.0  # in l
+        self.flag = 0
+        self.penalty = False
+        self.penalty_time = 0.0
+        self.abs = 0.0
+        self.tc = 0.0
 
-            car.km_fuel_level = car.fuel
-            car.mini_sector_fuel = car.fuel
-            car.sector_fuel = car.fuel
-            car.lap_fuel = car.fuel
-            
+        self.next = 0
+        self.next_dist = 0
+        self.next_time = 0
+
+        self.prev = 0
+        self.prev_dist = 0
+        self.prev_time = 0
+
+        self.lap = 1  # current lap
+        self.lap_diff = 0.0  # performance meter
+        self.lap_time = 0.0  # last lap time
+        self.lap_fuel = 0.0  # fuel consumption in l
+        self.lap_fuel_range = 0.0  # number of laps with current fuel
+        self.lap_fuel_level = 0.0  # fuel level from last lap
+
+        self.sector = 0
+        self.sector_index = 0
+        self.sector_time = [0.0] * 3
+        self.last_sector_time = [0.0] * 3
+        self.best_sector_time = [0.0] * 3
+        self.sector_fuel = 0.0
+        self.sector_fuel_range = 0.0
+        self.sector_fuel_level = 0.0
+
+        self.mini_sector = 0
+        self.mini_sector_index = 0
+        self.mini_sector_time = [0.0] * 12
+        self.last_mini_sector_time = [0.0] * 12
+        self.best_mini_sector_time = [0.0] * 12
+        self.mini_sector_fuel = 0.0
+        self.mini_sector_fuel_range = 0.0
+        self.mini_sector_fuel_level = 0.0
+
+        self.km = 0
+        self.km_index = 0
+        self.km_time = [0.0] * 1
+        self.last_km_time = [0.0] * 1
+        self.best_km_time = [0.0] * 1
+        self.km_fuel = 0.0
+        self.km_fuel_range = 0.0
+        self.km_fuel_level = 0.0
+
+        self.damage = [0.0] * 4  # 0: front, 1: rear, 2: left, 3: right
+        self.tyre_temp = [0.0] * 4  # 0: FL, 1: FR, 2: RL, 3: RR
+        self.tyre_dirt = [0.0] * 4
+        self.tyre_wear = [0.0] * 4
+        self.tyre_pressure = [0.0] * 4
+
+        self.init()
+
     def reset(self):
-        car = ACLIB.CARS[self.car_index]
-        
-        car.position = 0
-        car.benefit = 0
-        car.location = 0.0
-        car.traveled_distance = 0.0
-        car.fuel = 0.0
-        car.flag = 0
-        car.penalty = False
-        car.abs = 0.0
-        car.tc = 0.0
-        car.drs = False
-        car.ers = False
-        car.kers = False
-        
-        car.next = 0
-        car.next_dist = 0
-        car.next_time = 0
-        
-        car.prev = 0
-        car.prev_dist = 0
-        car.prev_time = 0
-        
-        car.lap = 0
-        car.lap_diff = 0.0
-        car.lap_time = 0.0
-        car.lap_fuel = 0.0
-        car.lap_fuel_range = 0.0
-        car.lap_fuel_level = 0.0
-        
-        car.sector = 0
-        car.sector_time = [0.0] * 3
-        car.sector_fuel = 0.0
-        car.sector_fuel_range = 0.0
-        car.sector_fuel_level = 0.0
-        
-        car.mini_sector = 0
-        car.mini_sector_time = [0.0] * 12
-        car.mini_sector_fuel = 0.0
-        car.mini_sector_fuel_range = 0.0
-        car.mini_sector_fuel_level = 0.0
-        
-        car.km = 0
-        car.km_time = [0.0] * 1
-        car.km_fuel = 0.0
-        car.km_fuel_range = 0.0
-        car.km_fuel_level = 0.0
-        
-        car.damage = [0.0] * 4
-        car.tyre_temp = [0.0] * 4
-        car.tyre_dirt = [0.0] * 4
-        car.tyre_wear = [0.0] * 4
-        car.tyre_pressure = [0.0] * 4
+        self.speed = 0.0
+        self.position = 0
+        self.benefit = 0
+        self.location = 0.0
+        self.traveled_distance = 0.0
+        self.lap_performance = 0.0
+        self.fuel = 0.0
+        self.flag = 0
+        self.penalty = False
+        self.abs = 0.0
+        self.tc = 0.0
 
-    def updateAll(self):
-        for i in range(0, len(ACLIB.CARS)):
-            self.update(0, i)
+        self.next = 0
+        self.next_dist = 0
+        self.next_time = 0
 
-    def update(self, delta, car=-1):
-        if not self.initialized:
-            self.init()
-            self.initialized = True
+        self.prev = 0
+        self.prev_dist = 0
+        self.prev_time = 0
 
-        if car != -1:
-            self.car_index = car
+        self.lap = 1
+        self.lap_diff = 0.0
+        self.lap_time = 0.0
+        self.lap_fuel = 0.0
+        self.lap_fuel_range = 0.0
+        self.lap_fuel_level = 0.0
+
+        self.sector = 1
+        self.sector_index = 0
+        self.sector_time = [0.0] * 3
+        self.last_sector_time = [0.0] * 3
+        self.best_sector_time = [0.0] * 3
+        self.sector_fuel = 0.0
+        self.sector_fuel_range = 0.0
+        self.sector_fuel_level = 0.0
+
+        self.mini_sector = 1
+        self.mini_sector_index = 0
+        self.mini_sector_time = [0.0] * 12
+        self.last_mini_sector_time = [0.0] * 12
+        self.best_mini_sector_time = [0.0] * 12
+        self.mini_sector_fuel = 0.0
+        self.mini_sector_fuel_range = 0.0
+        self.mini_sector_fuel_level = 0.0
+
+        self.km = 1
+        self.km_index = 0
+        self.km_time = [0.0] * 1
+        self.last_km_time = [0.0] * 1
+        self.best_km_time = [0.0] * 1
+        self.km_fuel = 0.0
+        self.km_fuel_range = 0.0
+        self.km_fuel_level = 0.0
+
+        self.damage = [0.0] * 4
+        self.tyre_temp = [0.0] * 4
+        self.tyre_dirt = [0.0] * 4
+        self.tyre_wear = [0.0] * 4
+        self.tyre_pressure = [0.0] * 4
+
+    def init(self):
+        self.player_nick = ACLIB.getPlayerNickname(self.number)
+        self.player_name = ACLIB.getPlayerFirstname() + ACLIB.getPlayerLastname()
+        self.drs = ACLIB.hasDRS(self.number)
+        self.ers = ACLIB.hasERS(self.number)
+        self.kers = ACLIB.hasKERS(self.number)
+
+        self.km_time = [0.0] * int(ACLIB.getTrackLength() / 1000)
+        self.last_km_time = [0.0] * int(ACLIB.getTrackLength() / 1000)
+        self.best_km_time = [0.0] * int(ACLIB.getTrackLength() / 1000)
+
+        self.position = ACLIB.getPosition(self.number)
+        self.benefit = 0
+        self.location = ACLIB.getLocation(self.number)
+        self.fuel = ACLIB.getFuel(self.number)
+        self.km_fuel_level = self.fuel
+        self.km_index = int(self.location * ACLIB.getTrackLength() / 1000) - 1
+        self.km = self.km_index - 1
+        self.mini_sector_fuel_level = self.fuel
+        self.mini_sector_index = max(0, int(self.location * 12) - 1)
+        self.mini_sector = self.mini_sector_index + 1
+        self.sector_fuel_level = self.fuel
+        self.sector_index = max(0, int(self.location * 10 / 3) - 1)
+        self.sector = self.sector_index + 1
+        self.lap_fuel_level = self.fuel
+
+    def update(self, delta):
+        self.location = round(ACLIB.getLocation(self.number), 4)
+        self.speed = round(ACLIB.getSpeed(self.number), 2)
+        self.traveled_distance = ACLIB.getTraveledDistance(self.number)
+        self.lap_performance = ACLIB.getCurrentLapTime(self.number)
+        self.fuel = round(ACLIB.getFuel(self.number), 2)
+        self.lap_diff = ACLIB.getLapDeltaTime(self.number)
+        self.penalty_time = ACLIB.getPenaltyTime(self.number)
+
+        if self.penalty_time > 0:
+            self.penalty = True
         else:
-            self.car_index = self.getFocusedCar()
+            self.penalty = False
 
-        self.car = ACLIB.CARS[self.car_index]
+        # flag
+        self.flag = ACLIB.getFlagId()
 
-        self.car.location = round(self.getLocation(self.car_index), 4)
-        self.car.traveled_distance = self.getTraveledDistance()
-        self.car.fuel = round(self.getFuel(), 2)
-        self.car.diff = self.getLapDeltaTime(self.car_index)
-        self.car.penalty_time = self.getPenaltyTime()
+        # Position changed
+        position = ACLIB.getPosition(self.number)
+        if position != self.position:
+            self.benefit += self.position - position
+            self.position = position
 
-        if self.car.penalty_time > 0:
-            self.car.penalty = True
-        else:
-            self.car.penalty = False
+        # Damage and tyres
+        for i in range(0, 4):
+            dmg = ACLIB.getCarDamage(i)
+            if dmg > self.damage[i]:
+                self.damage[i] = dmg
+
+            wear = ACLIB.getTyreWear(i)
+            temp = ACLIB.getTyreTemp(i)
+            pressure = ACLIB.getTyrePressure(i)
+            dirt = ACLIB.getTyreDirtyLevel(i)
 
         # Time and Distance to next and previous car
         both = 0
-        for c in range(self.getCarsCount()):
-            if self.getPosition(c) == self.getPosition(0) - 1:
-                track_len = self.getTrackLength()
-                c_lap = self.getLap(c)
-                c_pos = self.getLocation(c)
-                lap = self.car.lap
-                pos = self.car.position
+        for c in range(ACLIB.getCarsCount()):
+            if ACLIB.getPosition(c) == self.position - 1:
+                track_len = ACLIB.getTrackLength()
+                c_lap = ACLIB.getLap(c)
+                c_pos = ACLIB.getLocation(c)
+                lap = self.lap
+                pos = self.location
 
-                self.car.next_dist = max(0, ((c_pos + c_lap) * track_len) - ((pos + lap) * track_len))
-                self.car.next_time = max(0.0, self.car.next_dist / max(10.0, self.getSpeed(0, "ms")))
+                self.next_dist = max(0, ((c_pos + c_lap) * track_len) - ((pos + lap) * track_len))
+                self.next_time = max(0.0, self.next_dist / max(10.0, ACLIB.getSpeed(0, "ms")))
                 both += 1
 
-            elif self.getPosition(c) == self.getPosition(0) + 1:
-                track_len = self.getTrackLength()
-                c_lap = self.getLap(c)
-                c_pos = self.getLocation(c)
-                lap = self.car.lap
-                pos = self.car.position
+            elif ACLIB.getPosition(c) == self.position + 1:
+                track_len = ACLIB.getTrackLength()
+                c_lap = ACLIB.getLap(c)
+                c_pos = ACLIB.getLocation(c)
+                lap = self.lap
+                pos = self.location
 
-                self.car.prev_dist = max(0, (((pos + lap) * track_len) - (c_pos + c_lap) * track_len))
-                self.car.prev_time = max(0.0, self.car.prev_dist / max(10.0, self.getSpeed(0, "ms")))
+                self.prev_dist = max(0, (((pos + lap) * track_len) - (c_pos + c_lap) * track_len))
+                self.prev_time = max(0.0, self.prev_dist / max(10.0, ACLIB.getSpeed(0, "ms")))
                 both += 1
 
             if both == 2:
                 break
 
-        # flag
-        self.car.flag = self.getFlagId()
+        # Next lap
+        lap = ACLIB.getLap(self.number)
+        if lap != self.lap:
+            self.benefit = 0
+            self.lap = lap
+            self.lap_time = ACLIB.getLastLapTime(self.number)
+            self.lap_fuel = round(self.lap_fuel_level - self.fuel, 1)
+            if self.lap_fuel > 0:
+                self.lap_fuel_range = round(self.fuel / self.lap_fuel, 1)
+                self.lap_fuel_level = self.fuel
 
-        # Position changed
-        position = self.getPosition(self.car_index)
-        if position != self.car.position:
-            self.car.benefit = self.car.position - position
-            self.car.position = position
+        # Update every 5th loop only if delta is < 0.1 sec and priority >= 1
+        if self.priority >= 0 and self.loops % 3 == 0 and delta < self.max_delta:
+            # Next sector
+            sector = max(0, int(self.location * 10 / 3) - 1)
+            if sector != self.sector_index:
+                sec_time = ACLIB.getCurrentLapTime(self.number)
+                if self.sector_index > 0:
+                    sec_time -= self.sector_time[self.sector_index]
+                self.sector_time[sector] = sec_time
+                self.sector_fuel = round(self.sector_fuel_level - self.fuel, 1)
+                if self.sector_fuel > 0:
+                    self.sector_fuel_range = round(self.fuel / self.sector_fuel, 1)
+                    self.sector_fuel_level = self.fuel
+                self.sector_index = sector
+                self.sector = sector + 1
 
-        # # Next lap
-        # lap = self.getLap(self.car_index)
-        # if lap != self.car.lap:
-        #     self.car.lap = lap
-        #     self.car.lap_time = self.getLastLapTime(self.car_index)
-        #     self.car.lap_fuel = round(self.car.lap_fuel_level - self.car.fuel, 1)
-        #     if self.car.lap_fuel > 0:
-        #         self.car.lap_fuel_range = round(self.car.fuel / self.car.lap_fuel, 1)
-        #         self.car.lap_fuel_level = self.car.fuel
-        #
+        # Update every 20th loop only if delta is < 0.1 sec and priority >= 3
+        if self.priority >= 2 and self.loops % 5 == 0 and delta < self.max_delta:
+            # Next mini sector
+            mini_sector = max(0, int(self.location * 12) - 1)
+            if mini_sector != self.mini_sector_index:
+                mini_sector_time = ACLIB.getCurrentLapTime(self.number)
+                if self.mini_sector_index > 0:
+                    mini_sector_time -= self.mini_sector_time[self.mini_sector_index]
+                self.mini_sector_time[mini_sector] = mini_sector_time
+                self.mini_sector_fuel = round(self.mini_sector_fuel_level - self.fuel, 1)
+                if self.mini_sector_fuel > 0:
+                    self.mini_sector_fuel_range = round(self.fuel / self.mini_sector_fuel, 1)
+                    self.mini_sector_fuel_level = self.fuel
+                self.mini_sector_index = mini_sector
+                self.mini_sector = mini_sector + 1
+
         # # Update every 50th loop only if delta is < 0.1 sec and priority >= 5
         # if self.priority >= 5 and self.loops % 10 == 0 and delta < self.max_delta:
         #     # Next km
-        #     km = int(self.getTraveledDistance() / 1000) % int(self.getTrackLength() / 1000)
-        #     if km != self.car.km:
-        #         self.car.km_time[km] = self.getCurrentLapTime(self.car_index)
-        #         self.car.km = km
-        #         self.car.km_fuel = round(self.car.km_fuel_level - self.car.fuel, 1)
-        #         if self.car.km_fuel > 0:
-        #             self.car.km_fuel_range = round(self.car.fuel / self.car.km_fuel, 1)
-        #             self.car.km_fuel_level = self.car.fuel
-        #
-        # # Update every 20th loop only if delta is < 0.1 sec and priority >= 3
-        # if self.priority >= 2 and self.loops % 5 == 0 and delta < self.max_delta:
-        #     # Next mini sector
-        #     mini_sector = int(self.getLocation(self.car_index) * 12)
-        #     if mini_sector != self.car.mini_sector:
-        #         self.car.mini_sector_time[mini_sector] = self.getCurrentLapTime(self.car_index)
-        #         self.car.mini_sector = mini_sector
-        #         self.car.mini_sector_fuel = round(self.car.mini_sector_fuel_level - self.car.fuel, 1)
-        #         if self.car.mini_sector_fuel > 0:
-        #             self.car.mini_sector_fuel_range = round(self.car.fuel / self.car.mini_sector_fuel,
-        #                                                           1)
-        #             self.car.mini_sector_fuel_level = self.car.fuel
-        #
-        # # Update every 5th loop only if delta is < 0.1 sec and priority >= 1
-        # if self.priority >= 0 and self.loops % 3 == 0 and delta < self.max_delta:
-        #     # Next sector
-        #     sector = int(self.getLocation(self.car_index) * 10 / 3)
-        #     if sector != self.car.sector:
-        #         self.car.sector_time[sector] = self.getCurrentLapTime(self.car_index)
-        #         self.car.sector = sector
-        #         self.car.sector_fuel = round(self.car.sector_fuel_level - self.car.fuel, 1)
-        #         if self.car.sector_fuel > 0:
-        #             self.car.sector_fuel_range = round(self.car.fuel / self.car.sector_fuel, 1)
-        #             self.car.sector_fuel_level = self.car.fuel
-
-            # # Damage and tyres
-            # for i in range(0, 4):
-            #     dmg = self.getCarDamage(i)
-            #     if dmg > self.car.damage[i]:
-            #         self.car.damage[i] = dmg
-            #
-            #     wear = self.getTyreWear(i)
-            #     temp = self.getTyreTemp(i)
-            #     pressure = self.getTyrePressure(i)
-            #     dirt = self.getTyreDirtyLevel(i)
+        #     km = int(self.location * ACLIB.getTrackLength() / 1000)
+        #     if km != self.km_index:
+        #         km_time = ACLIB.getCurrentLapTime(self.number)
+        #         if self.km_index > 0:
+        #             km_time -= self.km_time[self.km_index]
+        #         self.km_time[max(0, km - 1)] = km_time
+        #         self.km_fuel = round(self.km_fuel_level - self.fuel, 1)
+        #         if self.km_fuel > 0:
+        #             self.km_fuel_range = round(self.fuel / self.km_fuel, 1)
+        #             self.km_fuel_level = self.fuel
+        #         self.km_index = max(0, km - 1)
+        #         self.km = km
 
         self.loops += 1
 
         if self.loops > 1000:
             self.loops = 0
 
+
+class ACLIB:
+    CARS = [Car] * ac.getCarsCount()
+
+    @staticmethod
+    def init():
+        for i in range(0, ac.getCarsCount()):
+            ACLIB.CARS[i] = Car(i)
+
     @staticmethod
     def LOG(msg):
-        ac.log(msg)
+        ac.log(str(msg))
 
     @staticmethod
     def CONSOLE(msg):
-        ac.console(msg)
+        ac.console(str(msg))
 
     @staticmethod
-    def getPlayerNickname():
-        return info.static.playerNick
+    def getPlayerNickname(car):
+        return ac.getDriverName(car)
 
     @staticmethod
-    def getUniquePlayername():
-        nick = info.static.playerNick
+    def getUniquePlayername(car):
+        nick = ACLIB.getPlayerNickname(car)
         return nick[0:3] + " " + nick[-3:]
 
     @staticmethod
@@ -459,14 +494,6 @@ class ACLIB:
         return info.static.trackConfiguration
 
     @staticmethod
-    def getCarName():
-        return info.static.carModel
-
-    @staticmethod
-    def getCarSkin():
-        return info.static.carSkin
-
-    @staticmethod
     def getCarsCount():
         return ac.getCarsCount()
 
@@ -495,6 +522,10 @@ class ACLIB:
         return info.physics.airDensity
 
     @staticmethod
+    def tyreBlankets():
+        return info.static.aidAllowTyreBlankets
+
+    @staticmethod
     def fuelRate():
         return info.static.aidFuelRate
 
@@ -505,10 +536,6 @@ class ACLIB:
     @staticmethod
     def damageRate():
         return info.static.aidMechanicalDamage
-
-    @staticmethod
-    def tyreBlankets():
-        return info.static.aidAllowTyreBlankets
 
     @staticmethod
     def stabilityControl():
@@ -527,71 +554,94 @@ class ACLIB:
         return info.graphics.completedLaps
 
     @staticmethod
-    def getCurrentLapTime(car=0):
+    def getCarName(car):
+        return info.static.carModel
+
+    @staticmethod
+    def getCarSkin(car):
+        return info.static.carSkin
+
+    @staticmethod
+    def getCurrentLapTime(car):
         return ac.getCarState(car, AC_PROP.LapTime)
 
     @staticmethod
-    def getCurrentLap(car=0):
+    def getCurrentLap(car):
         return formatTime(ACLIB.getCurrentLapTime(car))
 
     @staticmethod
-    def getLastLapTime(car=0):
+    def getLastLapTime(car):
         return ac.getCarState(car, AC_PROP.LastLap)
 
     @staticmethod
-    def getLastLap(car=0):
+    def getLastLap(car):
         return formatTime(ACLIB.getLastLapTime(car))
 
     @staticmethod
-    def getBestLapTime(car=0):
+    def getBestLapTime(car):
         return ac.getCarState(car, AC_PROP.BestLap)
 
     @staticmethod
-    def getBestLap(car=0):
+    def getBestLap(car):
         return formatTime(ACLIB.getBestLapTime(car))
 
     @staticmethod
-    def getSectorIndex():
-        return info.graphics.currentSectorIndex
+    def getSectorIndex(car):
+        if car == 0:
+            return info.graphics.currentSectorIndex
+        else:
+            return 0
 
     @staticmethod
-    def getLastSector():
-        return info.graphics.lastSectorTime
+    def getLastSector(car):
+        if car == 0:
+            return info.graphics.lastSectorTime
+        else:
+            return 0
 
     @staticmethod
-    def getSectorCount():
-        return info.static.sectorCount
+    def getSectorCount(car):
+        if car == 0:
+            return info.static.sectorCount
+        else:
+            return 0
 
     @staticmethod
-    def getSplit():
-        return info.graphics.split
+    def getSplit(car):
+        if car == 0:
+            return info.graphics.split
+        else:
+            return 0
 
     @staticmethod
-    def getSplits(car=0):
+    def getSplits(car):
         return ac.getLastSplits(car)
 
     @staticmethod
-    def getLap(car=0):
+    def getLap(car):
         return ac.getCarState(car, AC_PROP.LapCount) + 1
 
     @staticmethod
-    def getLapDeltaTime(car=0):
+    def getLapDeltaTime(car):
         return ac.getCarState(car, AC_PROP.PerformanceMeter)
 
     @staticmethod
-    def getLapDelta(car=0):
-        time = ACLIB.getLapDeltaTime() * 1000
-        if time != 0:
-            if time < 0:
-                return "-" + formatTime(abs(time))
-            elif time > 0:
-                return "+" + formatTime(abs(time))
+    def getLapDelta(car):
+        if car == 0:
+            time = ACLIB.getLapDeltaTime(car) * 1000
+            if time != 0:
+                if time < 0:
+                    return "-" + formatTime(abs(time))
+                elif time > 0:
+                    return "+" + formatTime(abs(time))
+            else:
+                return "-00:00.000"
         else:
-            return "-00:00.000"
+            return 0
 
     @staticmethod
-    def isLapInvalidated(car=0):
-        return ac.getCarState(car, AC_PROP.LapInvalidated) or ACLIB.getTyresOut() > 2 or ACLIB.isInPit()
+    def isLapInvalidated(car):
+        return ac.getCarState(car, AC_PROP.LapInvalidated) or ACLIB.getTyresOut(car) > 2 or ACLIB.isInPit(car)
 
     @staticmethod
     def getLaps():
@@ -601,174 +651,251 @@ class ACLIB:
             return "-"
 
     @staticmethod
-    def lastSectorTime():
-        return info.graphics.lastSectorTime
-
-    @staticmethod
-    def getSectors():
-        return info.static.sectorCount
-
-    @staticmethod
-    def getFocusedCar():
-        return ac.getFocusedCar()
-
-    @staticmethod
-    def getTraveledDistance():
-        return info.graphics.distanceTraveled
-
-    @staticmethod
-    def getCarDamage(loc=0):
-        # 0: Front, 1: Rear, 2: Left, 3: Right, 4:?
-        return info.physics.carDamage[loc]
-
-    @staticmethod
-    def getPrevCarDiffTimeDist():
-        time = 0
-        dist = 0
-        track_len = ACLIB.getTrackLength()
-        lap = ACLIB.getLap(0)
-        pos = ACLIB.getLocation(0)
-
-        for car in range(ACLIB.getCarsCount()):
-            if ACLIB.getPosition(car) == ACLIB.getPosition(0) - 1:
-                lap_next = ACLIB.getLap(car)
-                pos_next = ACLIB.getLocation(car)
-
-                dist = max(0, (pos_next * track_len + lap_next * track_len) - (pos * track_len + lap * track_len))
-                time = max(0.0, dist / max(10.0, ACLIB.getSpeed(0, "ms")))
-                break
-        return time, dist
-
-    @staticmethod
-    def getPrevCarDiff():
-        time, dist = ACLIB.getPrevCarDiffTimeDist()
-        track_len = ACLIB.getTrackLength()
-
-        if dist > track_len:
-            laps = dist / track_len
-            if laps > 1.05:
-                return "+{:3.1f}".format(laps) + " Laps"
-            elif laps < 1.05:
-                return "+{:3.0f}".format(laps) + "   Lap"
+    def lastSectorTime(car):
+        if car == 0:
+            return info.graphics.lastSectorTime
         else:
-            if time > 60:
-                minute = time / 60
-                if minute > 1.05:
-                    return "+{:3.1f}".format(minute) + " Mins"
-                elif minute < 1.05:
-                    return "+{:3.0f}".format(minute) + "   Min"
-            else:
-                return "+" + formatTime(int(time * 1000))
+            return 0
 
     @staticmethod
-    def getNextCarDiffTimeDist():
-        time = 0
-        dist = 0
-        track_len = ACLIB.getTrackLength()
-        lap = ACLIB.getLap(0)
-        pos = ACLIB.getLocation(0)
-
-        for car in range(ACLIB.getCarsCount()):
-            if ACLIB.getPosition(car) == ACLIB.getPosition(0) + 1:
-                lap_next = ACLIB.getLap(car)
-                pos_next = ACLIB.getLocation(car)
-
-                dist = max(0.0, (pos * track_len + lap * track_len) - (pos_next * track_len + lap_next * track_len))
-                time = max(0.0, dist / max(10.0, ACLIB.getSpeed(car, "ms")))
-                break
-        return time, dist
-
-    @staticmethod
-    def getNextCarDiff():
-        time, dist = ACLIB.getNextCarDiffTimeDist()
-        track_len = ACLIB.getTrackLength()
-
-        if dist > track_len:
-            laps = dist / track_len
-            if laps > 1:
-                return "-{:3.1f}".format(laps) + " Laps"
-            else:
-                return "-{:3.1f}".format(laps) + "   Lap"
+    def getSectors(car):
+        if car == 0:
+            return info.static.sectorCount
         else:
-            if time > 60:
-                minute = time / 60
-                if minute > 1.05:
-                    return "-{:3.1f}".format(minute) + " Mins"
-                elif minute < 1.05:
-                    return "-{:3.0f}".format(minute) + "   Min"
+            return 0
+
+    @staticmethod
+    def getFocusedCar(car):
+        if car == 0:
+            return ac.getFocusedCar()
+        else:
+            return 0
+
+    @staticmethod
+    def getTraveledDistance(car):
+        if car == 0:
+            return info.graphics.distanceTraveled
+        else:
+            return 0
+
+    @staticmethod
+    def getCarDamage(car, loc=0):
+        if car == 0:
+            return info.physics.carDamage[loc]  # 0: Front, 1: Rear, 2: Left, 3: Right, 4:?
+        else:
+            return 0
+
+    @staticmethod
+    def getPrevCarDiffTimeDist(car):
+        if car == 0:
+            time = 0
+            dist = 0
+            track_len = ACLIB.getTrackLength()
+            lap = ACLIB.getLap(0)
+            pos = ACLIB.getLocation(0)
+
+            for car in range(ACLIB.getCarsCount()):
+                if ACLIB.getPosition(car) == ACLIB.getPosition(0) - 1:
+                    lap_next = ACLIB.getLap(car)
+                    pos_next = ACLIB.getLocation(car)
+
+                    dist = max(0, (pos_next * track_len + lap_next * track_len) - (pos * track_len + lap * track_len))
+                    time = max(0.0, dist / max(10.0, ACLIB.getSpeed(0, "ms")))
+                    break
+            return time, dist
+        else:
+            return 0
+
+    @staticmethod
+    def getPrevCarDiff(car):
+        if car == 0:
+            time, dist = ACLIB.getPrevCarDiffTimeDist(car)
+            track_len = ACLIB.getTrackLength()
+
+            if dist > track_len:
+                laps = dist / track_len
+                if laps > 1.05:
+                    return "+{:3.1f}".format(laps) + " Laps"
+                elif laps < 1.05:
+                    return "+{:3.0f}".format(laps) + "   Lap"
             else:
-                return "-" + formatTime(int(time * 1000))
+                if time > 60:
+                    minute = time / 60
+                    if minute > 1.05:
+                        return "+{:3.1f}".format(minute) + " Mins"
+                    elif minute < 1.05:
+                        return "+{:3.0f}".format(minute) + "   Min"
+                else:
+                    return "+" + formatTime(int(time * 1000))
+        else:
+            return 0
 
     @staticmethod
-    def getGas():
-        return info.physics.gas
+    def getNextCarDiffTimeDist(car):
+        if car == 0:
+            time = 0
+            dist = 0
+            track_len = ACLIB.getTrackLength()
+            lap = ACLIB.getLap(0)
+            pos = ACLIB.getLocation(0)
+
+            for car in range(ACLIB.getCarsCount()):
+                if ACLIB.getPosition(car) == ACLIB.getPosition(0) + 1:
+                    lap_next = ACLIB.getLap(car)
+                    pos_next = ACLIB.getLocation(car)
+
+                    dist = max(0.0, (pos * track_len + lap * track_len) - (pos_next * track_len + lap_next * track_len))
+                    time = max(0.0, dist / max(10.0, ACLIB.getSpeed(car, "ms")))
+                    break
+            return time, dist
+        else:
+            return 0
 
     @staticmethod
-    def getBrake():
-        return info.physics.brake
+    def getNextCarDiff(car):
+        if car == 0:
+            time, dist = ACLIB.getNextCarDiffTimeDist(car)
+            track_len = ACLIB.getTrackLength()
+
+            if dist > track_len:
+                laps = dist / track_len
+                if laps > 1:
+                    return "-{:3.1f}".format(laps) + " Laps"
+                else:
+                    return "-{:3.1f}".format(laps) + "   Lap"
+            else:
+                if time > 60:
+                    minute = time / 60
+                    if minute > 1.05:
+                        return "-{:3.1f}".format(minute) + " Mins"
+                    elif minute < 1.05:
+                        return "-{:3.0f}".format(minute) + "   Min"
+                else:
+                    return "-" + formatTime(int(time * 1000))
+        else:
+            return 0
 
     @staticmethod
-    def getClutch():
-        return info.physics.clutch
+    def getGas(car):
+        if car == 0:
+            return info.physics.gas
+        else:
+            return 0
 
     @staticmethod
-    def hasDRS():
-        return info.static.hasDRS
+    def getBrake(car):
+        if car == 0:
+            return info.physics.brake
+        else:
+            return 0
 
     @staticmethod
-    def DRSAvailable():
-        return info.physics.drsAvailable
+    def getClutch(car):
+        if car == 0:
+            return info.physics.clutch
+        else:
+            return 0
 
     @staticmethod
-    def DRSEnabled():
-        return info.physics.drsEnabled
+    def hasDRS(car):
+        if car == 0:
+            return info.static.hasDRS
+        else:
+            return 0
 
     @staticmethod
-    def hasERS():
-        return info.static.hasERS
+    def DRSAvailable(car):
+        if car == 0:
+            return info.physics.drsAvailable
+        else:
+            return 0
 
     @staticmethod
-    def isERSCharging():
-        return info.static.ersIsCharging
+    def DRSEnabled(car):
+        if car == 0:
+            return info.physics.drsEnabled
+        else:
+            return 0
 
     @staticmethod
-    def ERSMaxJ():
-        return info.static.ersMaxJ
+    def hasERS(car):
+        if car == 0:
+            return info.static.hasERS
+        else:
+            return 0
 
     @staticmethod
-    def ERSPowerControllerCount():
-        return info.static.ersPowerControllerCount
+    def isERSCharging(car):
+        if car == 0:
+            return info.static.ersIsCharging
+        else:
+            return 0
 
     @staticmethod
-    def engineBrakeSettingsCount():
-        return info.static.engineBrakeSettingsCount
+    def ERSMaxJ(car):
+        if car == 0:
+            return info.static.ersMaxJ
+        else:
+            return 0
 
     @staticmethod
-    def hasKERS():
-        return info.static.hasKERS
+    def ERSPowerControllerCount(car):
+        if car == 0:
+            return info.static.ersPowerControllerCount
+        else:
+            return 0
 
     @staticmethod
-    def KERSCharge():
-        return info.physics.kersCharge
+    def engineBrakeSettingsCount(car):
+        if car == 0:
+            return info.static.engineBrakeSettingsCount
+        else:
+            return 0
 
     @staticmethod
-    def KERSInput():
-        return info.physics.kersInput
+    def hasKERS(car):
+        if car == 0:
+            return info.static.hasKERS
+        else:
+            return 0
 
     @staticmethod
-    def KERSCurrentKJ():
-        return info.static.kersCurrentKJ
+    def KERSCharge(car):
+        if car == 0:
+            return info.physics.kersCharge
+        else:
+            return 0
 
     @staticmethod
-    def KERSMaxJ():
-        return info.static.kersMaxJ
+    def KERSInput(car):
+        if car == 0:
+            return info.physics.kersInput
+        else:
+            return 0
 
     @staticmethod
-    def ABS():
-        return info.physics.abs
+    def KERSCurrentKJ(car):
+        if car == 0:
+            return info.static.kersCurrentKJ
+        else:
+            return 0
 
     @staticmethod
-    def getSpeed(car=0, unit="kmh"):
+    def KERSMaxJ(car):
+        if car == 0:
+            return info.static.kersMaxJ
+        else:
+            return 0
+
+    @staticmethod
+    def ABS(car):
+        if car == 0:
+            return info.physics.abs
+        else:
+            return 0
+
+    @staticmethod
+    def getSpeed(car, unit="kmh"):
         if unit == "kmh":
             return ac.getCarState(car, AC_PROP.SpeedKMH)
         elif unit == "mph":
@@ -777,96 +904,137 @@ class ACLIB:
             return ac.getCarState(car, AC_PROP.SpeedMS)
 
     @staticmethod
-    def getGear(car=0):
+    def getGear(car):
         return formatGear(ac.getCarState(car, AC_PROP.Gear))
 
     @staticmethod
-    def getRPMValue(car=0):
+    def getRPMValue(car):
         return ac.getCarState(car, AC_PROP.RPM)
 
     @staticmethod
-    def getRPM(car=0):
+    def getRPM(car):
         return int(ACLIB.getRPMValue(car))
 
     @staticmethod
-    def getRPMMax():
-        if info.static.maxRpm:
-            return info.static.maxRpm
+    def getRPMMax(car):
+        if car == 0:
+            if info.static.maxRpm:
+                return info.static.maxRpm
+            else:
+                return 8000
         else:
-            return 8000
+            return 0
 
     @staticmethod
-    def getPosition(car=0):
+    def getPosition(car):
         return ac.getCarRealTimeLeaderboardPosition(car) + 1
 
     @staticmethod
-    def getLocation(car=0):
+    def getLocation(car):
         return ac.getCarState(car, AC_PROP.NormalizedSplinePosition)
 
     @staticmethod
-    def getPenaltyTime():
-        return info.graphics.penaltyTime
+    def getPenaltyTime(car):
+        if car == 0:
+            return info.graphics.penaltyTime
+        else:
+            return 0
 
     @staticmethod
-    def isPitLimiterOn():
-        return info.physics.pitLimiterOn
+    def isPitLimiterOn(car):
+        if car == 0:
+            return info.physics.pitLimiterOn
+        else:
+            return 0
 
     @staticmethod
-    def mandatoryPitStopDone():
-        return info.graphics.mandatoryPitDone
+    def mandatoryPitStopDone(car):
+        if car == 0:
+            return info.graphics.mandatoryPitDone
+        else:
+            return 0
 
     @staticmethod
-    def isInPit(car=0):
+    def isInPit(car):
         return ACLIB.isInPitLine(car) or ACLIB.isInPitBox(car)
 
     @staticmethod
-    def isInPitLine(car=0):
+    def isInPitLine(car):
         return ac.isCarInPitline(car)
 
     @staticmethod
-    def isInPitBox(car=0):
+    def isInPitBox(car):
         return ac.isCarInPit(car)
 
     @staticmethod
-    def isAIDriven():
-        return info.physics.isAIControlled
+    def isAIDriven(car):
+        if car == 0:
+            return info.physics.isAIControlled
+        else:
+            return 0
 
     @staticmethod
-    def getFuel():
-        return info.physics.fuel
+    def getFuel(car):
+        if car == 0:
+            return info.physics.fuel
+        else:
+            return 0
 
     @staticmethod
-    def getMaxFuel():
-        return info.static.maxFuel
+    def getMaxFuel(car):
+        if car == 0:
+            return info.static.maxFuel
+        else:
+            return 0
 
     @staticmethod
-    def getCamberRad(tyre=0):
-        return info.physics.camberRAD[tyre]
+    def getCamberRad(car, tyre=0):
+        if car == 0:
+            return info.physics.camberRAD[tyre]
+        else:
+            return 0
 
     @staticmethod
-    def getMaxSuspensionTravel(tyre=0):
-        return info.static.suspensionMaxTravel[tyre]
+    def getMaxSuspensionTravel(car, tyre=0):
+        if car == 0:
+            return info.static.suspensionMaxTravel[tyre]
+        else:
+            return 0
 
     @staticmethod
-    def getSuspensionTravel(tyre=0):
-        return info.physics.suspensionTravel[tyre]
+    def getSuspensionTravel(car, tyre=0):
+        if car == 0:
+            return info.physics.suspensionTravel[tyre]
+        else:
+            return 0
 
     @staticmethod
-    def getTyresOut():
-        return info.physics.numberOfTyresOut
+    def getTyresOut(car):
+        if car == 0:
+            return info.physics.numberOfTyresOut
+        else:
+            return 0
 
     @staticmethod
-    def getTyreWearValue(tyre=0):
-        # 0: FL, 1: FR, 2: RL, 3: RR
-        return info.physics.tyreWear[tyre]
+    def getTyreWearValue(car, tyre=0):
+        if car == 0:
+            return info.physics.tyreWear[tyre]  # 0: FL, 1: FR, 2: RL, 3: RR
+        else:
+            return 0
 
     @staticmethod
-    def getTyreWear(tyre=0):
-        return (ACLIB.getTyreWearValue(tyre) - 94) * 16.6
+    def getTyreWear(car, tyre=0):
+        if car == 0:
+            return (ACLIB.getTyreWearValue(tyre) - 94) * 16.6
+        else:
+            return 0
 
     @staticmethod
-    def getTyreWearFormated(tyre=0):
-        return "{:2.1f}%".format((ACLIB.getTyreWearValue(tyre) - 94) * 16.6)
+    def getTyreWearFormated(car, tyre=0):
+        if car == 0:
+            return "{:2.1f}%".format((ACLIB.getTyreWearValue(car, tyre) - 94) * 16.6)
+        else:
+            return 0
 
     @staticmethod
     def getTyreDirtyLevel(tyre=0):
@@ -877,37 +1045,55 @@ class ACLIB:
         return info.graphics.tyreCompound
 
     @staticmethod
-    def getTyreTemp(tyre=0, loc="m"):
-        if loc == "i":
-            return info.physics.tyreTempI[tyre]
-        elif loc == "m":
-            return info.physics.tyreTempM[tyre]
-        elif loc == "o":
-            return info.physics.tyreTempO[tyre]
-        elif loc == "c":
-            return info.physics.tyreCoreTemperature[tyre]
-        elif loc == "all":
-            return [info.physics.tyreTempI[tyre],
-                    info.physics.tyreTempM[tyre],
-                    info.physics.tyreTempO[tyre],
-                    info.physics.tyreCoreTemperature[tyre]]
+    def getTyreTemp(car, tyre=0, loc="m"):
+        if car == 0:
+            if loc == "i":
+                return info.physics.tyreTempI[tyre]
+            elif loc == "m":
+                return info.physics.tyreTempM[tyre]
+            elif loc == "o":
+                return info.physics.tyreTempO[tyre]
+            elif loc == "c":
+                return info.physics.tyreCoreTemperature[tyre]
+            elif loc == "all":
+                return [info.physics.tyreTempI[tyre],
+                        info.physics.tyreTempM[tyre],
+                        info.physics.tyreTempO[tyre],
+                        info.physics.tyreCoreTemperature[tyre]]
+        else:
+            return 0
 
     @staticmethod
-    def getTyreTempFormated(tyre=0, loc="m"):
-        return "{:2.1f}°".format(ACLIB.getTyreTemp(tyre, loc))
+    def getTyreTempFormated(car, tyre=0, loc="m"):
+        if car == 0:
+            return "{:2.1f}°".format(ACLIB.getTyreTemp(car, tyre, loc))
+        else:
+            return 0
 
     @staticmethod
-    def getTyrePressure(tyre=0):
-        return info.physics.wheelsPressure[tyre]
+    def getTyrePressure(car, tyre=0):
+        if car == 0:
+            return info.physics.wheelsPressure[tyre]
+        else:
+            return 0
 
     @staticmethod
-    def getTyrePressureFormated(tyre=0):
-        return "{:2.1f}psi".format(ACLIB.getTyrePressure(tyre))
+    def getTyrePressureFormated(car, tyre=0):
+        if car == 0:
+            return "{:2.1f}psi".format(ACLIB.getTyrePressure(car, tyre))
+        else:
+            return 0
 
     @staticmethod
-    def getBrakeTemperature(tyre=0):
-        return info.physics.brakeTemp[tyre]
+    def getBrakeTemperature(car, tyre=0):
+        if car == 0:
+            return info.physics.brakeTemp[tyre]
+        else:
+            return 0
 
     @staticmethod
-    def getBrakeTemperatureFormated(tyre=0):
-        return "{:2.1f}°".format(ACLIB.getBrakeTemperature(tyre))
+    def getBrakeTemperatureFormated(car, tyre=0):
+        if car == 0:
+            return "{:2.1f}°".format(ACLIB.getBrakeTemperature(tyre))
+        else:
+            return 0
