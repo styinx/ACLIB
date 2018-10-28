@@ -1,13 +1,14 @@
 from source.color import Color
-from source.gui import ACApp, ACGrid, ACLabel, ACWidget
+from source.gui import ACApp, ACGrid, ACLabel
 from source.aclib import ACLIB
+from source.gl import rect
 
 
 class Tower(ACApp):
     def __init__(self):
         super().__init__("ACLIB_Tower", 200, 200, 256, 256)
 
-        self.hideDecoration().setBackgroundColor(Color(0, 0, 0, 0))
+        self.hideDecoration()
 
         self.max_rows = 22
         self.row_width = 288
@@ -23,21 +24,9 @@ class Tower(ACApp):
         c = 0.2
 
         for car in ACLIB.CARS:
-            # car_grid = ACGrid(None, 8, 1).setBackgroundColor(Color(1, 0.5, 0.5, 1))
-            # car_pos = ACLabel("", self, font_size=16, bold=1, text_h_alignment="center", text_v_alignment="middle",
-            #                   background_color=Color(0.2 + c, 0.2 + c, 0.2 + c, 0.75))
-            # player_name = ACLabel("", self, font_size=16, text_h_alignment="center", text_v_alignment="middle",
-            #                       background_color=Color(0.5 + c, 0.5 + c, 0.5 + c, 0.75))
-            # player_penalty = ACLabel("", self, font_size=16, bold=1, italic=1,
-            #                          text_h_alignment="center", text_v_alignment="middle")
-
-            car_grid = TowerEntry(None, self, car.number)
+            car_grid = TowerEntry(self._grid, self, car.number)
             self._grid.addWidget(car_grid, x, y, self.col_width - 1, 1)
             car_grid.updateSize().init()
-            #
-            # car_grid.addWidget(car_pos, 0, 0, 1, 1)
-            # car_grid.addWidget(player_name, 1, 0, 6, 1)
-            # car_grid.addWidget(player_penalty, 7, 0, 1, 1)
 
             y += 1
             c = c * -1
@@ -47,56 +36,14 @@ class Tower(ACApp):
                 x += self.col_width
 
     def update(self, delta):
-
-        x = 0
-        y = 0
-
-        # for car in ACLIB.CARS:
-        #     car_grid = self._grid.getWidget(x, y)
-        #
-        #     car_grid.getWidget(0, 0).setText(str(car.position))
-        #     car_grid.getWidget(1, 0).setText(str(car.player_nick))
-        #
-        #     penalty = car_grid.getWidget(7, 0)
-        #
-        #     if car.penalty_time > 0:
-        #         penalty.setText(str(round(car.penalty_time)))
-        #         penalty.setBackgroundColor(Color(0.7, 0, 0, 1))
-        #
-        #     else:
-        #         if car.benefit > 0:
-        #             penalty.setText("+" + str(car.benefit))
-        #             penalty.setBackgroundColor(Color(0, 0.7, 0, 1))
-        #         elif car.benefit < 0:
-        #             penalty.setText(str(car.benefit))
-        #             penalty.setBackgroundColor(Color(0.7, 0, 0, 1))
-        #         else:
-        #             penalty.setText("")
-        #             penalty.setBackgroundColor(Color(0, 0, 0, 1))
-        #
-        #     car_grid.update(delta)
-        #
-        #     y += 1
-        #
-        #     if y == self.max_rows:
-        #         y = 0
-        #         x += self.col_width
-
-        for _ in range(0, ACLIB.getCarsCount()):
-            car_grid = self._grid.getWidget(x, y)
-            ACLIB.CONSOLE(car_grid.car_index)
-            car_grid.update(delta)
-
-            y += 1
-
-            if y == self.max_rows:
-                y = 0
-                x += self.col_width
+        super().update(delta)
 
         self._grid.update(delta)
 
     def render(self, delta):
         super().render(delta)
+
+        self._grid.render(delta)
 
 
 class TowerEntry(ACGrid):
@@ -121,9 +68,10 @@ class TowerEntry(ACGrid):
         return self
 
     def update(self, delta):
+        super().render(delta)
 
         self.position.setText(str(self.car.position))
-        self.name.setText(self.car.player_name)
+        self.name.setText(self.car.player_nick)
 
         if self.car.penalty_time > 0:
             self.info.setText(str(round(self.car.penalty_time)))
@@ -141,3 +89,20 @@ class TowerEntry(ACGrid):
                 self.info.setBackgroundColor(Color(0, 0, 0, 1))
 
         return self
+
+    def render(self, delta):
+        super().render(delta)
+
+        pos = self.name.getPos()
+        size = self.name.getSize()
+        x = pos[0] + 1
+        for sector in range(0, 3):
+            rect(x, pos[1] + 20, size[0] / 3 - 2, 5, Color(1, 0, 0))
+            x += size[0] / 3 + 2
+
+        x = pos[0] + 3
+        for mini_sector in range(0, 12):
+            rect(x, pos[1] + 28, size[0] / 12 - 6, 5, Color(1, 1, 0))
+            x += size[0] / 23 + 3
+
+

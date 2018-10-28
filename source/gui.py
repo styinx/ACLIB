@@ -262,6 +262,7 @@ class ACApp(ACWidget):
 
         self._activated = self.activate
         self._dismissed = self.dismiss
+        self._render = self.render
 
         a_x, a_y = ac.getPosition(self._ac_obj)
         if a_x != -1:
@@ -275,8 +276,10 @@ class ACApp(ACWidget):
 
         self.activated_callback = self._activated
         self.dismissed_callback = self._dismissed
+        self.render_callback = self._render
 
         self.drawBorder(0)
+        self.setRenderCallback(self.render_callback)
 
     def isMainApp(self):
         return self._main_app
@@ -563,7 +566,7 @@ class ACGrid(ACLayout):
         for row in self._children:
             for cell in row:
                 if isinstance(cell, ACWidget):
-                    cell.update(delta)
+                    cell.render(delta)
 
         return self
 
@@ -627,13 +630,13 @@ class ACTextWidget(ACWidget):
         if text_v_alignment == "top":
             y = self._pos[1]
         elif text_v_alignment == "middle":
-            y = int(self._pos[1] + self._size[1] * 2)
+            y = int(self._pos[1] + self._size[1] / 2)
         elif text_v_alignment == "bottom":
             y = self._pos[1] + self._size[1]
 
         if self._ac_obj is not None:
-            ac.setPosition(self._ac_obj, x, y)
             ac.setFontAlignment(self._ac_obj, text_h_alignment)
+            ac.setPosition(self._ac_obj, x, y)
 
         return self
 

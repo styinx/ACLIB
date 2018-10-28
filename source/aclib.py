@@ -1,7 +1,7 @@
 import sys
 import os
 import platform
-from math import isinf
+from math import isinf#, inf
 import ac
 
 if platform.architecture()[0] == "64bit":
@@ -25,7 +25,7 @@ def formatTime(millis, form="{:02d}:{:02d}.{:03d}"):
     return form.format(m, s, ms)
 
 
-def formatDistance(meters, form="{:2d}.{:02.0f} km"):
+def formatDistance(meters, form="{:02d}.{:02.0f} km"):
     km = int(meters / 1000)
     m = (meters % 1000) / 10
 
@@ -56,7 +56,7 @@ class Car:
         self.priority = 10  # more means a higher effort to compute but more precise results
         self.loops = 0
         self.initialized = False
-        self.max_delta = 0.1
+        self.max_delta = 0.05
 
         self.number = number
         self.player_name = ""
@@ -86,9 +86,11 @@ class Car:
         self.prev_dist = 0
         self.prev_time = 0
 
-        self.lap = 1  # current lap
+        self.lap = 0  # current lap
         self.lap_diff = 0.0  # performance meter
-        self.lap_time = 0.0  # last lap time
+        self.lap_time = 0.0  # current lap time
+        self.last_time = 0.0  # last lap time
+        self.best_time = 0.0  # best lap time
         self.lap_fuel = 0.0  # fuel consumption in l
         self.lap_fuel_range = 0.0  # number of laps with current fuel
         self.lap_fuel_level = 0.0  # fuel level from last lap
@@ -97,7 +99,7 @@ class Car:
         self.sector_index = 0
         self.sector_time = [0.0] * 3
         self.last_sector_time = [0.0] * 3
-        self.best_sector_time = [0.0] * 3
+        self.best_sector_time = [float("inf")] * 3
         self.sector_fuel = 0.0
         self.sector_fuel_range = 0.0
         self.sector_fuel_level = 0.0
@@ -106,16 +108,16 @@ class Car:
         self.mini_sector_index = 0
         self.mini_sector_time = [0.0] * 12
         self.last_mini_sector_time = [0.0] * 12
-        self.best_mini_sector_time = [0.0] * 12
+        self.best_mini_sector_time = [float("inf")] * 12
         self.mini_sector_fuel = 0.0
         self.mini_sector_fuel_range = 0.0
         self.mini_sector_fuel_level = 0.0
 
         self.km = 0
         self.km_index = 0
-        self.km_time = [0.0] * 1
-        self.last_km_time = [0.0] * 1
-        self.best_km_time = [0.0] * 1
+        self.km_time = [0.0] * (int(ACLIB.getTrackLength() / 1000) + 1)
+        self.last_km_time = [0.0] * (int(ACLIB.getTrackLength() / 1000) + 1)
+        self.best_km_time = [float("inf")] * (int(ACLIB.getTrackLength() / 1000) + 1)
         self.km_fuel = 0.0
         self.km_fuel_range = 0.0
         self.km_fuel_level = 0.0
@@ -149,36 +151,38 @@ class Car:
         self.prev_dist = 0
         self.prev_time = 0
 
-        self.lap = 1
+        self.lap = 0
         self.lap_diff = 0.0
         self.lap_time = 0.0
+        self.last_time = 0.0
+        self.best_time = 0.0
         self.lap_fuel = 0.0
         self.lap_fuel_range = 0.0
         self.lap_fuel_level = 0.0
 
-        self.sector = 1
+        self.sector = 0
         self.sector_index = 0
         self.sector_time = [0.0] * 3
         self.last_sector_time = [0.0] * 3
-        self.best_sector_time = [0.0] * 3
+        self.best_sector_time = [float("inf")] * 3
         self.sector_fuel = 0.0
         self.sector_fuel_range = 0.0
         self.sector_fuel_level = 0.0
 
-        self.mini_sector = 1
+        self.mini_sector = 0
         self.mini_sector_index = 0
         self.mini_sector_time = [0.0] * 12
         self.last_mini_sector_time = [0.0] * 12
-        self.best_mini_sector_time = [0.0] * 12
+        self.best_mini_sector_time = [float("inf")] * 12
         self.mini_sector_fuel = 0.0
         self.mini_sector_fuel_range = 0.0
         self.mini_sector_fuel_level = 0.0
 
-        self.km = 1
+        self.km = 0
         self.km_index = 0
-        self.km_time = [0.0] * 1
-        self.last_km_time = [0.0] * 1
-        self.best_km_time = [0.0] * 1
+        self.km_time = [0.0] * (int(ACLIB.getTrackLength() / 1000) + 1)
+        self.last_km_time = [0.0] * (int(ACLIB.getTrackLength() / 1000) + 1)
+        self.best_km_time = [float("inf")] * (int(ACLIB.getTrackLength() / 1000) + 1)
         self.km_fuel = 0.0
         self.km_fuel_range = 0.0
         self.km_fuel_level = 0.0
@@ -191,31 +195,30 @@ class Car:
 
     def init(self):
         self.player_nick = ACLIB.getPlayerNickname(self.number)
-        self.player_name = ACLIB.getPlayerFirstname() + ACLIB.getPlayerLastname()
+        self.player_name = ACLIB.getPlayerFirstname(self.number) + ACLIB.getPlayerLastname(self.number)
         self.drs = ACLIB.hasDRS(self.number)
         self.ers = ACLIB.hasERS(self.number)
         self.kers = ACLIB.hasKERS(self.number)
-
-        self.km_time = [0.0] * int(ACLIB.getTrackLength() / 1000)
-        self.last_km_time = [0.0] * int(ACLIB.getTrackLength() / 1000)
-        self.best_km_time = [0.0] * int(ACLIB.getTrackLength() / 1000)
 
         self.position = ACLIB.getPosition(self.number)
         self.benefit = 0
         self.location = ACLIB.getLocation(self.number)
         self.fuel = ACLIB.getFuel(self.number)
+        self.lap_fuel_level = self.fuel
+        self.lap = ACLIB.getLap(self.number)
+
         self.km_fuel_level = self.fuel
-        self.km_index = int(self.location * ACLIB.getTrackLength() / 1000) - 1
-        self.km = self.km_index - 1
+        self.km_index = int(self.location * ACLIB.getTrackLength() / 1000)
+        self.km = self.km_index + 1
         self.mini_sector_fuel_level = self.fuel
-        self.mini_sector_index = max(0, int(self.location * 12) - 1)
+        self.mini_sector_index = int(self.location * 12)
         self.mini_sector = self.mini_sector_index + 1
         self.sector_fuel_level = self.fuel
-        self.sector_index = max(0, int(self.location * 10 / 3) - 1)
+        self.sector_index = int(self.location * 3)
         self.sector = self.sector_index + 1
-        self.lap_fuel_level = self.fuel
 
     def update(self, delta):
+        self.lap_time = ACLIB.getCurrentLapTime(self.number)
         self.location = round(ACLIB.getLocation(self.number), 4)
         self.speed = round(ACLIB.getSpeed(self.number), 2)
         self.traveled_distance = ACLIB.getTraveledDistance(self.number)
@@ -281,9 +284,19 @@ class Car:
         lap = ACLIB.getLap(self.number)
         if lap != self.lap:
             self.benefit = 0
-            self.lap = lap
-            self.lap_time = ACLIB.getLastLapTime(self.number)
-            self.lap_fuel = round(self.lap_fuel_level - self.fuel, 1)
+
+            self.lap = ACLIB.getLap(self.number)
+            self.last_time = ACLIB.getLastLapTime(self.number)
+            self.best_time = ACLIB.getBestLapTime(self.number)
+
+            self.last_sector_time = self.sector_time
+            self.sector_time = [0.0] * 3
+            self.last_mini_sector_time = self.mini_sector_time
+            self.mini_sector_time = [0.0] * 12
+            self.last_km_time = self.km_time
+            self.km_time = [0.0] * (int(ACLIB.getTrackLength() / 1000) + 1)
+
+            self.lap_fuel = max(round(self.lap_fuel_level - self.fuel, 1), 0)
             if self.lap_fuel > 0:
                 self.lap_fuel_range = round(self.fuel / self.lap_fuel, 1)
                 self.lap_fuel_level = self.fuel
@@ -291,50 +304,77 @@ class Car:
         # Update every 5th loop only if delta is < 0.1 sec and priority >= 1
         if self.priority >= 0 and self.loops % 3 == 0 and delta < self.max_delta:
             # Next sector
-            sector = max(0, int(self.location * 10 / 3) - 1)
+            sector = min(int(self.location * 3), 3)
             if sector != self.sector_index:
-                sec_time = ACLIB.getCurrentLapTime(self.number)
+
+                # Lap change
+                if sector == 0:
+                    sec_time = ACLIB.getLastLapTime(self.number)
+                else:
+                    sec_time = ACLIB.getCurrentLapTime(self.number)
                 if self.sector_index > 0:
-                    sec_time -= self.sector_time[self.sector_index]
-                self.sector_time[sector] = sec_time
-                self.sector_fuel = round(self.sector_fuel_level - self.fuel, 1)
+                    sec_time -= self.sector_time[self.sector_index - 1]
+                self.sector_time[self.sector_index] = sec_time
+                if sec_time < self.best_sector_time[self.sector_index]:
+                    self.best_sector_time[self.sector_index] = sec_time
+
+                self.sector_fuel = max(round(self.sector_fuel_level - self.fuel, 1), 0)
                 if self.sector_fuel > 0:
                     self.sector_fuel_range = round(self.fuel / self.sector_fuel, 1)
                     self.sector_fuel_level = self.fuel
+
                 self.sector_index = sector
                 self.sector = sector + 1
 
         # Update every 20th loop only if delta is < 0.1 sec and priority >= 3
         if self.priority >= 2 and self.loops % 5 == 0 and delta < self.max_delta:
             # Next mini sector
-            mini_sector = max(0, int(self.location * 12) - 1)
+            mini_sector = min(int(self.location * 12), 12)
             if mini_sector != self.mini_sector_index:
-                mini_sector_time = ACLIB.getCurrentLapTime(self.number)
+
+                # Lap change
+                if mini_sector == 0:
+                    mini_sector_time = ACLIB.getLastLapTime(self.number)
+                else:
+                    mini_sector_time = ACLIB.getCurrentLapTime(self.number)
                 if self.mini_sector_index > 0:
-                    mini_sector_time -= self.mini_sector_time[self.mini_sector_index]
-                self.mini_sector_time[mini_sector] = mini_sector_time
-                self.mini_sector_fuel = round(self.mini_sector_fuel_level - self.fuel, 1)
+                    mini_sector_time -= self.mini_sector_time[self.mini_sector_index - 1]
+                self.mini_sector_time[self.mini_sector_index] = mini_sector_time
+                if mini_sector_time < self.best_mini_sector_time[self.mini_sector_index]:
+                    self.best_mini_sector_time[self.mini_sector_index] = mini_sector_time
+
+                self.mini_sector_fuel = max(round(self.mini_sector_fuel_level - self.fuel, 1), 0)
                 if self.mini_sector_fuel > 0:
                     self.mini_sector_fuel_range = round(self.fuel / self.mini_sector_fuel, 1)
                     self.mini_sector_fuel_level = self.fuel
+
                 self.mini_sector_index = mini_sector
                 self.mini_sector = mini_sector + 1
 
-        # # Update every 50th loop only if delta is < 0.1 sec and priority >= 5
-        # if self.priority >= 5 and self.loops % 10 == 0 and delta < self.max_delta:
-        #     # Next km
-        #     km = int(self.location * ACLIB.getTrackLength() / 1000)
-        #     if km != self.km_index:
-        #         km_time = ACLIB.getCurrentLapTime(self.number)
-        #         if self.km_index > 0:
-        #             km_time -= self.km_time[self.km_index]
-        #         self.km_time[max(0, km - 1)] = km_time
-        #         self.km_fuel = round(self.km_fuel_level - self.fuel, 1)
-        #         if self.km_fuel > 0:
-        #             self.km_fuel_range = round(self.fuel / self.km_fuel, 1)
-        #             self.km_fuel_level = self.fuel
-        #         self.km_index = max(0, km - 1)
-        #         self.km = km
+        # Update every 50th loop only if delta is < 0.1 sec and priority >= 5
+        if self.priority >= 5 and self.loops % 10 == 0 and delta < self.max_delta:
+            # Next km
+            km = int(self.location * ACLIB.getTrackLength() / 1000)
+            if km != self.km_index:
+
+                # Lap change
+                if km == 0:
+                    km_time = ACLIB.getLastLapTime(self.number)
+                else:
+                    km_time = ACLIB.getCurrentLapTime(self.number)
+                if self.km_index > 0:
+                    km_time -= self.km_time[self.km_index - 1]
+                self.km_time[self.km_index] = km_time
+                if km_time < self.best_km_time[self.km_index]:
+                    self.best_km_time[self.km_index] = km_time
+
+                self.km_fuel = max(round(self.km_fuel_level - self.fuel, 1), 0)
+                if self.km_fuel > 0:
+                    self.km_fuel_range = round(self.fuel / self.km_fuel, 1)
+                    self.km_fuel_level = self.fuel
+
+                self.km_index = km
+                self.km = km + 1
 
         self.loops += 1
 
@@ -368,20 +408,32 @@ class ACLIB:
         return nick[0:3] + " " + nick[-3:]
 
     @staticmethod
-    def getPlayerFirstname():
-        return info.static.playerName
+    def getPlayerFirstname(car):
+        if car == 0:
+            return info.static.playerName
+        else:
+            return 0
 
     @staticmethod
-    def getPlayerLastname():
-        return info.static.playerSurname
+    def getPlayerLastname(car):
+        if car == 0:
+            return info.static.playerSurname
+        else:
+            return 0
 
     @staticmethod
-    def isIdealLineOn():
-        return info.graphics.idealLineOn
+    def isIdealLineOn(car):
+        if car == 0:
+            return info.graphics.idealLineOn
+        else:
+            return 0
 
     @staticmethod
-    def isAutoShifterOn():
-        return info.physics.autoShifterOn
+    def isAutoShifterOn(car):
+        if car == 0:
+            return info.physics.autoShifterOn
+        else:
+            return 0
 
     @staticmethod
     def getSessionTypeId():
