@@ -1,7 +1,7 @@
 import sys
 import os
 import platform
-from math import isinf#, inf
+from math import isinf
 import ac
 
 if platform.architecture()[0] == "64bit":
@@ -17,7 +17,7 @@ from third_party.sim_info import info, AC_PROP
 
 
 def formatTime(millis, form="{:02d}:{:02d}.{:03d}"):
-    millis = int(millis)
+    millis = abs(int(millis))
     m = int(millis / 60000)
     s = int((millis % 60000) / 1000)
     ms = millis % 1000
@@ -65,6 +65,8 @@ class Car:
         self.ers = False
         self.kers = False
 
+        self.gear = 0  # gear
+        self.rpm = 0  # rpm
         self.speed = 0.0  # standings
         self.position = 0  # standings
         self.benefit = 0  # position gain/loss per lap
@@ -73,6 +75,7 @@ class Car:
         self.lap_performance = 0.0  # current lap
         self.fuel = 0.0  # in l
         self.flag = 0
+        self.in_pit = False
         self.penalty = False
         self.penalty_time = 0.0
         self.abs = 0.0
@@ -131,6 +134,8 @@ class Car:
         self.init()
 
     def reset(self):
+        self.gear = 0
+        self.rpm = 0
         self.speed = 0.0
         self.position = 0
         self.benefit = 0
@@ -139,6 +144,7 @@ class Car:
         self.lap_performance = 0.0
         self.fuel = 0.0
         self.flag = 0
+        self.in_pit = False
         self.penalty = False
         self.abs = 0.0
         self.tc = 0.0
@@ -200,8 +206,11 @@ class Car:
         self.ers = ACLIB.hasERS(self.number)
         self.kers = ACLIB.hasKERS(self.number)
 
+        self.gear = ACLIB.getGear(self.number)
+        self.rpm = ACLIB.getRPM(self.number)
         self.position = ACLIB.getPosition(self.number)
         self.benefit = 0
+        self.in_pit = False
         self.location = ACLIB.getLocation(self.number)
         self.fuel = ACLIB.getFuel(self.number)
         self.lap_fuel_level = self.fuel
@@ -218,7 +227,10 @@ class Car:
         self.sector = self.sector_index + 1
 
     def update(self, delta):
+        self.gear = ACLIB.getGear(self.number)
+        self.rpm = ACLIB.getRPM(self.number)
         self.lap_time = ACLIB.getCurrentLapTime(self.number)
+        self.in_pit = ACLIB.isInPit(self.number)
         self.location = round(ACLIB.getLocation(self.number), 4)
         self.speed = round(ACLIB.getSpeed(self.number), 2)
         self.traveled_distance = ACLIB.getTraveledDistance(self.number)
@@ -304,7 +316,7 @@ class Car:
         # Update every 5th loop only if delta is < 0.1 sec and priority >= 1
         if self.priority >= 0 and self.loops % 3 == 0 and delta < self.max_delta:
             # Next sector
-            sector = min(int(self.location * 3), 3)
+            sector = min(int(self.location * 3), 2)
             if sector != self.sector_index:
 
                 # Lap change
@@ -315,6 +327,7 @@ class Car:
                 if self.sector_index > 0:
                     sec_time -= self.sector_time[self.sector_index - 1]
                 self.sector_time[self.sector_index] = sec_time
+                self.last_sector_time[self.sector_index] = sec_time
                 if sec_time < self.best_sector_time[self.sector_index]:
                     self.best_sector_time[self.sector_index] = sec_time
 
@@ -329,7 +342,7 @@ class Car:
         # Update every 20th loop only if delta is < 0.1 sec and priority >= 3
         if self.priority >= 2 and self.loops % 5 == 0 and delta < self.max_delta:
             # Next mini sector
-            mini_sector = min(int(self.location * 12), 12)
+            mini_sector = min(int(self.location * 12), 11)
             if mini_sector != self.mini_sector_index:
 
                 # Lap change
@@ -340,6 +353,7 @@ class Car:
                 if self.mini_sector_index > 0:
                     mini_sector_time -= self.mini_sector_time[self.mini_sector_index - 1]
                 self.mini_sector_time[self.mini_sector_index] = mini_sector_time
+                self.last_mini_sector_time[self.mini_sector_index] = mini_sector_time
                 if mini_sector_time < self.best_mini_sector_time[self.mini_sector_index]:
                     self.best_mini_sector_time[self.mini_sector_index] = mini_sector_time
 
@@ -365,6 +379,7 @@ class Car:
                 if self.km_index > 0:
                     km_time -= self.km_time[self.km_index - 1]
                 self.km_time[self.km_index] = km_time
+                self.last_km_time[self.km_index] = km_time
                 if km_time < self.best_km_time[self.km_index]:
                     self.best_km_time[self.km_index] = km_time
 
@@ -717,11 +732,8 @@ class ACLIB:
             return 0
 
     @staticmethod
-    def getFocusedCar(car):
-        if car == 0:
-            return ac.getFocusedCar()
-        else:
-            return 0
+    def getFocusedCar():
+        ac.getFocusedCar()
 
     @staticmethod
     def getTraveledDistance(car):
@@ -957,7 +969,7 @@ class ACLIB:
 
     @staticmethod
     def getGear(car):
-        return formatGear(ac.getCarState(car, AC_PROP.Gear))
+        return ac.getCarState(car, AC_PROP.Gear)
 
     @staticmethod
     def getRPMValue(car):

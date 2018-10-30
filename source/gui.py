@@ -656,7 +656,7 @@ class ACTextWidget(ACWidget):
         return self._font_size
 
     def setFontSize(self, font_size):
-        self._font_size = font_size
+        self._font_size = font_size#min(font_size, self._size[1])
 
         if self._ac_obj is not None:
             ac.setFontSize(self._ac_obj, self._font_size)

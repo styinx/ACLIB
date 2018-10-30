@@ -3,6 +3,7 @@ from source.gui import ACApp, ACLabel, ACVBox
 from source.aclib import ACLIB, Car
 from apps.ACLIB_Driver import Driver
 from apps.ACLIB_Tower import Tower
+from source.gl import rect
 
 
 def acMain(version):
