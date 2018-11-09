@@ -3,6 +3,7 @@ import os
 import platform
 from math import isinf
 import ac
+from source.event import LIB_EVENT
 
 if platform.architecture()[0] == "64bit":
     sysdir = os.path.dirname(__file__) + '/../stdlib64'
@@ -23,6 +24,24 @@ def formatTime(millis, form="{:02d}:{:02d}.{:03d}"):
     ms = millis % 1000
 
     return form.format(m, s, ms)
+
+
+def formatTimeCar(time, dist, track_len):
+    if dist > track_len:
+        laps = dist / track_len
+        if laps > 1.05:
+            return "{:3.1f}".format(laps) + " Laps"
+        elif laps < 1.05:
+            return "{:3.0f}".format(laps) + "   Lap"
+    else:
+        if time > 60:
+            minute = time / 60
+            if minute > 1.05:
+                return "{:3.1f}".format(minute) + " Mins"
+            elif minute < 1.05:
+                return "{:3.0f}".format(minute) + "   Min"
+        else:
+            return formatTime(int(time * 1000))
 
 
 def formatDistance(meters, form="{:02d}.{:02.0f} km"):
@@ -57,6 +76,7 @@ class Car:
         self.loops = 0
         self.initialized = False
         self.max_delta = 0.05
+        self._events = {}
 
         self.number = number
         self.player_name = ""
@@ -226,6 +246,13 @@ class Car:
         self.sector_index = int(self.location * 3)
         self.sector = self.sector_index + 1
 
+    def setEvent(self, event, callback):
+        self._events[event] = callback
+
+    def dispatchEvent(self, event):
+        if event in self._events:
+            self._events[event](self.number)
+
     def update(self, delta):
         self.gear = ACLIB.getGear(self.number)
         self.rpm = ACLIB.getRPM(self.number)
@@ -295,6 +322,7 @@ class Car:
         # Next lap
         lap = ACLIB.getLap(self.number)
         if lap != self.lap:
+            self.dispatchEvent(LIB_EVENT.ON_LAP_CHANGED)
             self.benefit = 0
 
             self.lap = ACLIB.getLap(self.number)
@@ -318,17 +346,21 @@ class Car:
             # Next sector
             sector = min(int(self.location * 3), 2)
             if sector != self.sector_index:
+                self.dispatchEvent(LIB_EVENT.ON_SECTOR_CHANGED)
 
-                # Lap change
-                if sector == 0:
-                    sec_time = ACLIB.getLastLapTime(self.number)
+                if self.sector_index == 0:
+                    sec_time = self.lap_time
                 else:
-                    sec_time = ACLIB.getCurrentLapTime(self.number)
-                if self.sector_index > 0:
-                    sec_time -= self.sector_time[self.sector_index - 1]
+                    if self.sector_index == 2:
+                        if self.sector_time[0] == 0:
+                            sec_time = self.last_time - sum(self.last_sector_time[:self.sector_index])
+                        else:
+                            sec_time = self.lap_time - sum(self.sector_time[:self.sector_index])
+                    else:
+                        sec_time = self.lap_time - sum(self.sector_time[:self.sector_index])
                 self.sector_time[self.sector_index] = sec_time
                 self.last_sector_time[self.sector_index] = sec_time
-                if sec_time < self.best_sector_time[self.sector_index]:
+                if 0 < sec_time < self.best_sector_time[self.sector_index] and self.lap > 1:
                     self.best_sector_time[self.sector_index] = sec_time
 
                 self.sector_fuel = max(round(self.sector_fuel_level - self.fuel, 1), 0)
@@ -344,17 +376,21 @@ class Car:
             # Next mini sector
             mini_sector = min(int(self.location * 12), 11)
             if mini_sector != self.mini_sector_index:
+                self.dispatchEvent(LIB_EVENT.ON_MINISECTOR_CHANGED)
 
                 # Lap change
                 if mini_sector == 0:
-                    mini_sector_time = ACLIB.getLastLapTime(self.number)
+                    if self.lap != 1:
+                        mini_sector_time = max(self.last_time, self.lap_time) - sum(self.last_sector_time[:11])
+                    else:
+                        mini_sector_time = float("inf")
                 else:
-                    mini_sector_time = ACLIB.getCurrentLapTime(self.number)
+                    mini_sector_time = self.lap_time
                 if self.mini_sector_index > 0:
                     mini_sector_time -= self.mini_sector_time[self.mini_sector_index - 1]
                 self.mini_sector_time[self.mini_sector_index] = mini_sector_time
                 self.last_mini_sector_time[self.mini_sector_index] = mini_sector_time
-                if mini_sector_time < self.best_mini_sector_time[self.mini_sector_index]:
+                if 0 < mini_sector_time < self.best_mini_sector_time[self.mini_sector_index] and self.lap > 1:
                     self.best_mini_sector_time[self.mini_sector_index] = mini_sector_time
 
                 self.mini_sector_fuel = max(round(self.mini_sector_fuel_level - self.fuel, 1), 0)
@@ -370,17 +406,21 @@ class Car:
             # Next km
             km = int(self.location * ACLIB.getTrackLength() / 1000)
             if km != self.km_index:
+                self.dispatchEvent(LIB_EVENT.ON_KM_CHANGED)
 
                 # Lap change
                 if km == 0:
-                    km_time = ACLIB.getLastLapTime(self.number)
+                    if self.lap != 1:
+                        km_time = max(self.last_time, self.lap_time) - sum(self.last_km_time[:len(self.km_time) - 1])
+                    else:
+                        km_time = float("inf")
                 else:
-                    km_time = ACLIB.getCurrentLapTime(self.number)
+                    km_time = self.lap_time
                 if self.km_index > 0:
                     km_time -= self.km_time[self.km_index - 1]
                 self.km_time[self.km_index] = km_time
                 self.last_km_time[self.km_index] = km_time
-                if km_time < self.best_km_time[self.km_index]:
+                if 0 < km_time < self.best_km_time[self.km_index] and self.lap > 1:
                     self.best_km_time[self.km_index] = km_time
 
                 self.km_fuel = max(round(self.km_fuel_level - self.fuel, 1), 0)
@@ -401,9 +441,24 @@ class ACLIB:
     CARS = [Car] * ac.getCarsCount()
 
     @staticmethod
-    def init():
-        for i in range(0, ac.getCarsCount()):
+    def setup():
+        for i in range(0, ACLIB.getCarsCount()):
             ACLIB.CARS[i] = Car(i)
+
+    @staticmethod
+    def init():
+        for i in range(0, len(ACLIB.CARS)):
+            ACLIB.CARS[i].init()
+
+    @staticmethod
+    def update(delta):
+        for i in range(0, len(ACLIB.CARS)):
+            ACLIB.CARS[i].update(delta)
+
+    @staticmethod
+    def reset():
+        for i in range(0, len(ACLIB.CARS)):
+            ACLIB.CARS[i].reset()
 
     @staticmethod
     def LOG(msg):

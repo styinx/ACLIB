@@ -1,6 +1,7 @@
 import ac
 from source.color import Color
 from source.gl import Texture, rect
+from source.event import GUI_EVENT
 
 
 class Font:
@@ -35,6 +36,7 @@ class ACWidget(object):
         self._background_color = Color(0, 0, 0, 0)
         self._border = 0
         self._border_color = Color(1, 1, 1, 1)
+        self._event_callback = {}
         self._render_callback = None
         self._animation = None
         self._animation_queue = []
@@ -69,6 +71,8 @@ class ACWidget(object):
         if child is not None:
             child._parent = self
 
+        self.dispatchEvent(GUI_EVENT.ON_CHILD_CHANGED)
+
         return self
 
     def getParent(self):
@@ -83,7 +87,16 @@ class ACWidget(object):
         if parent is not None:
             parent._child = self
 
+        self.dispatchEvent(GUI_EVENT.ON_PARENT_CHANGED)
+
         return self
+
+    def setEvent(self, event, callback):
+        self._event_callback[event] = callback
+
+    def dispatchEvent(self, event):
+        if event in self._event_callback:
+            self._event_callback[event]()
 
     def getPos(self):
         return self._pos
@@ -93,6 +106,8 @@ class ACWidget(object):
 
         if self._ac_obj is not None:
             ac.setPosition(self._ac_obj, self._pos[0], self._pos[1])
+
+        self.dispatchEvent(GUI_EVENT.ON_POSITION_CHANGED)
 
         return self
 
@@ -105,6 +120,8 @@ class ACWidget(object):
         if self._ac_obj is not None:
             ac.setSize(self._ac_obj, self._size[0], self._size[1])
 
+        self.dispatchEvent(GUI_EVENT.ON_SIZE_CHANGED)
+
         return self
 
     def isVisible(self):
@@ -115,6 +132,8 @@ class ACWidget(object):
 
         if self._ac_obj is not None:
             ac.setVisible(visible)
+
+        self.dispatchEvent(GUI_EVENT.ON_VISIBILITY_CHANGED)
 
         return self
 
@@ -238,6 +257,26 @@ class ACWidget(object):
         if self._child is not None:
             self._child.render(delta)
 
+        return self
+
+
+class DockingWidget(ACWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.attachable = True
+        self.attached = False
+        self.docking_area = (0, 0, 0, 0)
+
+    def setAttachable(self, attachable):
+        self.attachable = attachable
+        return self
+
+    def isAttached(self):
+        return self.attached
+
+    def setDockingArea(self, area):
+        self.docking_area = area
         return self
 
 
@@ -630,7 +669,7 @@ class ACTextWidget(ACWidget):
         if text_v_alignment == "top":
             y = self._pos[1]
         elif text_v_alignment == "middle":
-            y = int(self._pos[1] + self._size[1] / 2)
+            y = int(self._pos[1] + self._size[1] / 2 - self._font_size / 2)
         elif text_v_alignment == "bottom":
             y = self._pos[1] + self._size[1]
 

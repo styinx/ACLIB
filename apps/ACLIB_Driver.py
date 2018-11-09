@@ -1,6 +1,6 @@
 from source.gui import ACApp, ACLabel, ACGrid
-from source.aclib import ACLIB, formatTime, formatDistance, formatGear
-from source.gl import Texture, texture_rect, rect
+from source.aclib import ACLIB, formatTime, formatTimeCar, formatDistance, formatGear
+from source.gl import Texture
 from source.color import Color
 
 
@@ -22,9 +22,9 @@ class Driver(ACApp):
         self.rpm = ACLabel("", self, font_size=20, italic=1, text_h_alignment="center", text_v_alignment="middle")
         self.gear = ACLabel("", self, font_size=150, bold=1, text_h_alignment="center", text_v_alignment="middle")
 
-        self.s1 = ACLabel("", self, font_size=12)
-        self.s2 = ACLabel("", self, font_size=12)
-        self.s3 = ACLabel("", self, font_size=12)
+        self.s1 = ACLabel("", self, font_size=14)
+        self.s2 = ACLabel("", self, font_size=14)
+        self.s3 = ACLabel("", self, font_size=14)
 
         self.next_time = ACLabel("", self, font_size=20, bold=1, text_h_alignment="left", text_v_alignment="middle")
         self.next_dist = ACLabel("", self, font_size=20, bold=1, text_h_alignment="left", text_v_alignment="middle")
@@ -70,8 +70,6 @@ class Driver(ACApp):
     def update(self, delta):
         super().update(delta)
 
-        ACLIB.CONSOLE(self.car.lap_diff)
-
         status = ""
 
         if self.car.penalty_time > 0:
@@ -83,8 +81,10 @@ class Driver(ACApp):
 
         if self.car.lap_diff < 0:
             self.diff.setTextColor(Color(0, 0.75, 0, 1))
+            self.diff.setText("-" + formatTime(self.car.lap_diff * 1000))
         elif self.car.lap_diff > 0:
             self.diff.setTextColor(Color(0.75, 0, 0, 1))
+            self.diff.setText("+" + formatTime(self.car.lap_diff * 1000))
         else:
             self.diff.setTextColor(Color(1, 1, 1, 1))
 
@@ -95,33 +95,26 @@ class Driver(ACApp):
         self.s2.setText("Sector 2: " + formatTime(self.car.last_sector_time[1]))
         self.s3.setText("Sector 3: " + formatTime(self.car.last_sector_time[2]))
 
-        # if self.car.last_sector_time[0] < self.car.best_sector_time[0]:
-        #     self.s1.setTextColor(Color(0, 0.75, 0, 1))
-        # elif self.car.last_sector_time[0] > self.car.best_sector_time[0]:
-        #     self.s1.setTextColor(Color(0.75, 0, 0, 1))
-        # else:
-        #     self.s1.setTextColor(Color(0.75, 0, 0, 1))
-        #
-        # if self.car.last_sector_time[1] < self.car.best_sector_time[1]:
-        #     self.s2.setTextColor(Color(0, 0.75, 0, 1))
-        # elif self.car.last_sector_time[1] > self.car.best_sector_time[1]:
-        #     self.s2.setTextColor(Color(0.75, 0, 0, 1))
-        # else:
-        #     self.s2.setTextColor(Color(0.75, 0, 0, 1))
-        #
-        # if self.car.last_sector_time[2] < self.car.best_sector_time[2]:
-        #     self.s3.setTextColor(Color(0, 0.75, 0, 1))
-        # elif self.car.last_sector_time[2] > self.car.best_sector_time[2]:
-        #     self.s3.setTextColor(Color(0.75, 0, 0, 1))
-        # else:
-        #     self.s3.setTextColor(Color(0.75, 0, 0, 1))
+        if self.car.last_sector_time[0] <= self.car.best_sector_time[0]:
+            self.s1.setTextColor(Color(0, 0.75, 0, 1))
+        elif self.car.last_sector_time[0] > self.car.best_sector_time[0]:
+            self.s1.setTextColor(Color(0.85, 0.85, 0, 1))
 
-        self.prev_time.setText("-" + formatTime(self.car.prev_time * 1000))
+        if self.car.last_sector_time[1] <= self.car.best_sector_time[1]:
+            self.s2.setTextColor(Color(0, 0.75, 0, 1))
+        elif self.car.last_sector_time[1] > self.car.best_sector_time[1]:
+            self.s2.setTextColor(Color(0.85, 0.85, 0, 1))
+
+        if self.car.last_sector_time[2] <= self.car.best_sector_time[2]:
+            self.s3.setTextColor(Color(0, 0.75, 0, 1))
+        elif self.car.last_sector_time[2] > self.car.best_sector_time[2]:
+            self.s3.setTextColor(Color(0.85, 0.85, 0, 1))
+
+        self.prev_time.setText("-" + formatTimeCar(self.car.prev_time, self.car.prev_dist, ACLIB.getTrackLength()))
         self.prev_dist.setText("-" + formatDistance(self.car.prev_dist))
         self.current.setText(formatTime(self.car.lap_time))
-        self.diff.setText(formatTime(self.car.lap_diff * 1000))
         self.status.setText(status)
-        self.next_time.setText("+" + formatTime(self.car.next_time * 1000))
+        self.next_time.setText("+" + formatTimeCar(self.car.next_time, self.car.next_dist, ACLIB.getTrackLength()))
         self.next_dist.setText("+" + formatDistance(self.car.next_dist))
 
     def render(self, delta):

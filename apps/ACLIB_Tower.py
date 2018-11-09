@@ -58,7 +58,7 @@ class TowerEntry(ACGrid):
         self.name = ACLabel("", app, font_size=16, text_h_alignment="center", text_v_alignment="middle",
                             background_color=Color(0.5 + col_diff, 0.5 + col_diff, 0.5 + col_diff, 0.75))
         self.time = ACLabel("", app, font_size=16, bold=1, text_h_alignment="center", text_v_alignment="middle",
-                            background_color=Color(0.75, 0.75, 0.75, 0.75))
+                            background_color=Color(0.1, 0.1, 0.1, 0.5))
         self.info = ACLabel("", app, font_size=16, bold=1, italic=1,
                             text_h_alignment="center", text_v_alignment="middle")
 
@@ -112,21 +112,21 @@ class TowerEntry(ACGrid):
         pos = self.name.getPos()
         size = self.name.getSize()
         x = pos[0]
-        for sector in range(0, self.car.sector):
-            color = Color(1, 1, 0)
+        for sector in range(0, self.car.sector_index + 1):
+            color = Color(0.85, 0.85, 0)
             if self.car.sector_time[sector] < self.car.best_sector_time[sector]:
-                color = Color(0, 1, 0)
+                color = Color(0, 0.75, 0)
 
             rect(x, pos[1] + 22, size[0] / 3, 6, color)
             x += size[0] / 3
 
         x = pos[0]
-        for mini_sector in range(0, self.car.mini_sector):
-            color = Color(1, 1, 0)
+        for mini_sector in range(0, self.car.mini_sector_index + 1):
+            color = Color(0.85, 0.85, 0)
             if self.car.sector_time[mini_sector] < self.car.best_sector_time[mini_sector]:
-                color = Color(0, 1, 0)
+                color = Color(0, 0.75, 0)
 
-            rect(x, pos[1] + 30, size[0] / 12, 5, color)
+            rect(x, pos[1] + 28, size[0] / 12, 5, color)
             x += size[0] / 12
 
 
