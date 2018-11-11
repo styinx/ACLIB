@@ -222,6 +222,9 @@ class ACWidget(object):
         else:
             self._animation_queue.append({"var": var, "start": start, "middle": middle, "stop": stop, "step": step})
 
+    def updateSize(self):
+        pass
+
     def update(self, delta):
         if self._animation is None:
             if len(self._animation_queue) > 0:
@@ -499,6 +502,9 @@ class ACLayout(ACWidget):
 
         self._children = None
 
+    def getChildren(self):
+        return self._children
+
 
 class ACBox(ACLayout):
     def __init__(self, parent=None, orientation=0):
@@ -587,6 +593,11 @@ class ACGrid(ACLayout):
         self._cell_width = round(self._size[0] / self._cols)
         self._cell_height = round(self._size[1] / self._rows)
 
+        for row in self._children:
+            for cell in row:
+                if isinstance(cell, ACWidget):
+                    cell.updateSize()
+
         return self
 
     def update(self, delta):
@@ -633,7 +644,6 @@ class ACTextWidget(ACWidget):
 
         if self._ac_obj is not None:
             ac.setText(self._ac_obj, text)
-
         return self
 
     def getTextHAlignment(self):
@@ -642,8 +652,7 @@ class ACTextWidget(ACWidget):
     def setTextHAlignment(self, text_h_alignment="left"):
         self._text_h_alignment = text_h_alignment
 
-        self.setTextAlignment(self._text_h_alignment, self._text_v_alignment)
-
+        self.setTextAlignment()
         return self
 
     def getTextVAlignment(self):
@@ -652,31 +661,29 @@ class ACTextWidget(ACWidget):
     def setTextVAlignment(self, text_v_alignment="top"):
         self._text_v_alignment = text_v_alignment
 
-        self.setTextAlignment(self._text_h_alignment, self._text_v_alignment)
-
+        self.setTextAlignment()
         return self
 
-    def setTextAlignment(self, text_h_alignment, text_v_alignment):
+    def setTextAlignment(self):
         x, y = self._pos
 
-        if text_h_alignment == "left":
-            x = self._pos[0]
-        elif text_h_alignment == "center":
-            x = int(self._pos[0] + self._size[0] / 2)
-        elif text_h_alignment == "right":
-            x = self._pos[0] + self._size[0]
+        # if self._text_h_alignment == "left":  # or self._text_h_alignment == "l":
+        #     x = self._pos[0]
+        # elif self._text_h_alignment == "center":  # or self._text_h_alignment == "c":
+        #     x = int(self._pos[0] + self._size[0] / 2)
+        # elif self._text_h_alignment == "right":  # or self._text_h_alignment == "r":
+        #     x = self._pos[0] + self._size[0]
 
-        if text_v_alignment == "top":
-            y = self._pos[1]
-        elif text_v_alignment == "middle":
-            y = int(self._pos[1] + self._size[1] / 2 - self._font_size / 2)
-        elif text_v_alignment == "bottom":
-            y = self._pos[1] + self._size[1]
+        # if self._text_v_alignment == "top":  # or self._text_v_alignment == "t":
+        #     y = self._pos[1]
+        # elif self._text_v_alignment == "middle":  # or self._text_v_alignment == "m":
+        #     y = int(self._pos[1] + self._size[1] / 2 - self._font_size / 2)
+        # elif self._text_v_alignment == "bottom":  # or self._text_v_alignment == "b":
+        #     y = self._pos[1] + self._size[1]
 
         if self._ac_obj is not None:
-            ac.setFontAlignment(self._ac_obj, text_h_alignment)
-            ac.setPosition(self._ac_obj, x, y)
-
+            ac.setFontAlignment(self._ac_obj, self._text_h_alignment)
+            self.setPos((x, y))
         return self
 
     def getTextColor(self):
@@ -688,18 +695,16 @@ class ACTextWidget(ACWidget):
         if self._ac_obj is not None:
             ac.setFontColor(self._ac_obj, self._text_color.r, self._text_color.g, self._text_color.b,
                             self._text_color.a)
-
         return self
 
     def getFontSize(self):
         return self._font_size
 
     def setFontSize(self, font_size):
-        self._font_size = font_size#min(font_size, self._size[1])
+        self._font_size = font_size  # min(font_size, self._size[1])
 
         if self._ac_obj is not None:
             ac.setFontSize(self._ac_obj, self._font_size)
-
         return self
 
     def isItalic(self):
@@ -710,7 +715,6 @@ class ACTextWidget(ACWidget):
 
         if self._ac_obj is not None:
             ac.setCustomFont(self._ac_obj, self._font_family, self._font_italic, self._font_bold)
-
         return self
 
     def isBold(self):
@@ -721,7 +725,6 @@ class ACTextWidget(ACWidget):
 
         if self._ac_obj is not None:
             ac.setCustomFont(self._ac_obj, self._font_family, self._font_italic, self._font_bold)
-
         return self
 
     def setFontStyle(self, family, bold, italic):
@@ -731,7 +734,6 @@ class ACTextWidget(ACWidget):
 
         if self._ac_obj is not None:
             ac.setCustomFont(self._ac_obj, self._font_family, self._font_italic, self._font_bold)
-
         return self
 
     def getFontFamily(self):
@@ -749,8 +751,10 @@ class ACTextWidget(ACWidget):
 
             if self._ac_obj is not None:
                 ac.setCustomFont(self._ac_obj, self._font_family, self._font_italic, self._font_bold)
-
         return self
+
+    def updateSize(self):
+        self.setTextAlignment()
 
 
 class ACLabel(ACTextWidget):
@@ -770,7 +774,7 @@ class ACLabel(ACTextWidget):
         self._background_color = background_color
 
         self.setBackgroundColor(self._background_color)
-        self.setTextAlignment(self._text_h_alignment, self._text_h_alignment)
+        self.setTextAlignment()
         self.setTextColor(self._text_color)
         self.setFontSize(self._font_size)
         self.setFontFamily(self._font_family)

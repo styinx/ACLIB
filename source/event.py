@@ -13,6 +13,7 @@ class LIB_EVENT:
     ON_SECTOR_CHANGED = 1
     ON_MINISECTOR_CHANGED = 2
     ON_KM_CHANGED = 3
+    ON_POSITION_CHANGED = 3
 
 
 # class EventDispatcher:

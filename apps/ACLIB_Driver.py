@@ -8,23 +8,31 @@ class Driver(ACApp):
     def __init__(self):
         super().__init__("ACLIB_Driver", 200, 200, 576, 320)
 
-        self.hideDecoration()
+        self.hideDecoration().setBackgroundColor(Color(0, 0, 0, 0.5))
 
         self.car = ACLIB.CARS[0]
         self._grid = ACGrid(self, 18, 12)
 
+        self.delta = ACLabel("", self, font_size=20, bold=1, background_color=Color(1, 1, 1, 1),
+                             text_color=Color(0, 0, 0, 1))
+
+        self.deb = ACLabel("", self, font_size=20, bold=1, background_color=Color(1, 1, 1, 1),
+                           text_color=Color(0, 0, 0, 1))
+
         self.next1_tex = Texture("apps/python/ACLIB/resources/next_1.png")
         self.next2_tex = Texture("apps/python/ACLIB/resources/next_2.png")
-        self.middle_panel_tex = Texture("apps/python/ACLIB/resources/info_panel_mid.png")
+        self.m_panel_tex = Texture("apps/python/ACLIB/resources/info_panel_mid.png")
         self.prev1_tex = Texture("apps/python/ACLIB/resources/prev_1.png")
         self.prev2_tex = Texture("apps/python/ACLIB/resources/prev_2.png")
 
         self.rpm = ACLabel("", self, font_size=20, italic=1, text_h_alignment="center", text_v_alignment="middle")
-        self.gear = ACLabel("", self, font_size=150, bold=1, text_h_alignment="center", text_v_alignment="middle")
+        self.gear = ACLabel("", self, font_size=120, bold=1, text_h_alignment="center", text_v_alignment="middle")
 
         self.s1 = ACLabel("", self, font_size=14)
         self.s2 = ACLabel("", self, font_size=14)
         self.s3 = ACLabel("", self, font_size=14)
+        self.last = ACLabel("", self, font_size=14, text_h_alignment="center")
+        self.best = ACLabel("", self, font_size=14, text_h_alignment="center")
 
         self.next_time = ACLabel("", self, font_size=20, bold=1, text_h_alignment="left", text_v_alignment="middle")
         self.next_dist = ACLabel("", self, font_size=20, bold=1, text_h_alignment="left", text_v_alignment="middle")
@@ -42,18 +50,21 @@ class Driver(ACApp):
 
         self.next_time.setBackgroundTexture(self.next1_tex)
         self.next_dist.setBackgroundTexture(self.next1_tex)
-        self.current.setBackgroundTexture(self.middle_panel_tex)
-        self.diff.setBackgroundTexture(self.middle_panel_tex)
-        self.status.setBackgroundTexture(self.middle_panel_tex)
+        self.current.setBackgroundTexture(self.m_panel_tex)
+        self.diff.setBackgroundTexture(self.m_panel_tex)
+        self.status.setBackgroundTexture(self.m_panel_tex)
         self.prev_time.setBackgroundTexture(self.prev1_tex)
         self.prev_dist.setBackgroundTexture(self.prev1_tex)
 
         self._grid.addWidget(self.rpm, 7, 0, 4, 1)
         self._grid.addWidget(self.gear, 6, 1, 6, 6)
 
-        self._grid.addWidget(self.s1, 0, 2, 5, 1)
-        self._grid.addWidget(self.s2, 0, 3, 5, 1)
-        self._grid.addWidget(self.s3, 0, 4, 5, 1)
+        self._grid.addWidget(self.s1, 0, 2, 6, 1)
+        self._grid.addWidget(self.s2, 0, 3, 6, 1)
+        self._grid.addWidget(self.s3, 0, 4, 6, 1)
+
+        self._grid.addWidget(self.last, 0, 5, 6, 1)
+        self._grid.addWidget(self.best, 0, 6, 6, 1)
 
         self._grid.addWidget(self.prev_time, 0, 7, 6, 1)
         self._grid.addWidget(self.prev_dist, 1, 8, 5, 1)
@@ -62,6 +73,11 @@ class Driver(ACApp):
         self._grid.addWidget(self.status, 6, 9, 6, 2)
         self._grid.addWidget(self.next_time, 12, 7, 6, 1)
         self._grid.addWidget(self.next_dist, 12, 8, 5, 1)
+
+        self._grid.addWidget(self.delta, 0, 0, 2, 2)
+        self._grid.addWidget(self.deb, 2, 0, 2, 2)
+
+        self._grid.updateSize()
 
         self.render_func = self.render
 
@@ -72,8 +88,11 @@ class Driver(ACApp):
 
         status = ""
 
+        self.delta.setText(str(round(delta, 3)))
+        self.deb.setText(str(self.car.lap) + "|" + str(self.car.sector) + "|" + str(self.car.mini_sector) + "|" + str(self.car.km))
+
         if self.car.penalty_time > 0:
-            status = "Penalty: " + self.car.penalty_time + " s"
+            status = "Penalty: " + str(self.car.penalty_time) + " s"
             self.status.setTextColor(Color(0.75, 0, 0, 1))
         else:
             self.status.setTextColor(Color(1, 1, 1, 1))
@@ -94,6 +113,9 @@ class Driver(ACApp):
         self.s1.setText("Sector 1: " + formatTime(self.car.last_sector_time[0]))
         self.s2.setText("Sector 2: " + formatTime(self.car.last_sector_time[1]))
         self.s3.setText("Sector 3: " + formatTime(self.car.last_sector_time[2]))
+
+        self.last.setText("LST: " + formatTime(self.car.last_time))
+        self.best.setText("BST: " + formatTime(self.car.best_time))
 
         if self.car.last_sector_time[0] <= self.car.best_sector_time[0]:
             self.s1.setTextColor(Color(0, 0.75, 0, 1))

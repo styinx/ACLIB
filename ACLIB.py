@@ -1,16 +1,16 @@
 #from source.db import DB
-from source.gui import ACApp, ACLabel, ACVBox
-from source.aclib import ACLIB, Car
+from source.gui import ACApp
+from source.aclib import ACLIB
 from apps.ACLIB_Driver import Driver
 from apps.ACLIB_Tower import Tower
 
 
 def acMain(version):
     global app, driver, tower
-    global loops, init
+    global init
 
-    loops = 0
     init = False
+    loop = -100
 
     ACLIB.setup()
 
@@ -23,30 +23,23 @@ def acMain(version):
 
 
 def acUpdate(delta):
-    global app, driver, tower
-    global loops
+    global app, driver, tower, init
 
-    if not app.isSuspended():
-        ACLIB.update(delta)
+    ACLIB.update(delta)
 
-        app.update(delta)
-        driver.update(delta)
-        tower.update(delta)
+    app.update(delta)
+    driver.update(delta)
+    tower.update(delta)
 
-        loops += 1
-        if loops == 1000:
-            loops = 0
-
-    if ACLIB.getSessionStatusId() != 2:
+    if ACLIB.getSessionStatusId() != 2 and not init:
+        ACLIB.CONSOLE(delta)
         ACLIB.reset()
+        ACLIB.init()
+        init = True
 
 
 def acRender(delta):
-    global app, init
-
-    if not init:
-        ACLIB.init()
-        init = True
+    global app
 
     app.render(delta)
 
