@@ -32,7 +32,6 @@ def acUpdate(delta):
     tower.update(delta)
 
     if ACLIB.getSessionStatusId() != 2 and not init:
-        ACLIB.CONSOLE(delta)
         ACLIB.reset()
         ACLIB.init()
         init = True

@@ -1,6 +1,6 @@
 import ac
 from source.color import Color
-from source.gl import Texture, rect
+from source.gl import Texture, rect, texture_rect
 from source.event import GUI_EVENT
 
 
@@ -32,6 +32,8 @@ class ACWidget(object):
         self._size = (0, 0)
         self._visible = True
         self._background_texture = None
+        self._colored_texture = False
+        self._texture_color = Color(1, 1, 1, 1)
         self._background = 0
         self._background_color = Color(0, 0, 0, 0)
         self._border = 0
@@ -208,6 +210,15 @@ class ACWidget(object):
 
         return self
 
+    def coloredTexture(self):
+        return self._colored_texture
+
+    def setColoredTexture(self, colored):
+        self._colored_texture = colored
+
+    def setTextureColor(self, color):
+        self._texture_color = color
+
     def show(self):
         if self._ac_obj is not None:
             ac.setVisible(self._ac_obj, True)
@@ -256,6 +267,9 @@ class ACWidget(object):
     def render(self, delta):
         if self._border:
             rect(self._pos[0], self._pos[1], self._size[0], self._size[1], self._border_color, False)
+
+        if self._colored_texture:
+            texture_rect(self._pos[0], self._pos[1], self._size[0], self._size[1], self._background_texture, self._texture_color)
 
         if self._child is not None:
             self._child.render(delta)
@@ -582,10 +596,13 @@ class ACGrid(ACLayout):
         return self._children[y][x]
 
     def addWidget(self, widget, x, y, w=1, h=1):
-        self._children[y][x] = widget
+        if isinstance(widget, ACWidget):
+            if isinstance(self._children[y][x], ACWidget):
+                del self._children[y][x]
+            self._children[y][x] = widget
 
-        widget.setPos((round(self._pos[0] + x * self._cell_width), round(self._pos[1] + y * self._cell_height)))
-        widget.setSize((round(w * self._cell_width), round(h * self._cell_height)))
+            widget.setPos((round(self._pos[0] + x * self._cell_width), round(self._pos[1] + y * self._cell_height)))
+            widget.setSize((round(w * self._cell_width), round(h * self._cell_height)))
 
         return self
 

@@ -25,6 +25,10 @@ def formatTime(millis, form="{:02d}:{:02d}.{:03d}"):
     ms = millis % 1000
 
     return form.format(m, s, ms)
+    
+    
+def pad(number, pos=2):
+    return ("{:0" + str(pos) + "}").format(number)
 
 
 def formatTimeCar(time, dist, track_len):
@@ -82,9 +86,11 @@ class Car:
         self.number = number
         self.player_name = ""
         self.player_nick = ""
+        self.car_skin = ""
         self.car_id = ""
         self.car_name = ""
         self.car_brand = ""
+        self.car_badge = ""
         self.car_class = ""
         self.car_type = ""
         self.drs = False
@@ -228,8 +234,10 @@ class Car:
     def init(self):
         self.player_nick = ACLIB.getPlayerNickname(self.number)
         self.player_name = ACLIB.getPlayerFirstname(self.number) + ACLIB.getPlayerLastname(self.number)
+        self.car_skin = ACLIB.getCarSkin(self.number)
         self.car_id = ACLIB.getCarId(self.number)
         self.car_name = ACLIB.getCarName(self.number)
+        self.car_badge = ACLIB.getCarBadge(self.number)
         self.car_brand = ACLIB.getCarBrand(self.number)
         self.car_class = ACLIB.getCarClass(self.number)
         self.car_type = ACLIB.getCarType(self.number)
@@ -288,8 +296,14 @@ class Car:
         # Position changed
         position = ACLIB.getPosition(self.number)
         if position != self.position:
-            self.dispatchEvent(LIB_EVENT.ON_POSITION_CHANGED)
             self.benefit += self.position - position
+            self.dispatchEvent(LIB_EVENT.ON_POSITION_CHANGED)
+
+            if self.position - position > 0:
+                self.dispatchEvent(LIB_EVENT.ON_POSITION_GAINED)
+            else:
+                self.dispatchEvent(LIB_EVENT.ON_POSITION_LOST)
+
             self.position = position
 
         # Damage and tyres

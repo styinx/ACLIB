@@ -13,40 +13,53 @@ class Driver(ACApp):
         self.car = ACLIB.CARS[0]
         self._grid = ACGrid(self, 18, 12)
 
-        self.delta = ACLabel("", self, font_size=20, bold=1, background_color=Color(1, 1, 1, 1),
-                             text_color=Color(0, 0, 0, 1))
-
-        self.deb = ACLabel("", self, font_size=20, bold=1, background_color=Color(1, 1, 1, 1),
-                           text_color=Color(0, 0, 0, 1))
-
         self.next1_tex = Texture("apps/python/ACLIB/resources/next_1.png")
         self.next2_tex = Texture("apps/python/ACLIB/resources/next_2.png")
         self.m_panel_tex = Texture("apps/python/ACLIB/resources/info_panel_mid.png")
         self.prev1_tex = Texture("apps/python/ACLIB/resources/prev_1.png")
         self.prev2_tex = Texture("apps/python/ACLIB/resources/prev_2.png")
+        self.status_tex = Texture("apps/python/ACLIB/resources/status.png")
 
-        self.rpm = ACLabel("", self, font_size=20, italic=1, text_h_alignment="center", text_v_alignment="middle")
-        self.gear = ACLabel("", self, font_size=120, bold=1, text_h_alignment="center", text_v_alignment="middle")
+        self.rpm = ACLabel("", self, font_size=20, italic=1, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                           text_h_alignment="center")
+        self.gear = ACLabel("", self, font_size=120, bold=1, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                            text_h_alignment="center")
+        self.drs = ACLabel("", self, font_size=16, bold=1, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                           text_h_alignment="center")
+        self.ers = ACLabel("", self, font_size=16, bold=1, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                           text_h_alignment="center")
+        self.kers = ACLabel("", self, font_size=16, bold=1, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                            text_h_alignment="center")
 
-        self.s1 = ACLabel("", self, font_size=14)
-        self.s2 = ACLabel("", self, font_size=14)
-        self.s3 = ACLabel("", self, font_size=14)
-        self.last = ACLabel("", self, font_size=14, text_h_alignment="center")
-        self.best = ACLabel("", self, font_size=14, text_h_alignment="center")
+        self.last = ACLabel("", self, font_size=16, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                            text_h_alignment="center")
+        self.best = ACLabel("", self, font_size=16, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                            text_h_alignment="center")
 
-        self.next_time = ACLabel("", self, font_size=20, bold=1, text_h_alignment="left", text_v_alignment="middle")
-        self.next_dist = ACLabel("", self, font_size=20, bold=1, text_h_alignment="left", text_v_alignment="middle")
-        self.current = ACLabel("", self, font_size=20, bold=1, text_h_alignment="center", text_v_alignment="middle")
-        self.diff = ACLabel("", self, font_size=20, bold=1, text_h_alignment="center", text_v_alignment="middle")
-        self.status = ACLabel("", self, font_size=30, bold=1, text_h_alignment="center", text_v_alignment="middle")
-        self.prev_time = ACLabel("", self, font_size=20, bold=1, text_h_alignment="right", text_v_alignment="middle")
-        self.prev_dist = ACLabel("", self, font_size=20, bold=1, text_h_alignment="right", text_v_alignment="middle")
+        self.next_time = ACLabel("", self, font_size=20, bold=1, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                                 text_h_alignment="left")
+        self.next_dist = ACLabel("", self, font_size=20, bold=1, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                                 text_h_alignment="left")
+        self.current = ACLabel("", self, font_size=20, bold=1, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                               text_h_alignment="center")
+        self.s1 = ACLabel("", self, font_size=14, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                          text_h_alignment="center")
+        self.s2 = ACLabel("", self, font_size=14, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                          text_h_alignment="center")
+        self.s3 = ACLabel("", self, font_size=14, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                          text_h_alignment="center")
+        self.diff = ACLabel("", self, font_size=20, bold=1, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                            text_h_alignment="center")
+        self.status = ACLabel("", self, font_size=30, bold=1, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                              text_h_alignment="center")
+        self.prev_time = ACLabel("", self, font_size=20, bold=1, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                                 text_h_alignment="right")
+        self.prev_dist = ACLabel("", self, font_size=20, bold=1, background_color=Color(0.3, 0.3, 0.3, 0.75),
+                                 text_h_alignment="right")
 
-        self.rpm.setBackgroundColor(Color(0.3, 0.3, 0.3, 0.75))
-        self.gear.setBackgroundColor(Color(0.3, 0.3, 0.3, 0.75))
-        self.s1.setBackgroundColor(Color(0.3, 0.3, 0.3, 0.75))
-        self.s2.setBackgroundColor(Color(0.3, 0.3, 0.3, 0.75))
-        self.s3.setBackgroundColor(Color(0.3, 0.3, 0.3, 0.75))
+        # self.drs.setBackgroundTexture(self.status_tex)
+        # self.ers.setBackgroundTexture(self.status_tex)
+        # self.kers.setBackgroundTexture(self.status_tex)
 
         self.next_time.setBackgroundTexture(self.next1_tex)
         self.next_dist.setBackgroundTexture(self.next1_tex)
@@ -59,23 +72,26 @@ class Driver(ACApp):
         self._grid.addWidget(self.rpm, 7, 0, 4, 1)
         self._grid.addWidget(self.gear, 6, 1, 6, 6)
 
-        self._grid.addWidget(self.s1, 0, 2, 6, 1)
-        self._grid.addWidget(self.s2, 0, 3, 6, 1)
-        self._grid.addWidget(self.s3, 0, 4, 6, 1)
+        if ACLIB.hasDRS(self.car.number):
+            self._grid.addWidget(self.drs, 16, 1, 2, 1)
+        if ACLIB.hasERS(self.car.number):
+            self._grid.addWidget(self.ers, 16, 2, 2, 1)
+        if ACLIB.hasKERS(self.car.number):
+            self._grid.addWidget(self.kers, 16, 3, 2, 1)
 
         self._grid.addWidget(self.last, 0, 5, 6, 1)
         self._grid.addWidget(self.best, 0, 6, 6, 1)
 
-        self._grid.addWidget(self.prev_time, 0, 7, 6, 1)
-        self._grid.addWidget(self.prev_dist, 1, 8, 5, 1)
+        self._grid.addWidget(self.prev_time, 2, 7, 5, 1)
+        self._grid.addWidget(self.prev_dist, 2, 8, 5, 1)
         self._grid.addWidget(self.current, 6, 7, 6, 1)
-        self._grid.addWidget(self.diff, 6, 8, 6, 1)
-        self._grid.addWidget(self.status, 6, 9, 6, 2)
-        self._grid.addWidget(self.next_time, 12, 7, 6, 1)
+        self._grid.addWidget(self.s1, 6, 8, 2, 1)
+        self._grid.addWidget(self.s2, 8, 8, 2, 1)
+        self._grid.addWidget(self.s3, 10, 8, 2, 1)
+        self._grid.addWidget(self.diff, 6, 9, 6, 1)
+        self._grid.addWidget(self.status, 7, 9, 6, 2)
+        self._grid.addWidget(self.next_time, 12, 7, 5, 1)
         self._grid.addWidget(self.next_dist, 12, 8, 5, 1)
-
-        self._grid.addWidget(self.delta, 0, 0, 2, 2)
-        self._grid.addWidget(self.deb, 2, 0, 2, 2)
 
         self._grid.updateSize()
 
@@ -88,12 +104,9 @@ class Driver(ACApp):
 
         status = ""
 
-        self.delta.setText(str(round(delta, 3)))
-        self.deb.setText(str(self.car.lap) + "|" + str(self.car.sector) + "|" + str(self.car.mini_sector) + "|" + str(self.car.km))
-
         if self.car.penalty_time > 0:
-            status = "Penalty: " + str(self.car.penalty_time) + " s"
-            self.status.setTextColor(Color(0.75, 0, 0, 1))
+            status = "Penalty: " + str(int(self.car.penalty_time)) + " s"
+            self.status.setTextColor(Color(1, 0.75, 0, 1))
         else:
             self.status.setTextColor(Color(1, 1, 1, 1))
             status = ""
@@ -110,9 +123,23 @@ class Driver(ACApp):
         self.gear.setText(formatGear(self.car.gear))
         self.rpm.setText(self.car.rpm)
 
-        self.s1.setText("Sector 1: " + formatTime(self.car.last_sector_time[0]))
-        self.s2.setText("Sector 2: " + formatTime(self.car.last_sector_time[1]))
-        self.s3.setText("Sector 3: " + formatTime(self.car.last_sector_time[2]))
+        if ACLIB.hasDRS(self.car.number):
+            self.drs.setText("DRS")
+            if ACLIB.DRSAvailable(self.car.number):
+                if ACLIB.DRSEnabled(self.car.number):
+                    self.drs.setTextColor(Color(0, 1, 0, 1))
+                else:
+                    self.drs.setTextColor(Color(1, 1, 0, 1))
+            else:
+                self.drs.setTextColor(Color(1, 1, 1, 1))
+        if ACLIB.hasERS(self.car.number):
+            self.ers.setText("ERS")
+        if ACLIB.hasKERS(self.car.number):
+            self.kers.setText("KERS")
+
+        self.s1.setText(formatTime(self.car.last_sector_time[0], "{:d}:{:02d}.{:03d}"))
+        self.s2.setText(formatTime(self.car.last_sector_time[1], "{:d}:{:02d}.{:03d}"))
+        self.s3.setText(formatTime(self.car.last_sector_time[2], "{:d}:{:02d}.{:03d}"))
 
         self.last.setText("LST: " + formatTime(self.car.last_time))
         self.best.setText("BST: " + formatTime(self.car.best_time))
