@@ -2,6 +2,13 @@ import ac
 from source.color import Color
 from source.gl import Texture, rect, texture_rect
 from source.event import GUI_EVENT
+from source.animation import Animation
+
+
+class Point:
+    def __init__(self):
+        self.x = 0
+        self.y = 0
 
 
 class Font:
@@ -227,11 +234,10 @@ class ACWidget(object):
         if self._ac_obj is not None:
             ac.setVisible(self._ac_obj, False)
 
-    def addAnimation(self, var, start, middle, stop, step, loops=0):
-        if self._animation is None:
-            self._animation = {"var": var, "start": start, "middle": middle, "stop": stop, "step": step}
-        else:
-            self._animation_queue.append({"var": var, "start": start, "middle": middle, "stop": stop, "step": step})
+    def addAnimation(self, animation):
+        if isinstance(animation, Animation):
+            self._animation_queue.append(animation)
+        return self
 
     def updateSize(self):
         pass
@@ -240,18 +246,13 @@ class ACWidget(object):
         if self._animation is None:
             if len(self._animation_queue) > 0:
                 self._animation = self._animation_queue.pop(0)
+                self._animation.init()
 
         else:
-            anim = self._animation
-            var = getattr(self, anim["var"])
-
-            if var < anim["stop"]:
-                setattr(self, anim["var"], var + anim["step"])
+            if not self._animation.isFinished():
+                self._animation.update(delta)
             else:
-                if len(self._animation_queue) > 0:
-                    self._animation = self._animation_queue.pop(0)
-                else:
-                    self._animation = None
+                self._animation = None
 
         if self._child is not None:
             self._child.update(delta)
@@ -700,7 +701,7 @@ class ACTextWidget(ACWidget):
 
         if self._ac_obj is not None:
             ac.setFontAlignment(self._ac_obj, self._text_h_alignment)
-            self.setPos((x, y))
+            # self.setPos((x, y))
         return self
 
     def getTextColor(self):
