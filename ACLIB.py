@@ -1,46 +1,52 @@
 #from source.db import DB
-from source.gui import ACApp
-from source.aclib import ACLIB
+from source.aclib import ACLIB, SESSION
 from apps.ACLIB_Driver import Driver
 from apps.ACLIB_Tower import Tower
+from apps.ACLIB_Test import Test
 
 
 def acMain(version):
-    global app, driver, tower
+    global driver, tower, test
     global init
 
     init = False
     loop = -100
 
     ACLIB.setup()
-
-    app = ACApp("ACLIB", 200, 200, 200, 250).hideDecoration()
     driver = Driver()
     tower = Tower()
-    app.setRenderCallback(acRender)
-
-    return app.run()
+    test = Test()
 
 
 def acUpdate(delta):
-    global app, driver, tower, init
+    global driver, tower, test
+    global init
 
+    SESSION.update()
     ACLIB.update(delta)
 
-    app.update(delta)
     driver.update(delta)
     tower.update(delta)
+    test.update(delta)
 
     if ACLIB.getSessionStatusId() != 2 and not init:
+        SESSION.init()
         ACLIB.reset()
         ACLIB.init()
+        driver.init()
         init = True
 
-
-def acRender(delta):
-    global app
-
-    app.render(delta)
+    # s = ""
+    # for time in SESSION.best_mini_sector_time:
+    #     if time != float("inf"):
+    #         s += formatTime(time) + " | "
+    # ACLIB.CONSOLE(s)
+    #
+    # s = ""
+    # for time in SESSION.best_sector_time:
+    #     if time != float("inf"):
+    #         s += formatTime(time) + " | "
+    # ACLIB.CONSOLE(s)
 
 
 def acShutdown():
