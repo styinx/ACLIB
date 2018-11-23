@@ -50,7 +50,7 @@ def line(x1, y1, x2, y2, color=Color(1, 1, 1, 1)):
     ac.glEnd()
 
 
-def rect(x, y, w, h, color=Color(1, 1, 1, 1), filled=True):
+def rect(x, y, w, h, color=Color(1, 1, 1, 1), filled=True, r=None):
     if not isinstance(color, Color):
         raise Exception("Argument is not a Color")
 
@@ -67,6 +67,28 @@ def rect(x, y, w, h, color=Color(1, 1, 1, 1), filled=True):
         ac.glVertex2f(x, y + h)
         ac.glVertex2f(x, y + h)
         ac.glVertex2f(x, y)
+        ac.glEnd()
+        
+
+def quad(x, y, w, h, colors):
+    if type(colors) == list:
+        ac.glBegin(3)
+        if len(colors) >= 1:
+            c = colors[0]
+            ac.glColor4f(c.r, c.g, c.b, c.a)
+        ac.glVertex2f(x, y)
+        if len(colors) >= 2:
+            c = colors[1]
+            ac.glColor4f(c.r, c.g, c.b, c.a)
+        ac.glVertex2f(x, y + h)
+        if len(colors) >= 3:
+            c = colors[2]
+            ac.glColor4f(c.r, c.g, c.b, c.a)
+        ac.glVertex2f(x + w, y + h)
+        if len(colors) >= 4:
+            c = colors[3]
+            ac.glColor4f(c.r, c.g, c.b, c.a)
+        ac.glVertex2f(x + w, y)
         ac.glEnd()
 
 
