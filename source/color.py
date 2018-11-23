@@ -6,22 +6,30 @@ class Color:
         self.a = a
 
     def __iadd__(self, other):
-        self.r = max(min(other.r + self.r, 1), 0)
-        self.g = max(min(other.g + self.g, 1), 0)
-        self.b = max(min(other.b + self.b, 1), 0)
-        self.a = max(min(other.a + self.a, 1), 0)
+        self.r = max(min(self.r + other.r, 1), 0)
+        self.g = max(min(self.g + other.g, 1), 0)
+        self.b = max(min(self.b + other.b, 1), 0)
+        self.a = max(min(self.a + other.a, 1), 0)
+        return self
 
     def __add__(self, other):
-        return Color(max(min(other.r + self.r, 1), 0),
-                     max(min(other.g + self.g, 1), 0),
-                     max(min(other.b + self.b, 1), 0),
-                     max(min(other.a + self.a, 1), 0))
+        return Color(max(min(self.r + other.r, 1), 0),
+                     max(min(self.g + other.g, 1), 0),
+                     max(min(self.b + other.b, 1), 0),
+                     max(min(self.a + other.a, 1), 0))
 
-    def __lt__(self, other):
-        return self.r < other.r and self.g < other.g and self.b < other.b and self.a < other.a
+    def __eq__(self, other):
+        return self.r == other.r and self.g == other.g and self.b == other.b and self.a == other.a
 
-    def __le__(self, other):
-        return self.r <= other.r and self.g <= other.g and self.b <= other.b and self.a <= other.a
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __imul__(self, other):
+        self.r *= other
+        self.g *= other
+        self.b *= other
+        self.a *= other
+        return self
 
     def hsv(self, h, s, v):
         i = 0
