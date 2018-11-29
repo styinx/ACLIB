@@ -109,7 +109,7 @@ class Car:
         self.initialized = False
         self.max_delta = 0.2  # 0.02
         self.last_interval = 0
-        self._events = {}
+        self.events = {}
 
         self.number = number
         self.player_name = ""
@@ -316,11 +316,11 @@ class Car:
         self.tyre_compound_symbol = ACLIB.getTyreCompund()
 
     def setEvent(self, event, callback):
-        self._events[event] = callback
+        self.events[event] = callback
 
     def dispatchEvent(self, event):
-        if event in self._events:
-            self._events[event](self.number)
+        if event in self.events:
+            self.events[event](self.number)
 
     def update(self, delta):
         self.gear = ACLIB.getGear(self.number)
@@ -443,14 +443,11 @@ class Car:
 
             self.last_sector_time = self.sector_time
             self.last_sector_time[2] = self.last_time - sum(self.sector_time[:2])
-            self.sector_time = [0.0] * 3
             self.last_mini_sector_time = self.mini_sector_time
             self.last_mini_sector_time[11] = self.last_time - sum(self.mini_sector_time[:11])
-            self.mini_sector_time = [0.0] * 12
             self.last_km_time = self.km_time
             self.last_km_time[int(ACLIB.getTrackLength() / 1000)] = self.last_time - sum(
                 self.km_time[:int(ACLIB.getTrackLength() / 1000)])
-            self.km_time = [0.0] * (int(ACLIB.getTrackLength() / 1000) + 1)
 
             if self.lap_fuel_level - self.fuel > 0:
                 self.lap_fuel = self.lap_fuel_level - self.fuel
@@ -1211,6 +1208,10 @@ class ACLIB:
     @staticmethod
     def getFocusedCar():
         return ac.getFocusedCar()
+
+    @staticmethod
+    def setFocusedCar(car):
+        return ac.focusCar(car)
 
     @staticmethod
     def isAIDriven(car):
