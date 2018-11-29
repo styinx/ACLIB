@@ -1,52 +1,42 @@
+import os
+import sys
+import importlib
+
 #from source.db import DB
 from source.aclib import ACLIB, SESSION
-from apps.ACLIB_Driver import Driver
-from apps.ACLIB_Tower import Tower
-from apps.ACLIB_Test import Test
-
 
 def acMain(version):
-    global driver, tower, test
-    global init
+    global init, apps
 
     init = False
     loop = -100
+    apps = []
 
     ACLIB.setup()
-    driver = Driver()
-    tower = Tower()
-    test = Test()
+
+    for module in os.listdir("apps/python/ACLIB/apps/"):
+        module = "apps." + module[:module.rfind(".")]
+        if module not in sys.modules.keys():
+            importlib.import_module(module)
+        class_init = getattr(sys.modules[module], module[module.find("_") + 1:])
+        apps.append(class_init())
 
 
 def acUpdate(delta):
-    global driver, tower, test
-    global init
+    global init, apps
+
+    if ACLIB.getSessionStatusId() != 2 and not init:
+        SESSION.init()
+        ACLIB.init()
+        for app in apps:
+            app.init()
+        init = True
 
     SESSION.update()
     ACLIB.update(delta)
 
-    driver.update(delta)
-    tower.update(delta)
-    test.update(delta)
-
-    if ACLIB.getSessionStatusId() != 2 and not init:
-        SESSION.init()
-        ACLIB.reset()
-        ACLIB.init()
-        driver.init()
-        init = True
-
-    # s = ""
-    # for time in SESSION.best_mini_sector_time:
-    #     if time != float("inf"):
-    #         s += formatTime(time) + " | "
-    # ACLIB.CONSOLE(s)
-    #
-    # s = ""
-    # for time in SESSION.best_sector_time:
-    #     if time != float("inf"):
-    #         s += formatTime(time) + " | "
-    # ACLIB.CONSOLE(s)
+    for app in apps:
+        app.update(delta)
 
 
 def acShutdown():
