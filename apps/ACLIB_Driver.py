@@ -1,7 +1,7 @@
 from time import strftime, localtime
 from source.gui import ACApp, ACLabel, ACGrid, ACLabelPair
-from source.widget import ACDeltaBarWidget, ACTyreWidget, ACTwinShiftLightWidget
-from source.aclib import ACLIB, SESSION, s, formatTime, formatTimeCar, formatDistance, formatGear
+from source.widget import ACDeltaBarWidget, ACTyreWidget, ACTwinShiftLightWidget, ACFuelWidget
+from source.aclib import ACLIB, SESSION, formatTime, formatTimeCar, formatDistance, formatGear, CarIdealData
 from source.gl import Texture
 from source.color import Color
 # import sqlite3
@@ -24,15 +24,10 @@ class Driver(ACApp):
     def __init__(self):
         super().__init__("ACLIB_Driver", 200, 200, 576, 288)
 
-        # try:
-        #     db = DB("test.sql")
-        # except:
-        #     ACLIB.CONSOLE("test")
-
         self.hideDecoration().setBackgroundColor(Color(0.2, 0.2, 0.2, 0.75))
 
         self.car = ACLIB.CARS[ACLIB.getFocusedCar()]
-        self._grid = ACGrid(self, 18, 11)
+        self.grid = ACGrid(self, 18, 11)
 
         self.next1_tex = Texture("apps/python/ACLIB/resources/next_1.png")
         self.next2_tex = Texture("apps/python/ACLIB/resources/next_2.png")
@@ -58,9 +53,7 @@ class Driver(ACApp):
         self.kers = ACLabel("", self, font_size=16, bold=1, background_color=DRIVER_BG_COLOR,
                             text_h_alignment="center")
 
-        self.fuel = ACLabel("", self, font_size=14)
-        self.fuel_lap_range = ACLabel("", self, font_size=14)
-        self.fuel_lap_consumption = ACLabel("", self, font_size=14)
+        # self.fuel_widget = ACFuelWidget(self)
         self.local_time = ACLabel("", self, font_size=20, bold=1)
 
         self.next_time = ACLabel("", self, font_size=20, bold=1, background_color=DRIVER_BG_COLOR,
@@ -78,7 +71,7 @@ class Driver(ACApp):
         self.delta_widget = ACLabelPair(self, label_pos="top",
                                         label=ACLabel("", self, font_size=16, bold=1, text_h_alignment="center"),
                                         widget=ACDeltaBarWidget())
-        self.shift_widget = ACTwinShiftLightWidget()
+        # self.shift_widget = ACTwinShiftLightWidget()
         self.tyre_widget = ACTyreWidget()
         self.status = ACLabel("", self, font_size=30, bold=1, background_color=DRIVER_BG_COLOR,
                               text_h_alignment="center")
@@ -94,55 +87,48 @@ class Driver(ACApp):
         self.next_time.setBackgroundTexture(self.next1_tex)
         self.next_dist.setBackgroundTexture(self.next1_tex)
         self.current.setBackgroundTexture(self.m_panel_tex)
-        self.delta_widget.setBackgroundTexture(self.m_panel_tex)
+        # self.delta_widget.setBackgroundTexture(self.m_panel_tex)
         self.status.setBackgroundTexture(self.m_panel_tex)
         self.prev_time.setBackgroundTexture(self.prev1_tex)
         self.prev_dist.setBackgroundTexture(self.prev1_tex)
 
-        self._grid.addWidget(self.lap, 0, 1, 3, 1)
-        self._grid.addWidget(self.pos, 0, 2, 3, 1)
-        self._grid.addWidget(self.last, 0, 5, 6, 1)
-        self._grid.addWidget(self.best, 0, 6, 6, 1)
+        self.grid.addWidget(self.lap, 0, 1, 3, 1)
+        self.grid.addWidget(self.pos, 0, 2, 3, 1)
+        self.grid.addWidget(self.last, 0, 5, 6, 1)
+        self.grid.addWidget(self.best, 0, 6, 6, 1)
 
-        self._grid.addWidget(self.rpm, 8, 0, 2, 1)
-        self._grid.addWidget(self.gear, 6, 1, 6, 6)
+        # self.grid.addWidget(self.shift_widget, 0, 0, 18, 1)
+        self.grid.addWidget(self.rpm, 8, 0, 2, 1)
+        self.grid.addWidget(self.gear, 6, 1, 6, 6)
 
-        self._grid.addWidget(self.fuel, 12, 1, 3, 1)
-        self._grid.addWidget(self.fuel_lap_consumption, 12, 2, 3, 1)
-        self._grid.addWidget(self.fuel_lap_range, 15, 2, 3, 1)
-        self._grid.addWidget(self.local_time, 15, 3, 2, 1)
-        self._grid.addWidget(self.tyre_widget, 12, 3, 5, 3)
+        # self.grid.addWidget(self.fuel_widget, 12, 1, 2, 3)
+        self.grid.addWidget(self.local_time, 15, 3, 2, 1)
+        self.grid.addWidget(self.tyre_widget, 12, 3, 5, 3)
 
-        self._grid.addWidget(self.prev_time, 2, 7, 4, 1)
-        self._grid.addWidget(self.prev_dist, 2, 8, 4, 1)
-        self._grid.addWidget(self.current, 6, 7, 6, 1)
-        self._grid.addWidget(self.s1, 6, 8, 2, 1)
-        self._grid.addWidget(self.s2, 8, 8, 2, 1)
-        self._grid.addWidget(self.s3, 10, 8, 2, 1)
-        self._grid.addWidget(self.delta_widget, 6, 9, 6, 2)
-        self._grid.addWidget(self.next_time, 12, 7, 4, 1)
-        self._grid.addWidget(self.next_dist, 12, 8, 4, 1)
+        self.grid.addWidget(self.prev_time, 2, 7, 4, 1)
+        self.grid.addWidget(self.prev_dist, 2, 8, 4, 1)
+        self.grid.addWidget(self.current, 6, 7, 6, 1)
+        self.grid.addWidget(self.s1, 6, 8, 2, 1)
+        self.grid.addWidget(self.s2, 8, 8, 2, 1)
+        self.grid.addWidget(self.s3, 10, 8, 2, 1)
+        self.grid.addWidget(self.delta_widget, 6, 9, 6, 2)
+        self.grid.addWidget(self.next_time, 12, 7, 4, 1)
+        self.grid.addWidget(self.next_dist, 12, 8, 4, 1)
 
-        self._grid.updateSize()
+        self.grid.updateSize()
 
         self.readConfig("apps/python/ACLIB/config/ACLIB_Driver.ini")
 
     def init(self):
         if ACLIB.hasDRS(self.car.number):
-            self._grid.addWidget(self.drs, 16, 1, 2, 1)
+            self.grid.addWidget(self.drs, 16, 1, 2, 1)
         if ACLIB.hasERS(self.car.number):
-            self._grid.addWidget(self.ers, 16, 2, 2, 1)
+            self.grid.addWidget(self.ers, 16, 2, 2, 1)
         if ACLIB.hasKERS(self.car.number):
-            self._grid.addWidget(self.kers, 16, 3, 2, 1)
+            self.grid.addWidget(self.kers, 16, 3, 2, 1)
 
     def update(self, delta):
         super().update(delta)
-
-        self.tyre_widget\
-            .setTemperature(self.car.tyre_temp)\
-            .setPressure(self.car.tyre_pressure)\
-            .setWear(self.car.tyre_wear)\
-            .setDirt(self.car.tyre_dirt)
 
         if self.car.number != ACLIB.getFocusedCar():
             self.car = ACLIB.CARS[ACLIB.getFocusedCar()]
@@ -171,16 +157,15 @@ class Driver(ACApp):
         if ACLIB.hasKERS(self.car.number):
             self.kers.setText("KERS")
 
-        self.delta_widget.pair_widget.setDelta(self.car.lap_diff)
-        if self.car.lap_diff < 0:
-            self.delta_widget.label_widget.setTextColor(DRIVER_GOOD_COLOR)
-            self.delta_widget.label_widget.setText("-" + formatTime(self.car.lap_diff * 1000))
-        elif self.car.lap_diff > 0:
-            self.delta_widget.label_widget.setTextColor(DRIVER_BAD_COLOR)
-            self.delta_widget.label_widget.setText("+" + formatTime(self.car.lap_diff * 1000))
-        else:
-            self.delta_widget.label_widget.setTextColor(Color(1, 1, 1, 1))
-            self.delta_widget.label_widget.setText(" " + formatTime(0))
+        # if self.car.lap_diff < 0:
+        #     self.delta_widget.label_widget.setTextColor(DRIVER_GOOD_COLOR)
+        #     self.delta_widget.label_widget.setText("-" + formatTime(self.car.lap_diff * 1000))
+        # elif self.car.lap_diff > 0:
+        #     self.delta_widget.label_widget.setTextColor(DRIVER_BAD_COLOR)
+        #     self.delta_widget.label_widget.setText("+" + formatTime(self.car.lap_diff * 1000))
+        # else:
+        #     self.delta_widget.label_widget.setTextColor(Color(1, 1, 1, 1))
+        #     self.delta_widget.label_widget.setText(" " + formatTime(0))
 
         status = ""
         if self.car.penalty_time > 0:
@@ -228,6 +213,11 @@ class Driver(ACApp):
             else:
                 self.best.setTextColor(DRIVER_GOOD_COLOR)
 
+        self.delta_widget.update(delta)
+        self.tyre_widget.update(delta)
+        # self.fuel_widget.update(delta)
+        # self.shift_widget.update(delta)
+
         self.lap.setText("L: {:}/{:}".format(self.car.lap, ACLIB.getLaps()))
         self.pos.setText("P: {:}/{:}".format(self.car.position, ACLIB.getCarsCount()))
         self.last.setText("LST: " + formatTime(self.car.last_time))
@@ -235,10 +225,6 @@ class Driver(ACApp):
 
         self.gear.setText(formatGear(self.car.gear))
         self.rpm.setText("{:4.0f}".format(self.car.rpm))
-
-        self.fuel.setText(str(round(self.car.fuel, 2)) + " l")
-        self.fuel_lap_consumption.setText(str(round(self.car.lap_fuel, 2)) + " l/lap")
-        self.fuel_lap_range.setText("(+" + s(round(self.car.lap_fuel_range, 2), " lap") + ")")
         self.local_time.setText(strftime("%H:%M:%S", localtime()))
 
         self.s1.setText(formatTime(self.car.sector_time[0], "{:d}:{:02d}.{:03d}"))
@@ -254,31 +240,3 @@ class Driver(ACApp):
 
     def render(self, delta):
         super().render(delta)
-
-
-
-
-# def optimalTemp(class_name):
-#     temps = {
-#         "90s touring": (75, 85),
-#         "f138": ,
-#         "f2004": ,
-#         "fabarth": ,
-#         "gt4": ,
-#         "gte-gt3": ,
-#         "hypercars r": ,
-#         "lmp1": ,
-#         "lmp3": ,
-#         "porsche cup": ,
-#         "proto c": ,
-#         "rally": ,
-#         "sf70h": ,
-#         "sf15t": ,
-#         "small sports": ,
-#         "sportscars": ,
-#         "supercars": ,
-#         "suv": ,
-#         "vintage touring": ,
-#         "vintage gt": ,
-#         "vintage supercars": ,
-#     }

@@ -3,7 +3,7 @@ from source.color import Color
 from source.math import Rect
 from source.gui import ACApp, ACGrid, ACLabel
 from source.aclib import ACLIB, SESSION, formatTime, pad
-from source.gl import rect, quad, Texture
+from source.gl import rect, Texture
 from source.event import LIB_EVENT
 
 TOWER_BG_COLOR = Color(0.1, 0.1, 0.1, 0.75)
@@ -29,8 +29,9 @@ class Tower(ACApp):
         self.show_classes = False
         self.classes = ""
         self.entries = {}
+        self.time = 0
 
-        self.max_rows = 24
+        self.max_rows = max(24, ACLIB.getCarsCount())
         self.row_width = 432
         self.row_height = 32
         self.col_width = 6
@@ -63,10 +64,15 @@ class Tower(ACApp):
             self.entries[entry].update(delta)
 
     def render(self, delta):
-        super().render(delta)
+        if self.render_timer >= self.render_time:
+            super().render(delta)
 
-        for entry in self.entries:
-            self.entries[entry].render(delta)
+            for entry in self.entries:
+                self.entries[entry].render(delta)
+
+            self.render_timer = 0
+        else:
+            self.render_timer += delta
 
     @staticmethod
     def getClassColor(class_name):
@@ -100,9 +106,13 @@ class Tower(ACApp):
             return Color(1, 1, 1, 1)
 
 
+def changeCar(*args, param):
+    ACLIB.setFocusedCar(param)
+
+
 class TowerEntry:
     def __init__(self, x, y, w, h, app, car_index, show_class=False):
-        self.init = False
+        self.is_init = False
         self.x = x
         self.y = y
         self.w = w
@@ -130,6 +140,7 @@ class TowerEntry:
         self.car_class.setBackgroundTexture(self.car.car_badge)
 
         self.car.setEvent(LIB_EVENT.ON_LAP_CHANGED, self.reset)
+        self.name.onClick(changeCar, car_index)
 
     def reset(self, car_index):
         self.benefit_marker = True
@@ -147,13 +158,14 @@ class TowerEntry:
         self.time.update(delta)
         self.info.update(delta)
 
-        # if not self.init:
-        #     self.init = True
-        #
-        #     start = self.name.getGeometry().set(w=0, h=0)
-        #     step = Rect(0, 0, 240 / 1000, 30 / 1000)
-        #     stop = self.name.getGeometry().set(w=240, h=30)
-        #     self.name.addAnimation(Animation(self.name, "_geometry", start, step, stop))
+        if not self.is_init:
+            self.is_init = True
+
+            c = self.name.background_color
+            start = Color(0, 0, 0, 0)
+            step = Color(c.r / 1000, c.g / 1000, c.b / 1000, c.a / 1000)
+            stop = c
+            self.name.addAnimation(Animation(self.name, "background_color", start, step, stop))
 
         self.position.setText(str(self.car.position))
         self.name.setText(pad(self.car.number) + " | " + self.car.player_nick)
@@ -186,7 +198,7 @@ class TowerEntry:
                         start = Color(0, 0, 0, 1)
                         step = Color(0, 0.01, 0, 0)
                         stop = Color(0, 1, 0, 1)
-                        self.info.addAnimation(Animation(self.info, "_background_color", start, step, stop,
+                        self.info.addAnimation(Animation(self.info, "background_color", start, step, stop,
                                                          direction="Alternate"))
                         self.benefit_marker = False
                     self.info.setText("+" + str(self.car.benefit))
@@ -196,7 +208,7 @@ class TowerEntry:
                         start = Color(0, 0, 0, 1)
                         step = Color(0.01, 0, 0, 0)
                         stop = Color(1, 0, 0, 1)
-                        self.info.addAnimation(Animation(self.info, "_background_color", start, step, stop,
+                        self.info.addAnimation(Animation(self.info, "background_color", start, step, stop,
                                                          direction="Alternate"))
                     self.benefit_marker = False
                     self.info.setText(str(self.car.benefit))
