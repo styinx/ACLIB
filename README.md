@@ -155,6 +155,34 @@ my_widget.addAnimation(my_alternate_color_animation)
 ```
 
 ![Animation](https://github.com/styinx/ACLIB/blob/master/images/animation.gif "Animation")
+```python
+from source.color import Color
+from source.math import Rect
+from source.animation import Animation
+
+def update(self, delta):
+    super().update(delta)
+    
+    if self.loops % 100 == 0:
+        start = Color(0, 0, 0, 1)
+        step = Color(0.05, 0.05, 0, 0)
+        stop = Color(1, 1, 0, 1)
+        self.addAnimation(Animation(self, "background_color", start, step, stop, 0, "Alternate"))
+        self.setBackgroundColor(Color(1, 1, 0))
+
+    if self.loops % 500 == 0:
+        x, y = self.getPos()
+        w, h = self.getSize()
+        start = Rect().set(x, y, w, h)
+        step = Rect().set(0, 0, 1, 1)
+        stop = Rect().set(x, y, w + 25, h + 25)
+        self.addAnimation(Animation(self, "geometry", start, step, stop, 0, "Alternate"))
+
+    if self.loops == 1000:
+        self.loops = 0
+
+    self.loops += 1
+```
 
 ---
 
