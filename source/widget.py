@@ -1,7 +1,10 @@
-from source.gui import ACWidget
+from source.aclib import ACLIB
+from source.gui import ACWidget, ACGrid, ACProgressBar
 from source.gl import rect, quad, line
 from source.color import Color
 from math import log10
+
+from source.math import Rect
 
 
 class ACDeltaBarWidget(ACWidget):
@@ -11,9 +14,9 @@ class ACDeltaBarWidget(ACWidget):
         self.delta = 0
         self.delta_val = 0
 
-    def setDelta(self, delta):
-        self.delta = delta
-        self.delta_val = max(0.0, log10(abs(delta) + 1)) * self._geometry.w / 2
+    def update(self, delta):
+        self.delta = ACLIB.CARS[0].lap_diff
+        self.delta_val = max(0.0, log10(abs(delta) + 1)) * self.geometry.w / 2
         return self
 
     def render(self, delta):
@@ -32,9 +35,25 @@ class ACDeltaBarWidget(ACWidget):
         return self
 
 
-class ACFuelWidget(ACWidget):
-    def __init__(self):
-        super().__init__(None)
+class ACFuelWidget(ACGrid):
+    def __init__(self, app):
+        super().__init__(None, 2, 3)
+
+        self.fuel_level = ACProgressBar(app, 1)
+
+        self.fuel_level.color = Color(1, 1, 0)
+        self.fuel_level.background_color = Color(0.75, 0.75, 0.75, 0.5)
+        self.fuel_level.max_val = ACLIB.getMaxFuel(0)
+
+        self.addWidget(self.fuel_level, 0, 0, 1, 3)
+
+    def update(self, delta):
+        self.fuel_level.value = ACLIB.CARS[0].fuel
+
+    def render(self, delta):
+        super().render(delta)
+
+        self.fuel_level.render(delta)
 
 
 class ACTwinShiftLightWidget(ACWidget):
@@ -46,22 +65,29 @@ class ACTwinShiftLightWidget(ACWidget):
         self.rpm = 0
         self.max_rpm = 0
 
-    def setRpm(self, rpm):
-        self.rpm = rpm
+    def update(self, delta):
+        self.rpm = ACLIB.CARS[0].rpm
+        self.max_rpm = ACLIB.CARS[0].max_rpm
+        return self
 
     def render(self, delta):
-        light_w, light_h = 32, 32
-        middle_gap = 100
         x, y = self.getPos()
         w, h = self.getSize()
+        middle_gap = 100
+        light_w, light_h = (w - middle_gap) / 4 / self.lights, h
+        pos = x
 
-        for i in range(0, self.lights * 2):
-            rect(x, y, light_w, light_h)
-            rect(x, y, light_w, light_h, Color(0, 0, 0), False)
-            if i == self.lights:
-                x += middle_gap
-            else:
-                x += w / self.lights
+        for i in range(0, self.lights):
+            rect(pos, y, light_w, light_h)
+            rect(pos, y, light_w, light_h, Color(0, 0, 0), False)
+            pos += light_w * 2
+
+        pos = x + w - light_w
+
+        for i in range(0, self.lights):
+            rect(pos, y, light_w, light_h)
+            rect(pos, y, light_w, light_h, Color(0, 0, 0), False)
+            pos -= light_w * 2
 
 
 class ACTyreWidget(ACWidget):
@@ -73,139 +99,124 @@ class ACTyreWidget(ACWidget):
         self.wear = [0, 0, 0, 0]
         self.dirt = [0, 0, 0, 0]
 
-    def setTemperature(self, values):
-        self.temp = values
-        return self
-
-    def setPressure(self, values):
-        self.press = values
-        return self
-
-    def setWear(self, values):
-        self.wear = values
-        return self
-
-    def setDirt(self, values):
-        self.dirt = values
-        return self
+    def update(self, delta):
+        self.temp = ACLIB.CARS[0].tyre_temp
+        self.press = ACLIB.CARS[0].tyre_pressure
+        self.wear = ACLIB.CARS[0].tyre_wear
+        self.dirt = ACLIB.CARS[0].tyre_dirt
 
     def render(self, delta):
-        super().render(delta)
-
         t_w, t_h = 24, 34
         h_space, v_space = 10, 10
-        dirt_space = 2
         x, y = self.getPos()
 
         # tyre 1
 
-        dfl_col = tyreDirtColor(self.dirt[0])
-        rect(x, y, t_w, t_h, dfl_col)
+        index = 0
+        pfl_col = tyrePressureColor(self.press[index])
+        wfl_col = tyreWearColor(self.wear[index])
+        tfl_col = [tyreTempColor(self.temp[index][0]),
+                   tyreTempColor(self.temp[index][1]),
+                   tyreTempColor(self.temp[index][2]),
+                   tyreTempColor(self.temp[index][3])]
 
-        tfl = self.temp[0]
-        tfl_i_col = tyreTempColor(tfl[2])
-        tfl_m_col = tyreTempColor(tfl[1])
-        tfl_o_col = tyreTempColor(tfl[0])
-        tfl_c_col = tyreTempColor(tfl[3])
-        quad(x + dirt_space, y + dirt_space, t_w / 2 - dirt_space, t_h - dirt_space * 2,
-             colors=[tfl_o_col, tfl_o_col, tfl_m_col, tfl_m_col])
-        quad(x + t_w / 2, y + dirt_space, t_w / 2 - dirt_space, t_h - dirt_space * 2,
-             colors=[tfl_m_col, tfl_m_col, tfl_i_col, tfl_i_col])
-        rect(x + dirt_space + t_w * 0.3, y + dirt_space + t_h * 0.2,
-             (t_w - 2 * dirt_space) * 0.3, (t_h - 2 * dirt_space) * 0.3, tfl_c_col)
-        rect(x + dirt_space + t_w * 0.3, y + dirt_space + t_h * 0.2,
-             (t_w - 2 * dirt_space) * 0.3, (t_h - 2 * dirt_space) * 0.3, Color(0, 0, 0), False)
+        if self.dirt[index] > 0:
+            colors1 = [tyreDirtColor(self.dirt[index])] * 4
+            colors2 = colors1
+            colors3 = colors1
+            colors4 = colors1
+        else:
+            colors1 = [tfl_col[0], tfl_col[0], tfl_col[3], tfl_col[1]]
+            colors2 = [tfl_col[1], tfl_col[3], tfl_col[2], tfl_col[2]]
+            colors3 = [tfl_col[0], tfl_col[0], tfl_col[1], tfl_col[3]]
+            colors4 = [tfl_col[3], tfl_col[1], tfl_col[2], tfl_col[2]]
 
-        pfl_col = tyrePressureColor(self.press[0])
-        rect(x + dirt_space + t_w * 0.2, y + dirt_space + t_h * 0.6,
-             (t_w - 2 * dirt_space) * 0.6, (t_h - 2 * dirt_space) * 0.2, pfl_col)
-        rect(x + dirt_space + t_w * 0.2, y + dirt_space + t_h * 0.6,
-             (t_w - 2 * dirt_space) * 0.6, (t_h - 2 * dirt_space) * 0.2, Color(0, 0, 0), False)
-
-        wfl_col = tyreWearColor(self.wear[0])
-        wfl_offset = self.wear[0] / 100 * t_h
-        rect(x + dirt_space * 2 + t_w, y + t_h - wfl_offset, h_space * 0.5, wfl_offset, wfl_col)
-        rect(x + dirt_space * 2 + t_w, y, h_space * 0.5, t_h, Color(0, 0, 0), False)
+        base = Rect(x, y, t_w / 2, t_h / 2)
+        quad(colors=colors1, r=base)
+        quad(colors=colors2, r=base + Rect(t_w / 2))
+        quad(colors=colors3, r=base + Rect(y=t_h / 2))
+        quad(colors=colors4, r=base + Rect(t_w / 2, t_h / 2))
 
         # tyre 2
 
-        dfr_col = tyreDirtColor(self.dirt[1])
-        rect(x + t_w + h_space, y, t_w, t_h, dfr_col)
+        index = 1
+        pfl_col = tyrePressureColor(self.press[index])
+        wfl_col = tyreWearColor(self.wear[index])
+        tfl_col = [tyreTempColor(self.temp[index][0]),
+                   tyreTempColor(self.temp[index][1]),
+                   tyreTempColor(self.temp[index][2]),
+                   tyreTempColor(self.temp[index][3])]
 
-        tfr = self.temp[1]
-        tfr_i_col = tyreTempColor(tfr[0])
-        tfr_m_col = tyreTempColor(tfr[1])
-        tfr_o_col = tyreTempColor(tfr[2])
-        tfr_c_col = tyreTempColor(tfr[3])
-        quad(x + t_w + h_space + dirt_space, y + dirt_space, t_w / 2 - dirt_space, t_h - dirt_space * 2,
-             colors=[tfr_i_col, tfr_i_col, tfr_m_col, tfr_m_col])
-        quad(x + t_w + h_space + t_w / 2, y + dirt_space, t_w / 2 - dirt_space, t_h - dirt_space * 2,
-             colors=[tfr_m_col, tfr_m_col, tfr_o_col, tfr_o_col])
-        rect(x + t_w + h_space + dirt_space + t_w * 0.3, y + dirt_space + t_h * 0.2,
-             (t_w - 2 * dirt_space) * 0.3, (t_h - 2 * dirt_space) * 0.3, tfr_c_col)
-        rect(x + t_w + h_space + dirt_space + t_w * 0.3, y + dirt_space + t_h * 0.2,
-             (t_w - 2 * dirt_space) * 0.3, (t_h - 2 * dirt_space) * 0.3, Color(0, 0, 0), False)
+        if self.dirt[index] > 0:
+            colors1 = [tyreDirtColor(self.dirt[index])] * 4
+            colors2 = colors1
+            colors3 = colors1
+            colors4 = colors1
+        else:
+            colors1 = [tfl_col[0], tfl_col[0], tfl_col[3], tfl_col[1]]
+            colors2 = [tfl_col[1], tfl_col[3], tfl_col[2], tfl_col[2]]
+            colors3 = [tfl_col[0], tfl_col[0], tfl_col[1], tfl_col[3]]
+            colors4 = [tfl_col[3], tfl_col[1], tfl_col[2], tfl_col[2]]
 
-        pfr_col = tyrePressureColor(self.press[1])
-        rect(x + t_w + h_space + dirt_space + t_w * 0.2, y + dirt_space + t_h * 0.6,
-             (t_w - 2 * dirt_space) * 0.6, (t_h - 2 * dirt_space) * 0.2, pfr_col)
-        rect(x + t_w + h_space + dirt_space + t_w * 0.2, y + dirt_space + t_h * 0.6,
-             (t_w - 2 * dirt_space) * 0.6, (t_h - 2 * dirt_space) * 0.2, Color(0, 0, 0), False)
+        base = Rect(x + t_w + h_space, y, t_w / 2, t_h / 2)
+        quad(colors=colors1, r=base)
+        quad(colors=colors2, r=base + Rect(t_w / 2))
+        quad(colors=colors3, r=base + Rect(y=t_h / 2))
+        quad(colors=colors4, r=base + Rect(t_w / 2, t_h / 2))
 
         # tyre 3
 
-        drl_col = tyreDirtColor(self.dirt[2])
-        rect(x, y + t_h + v_space, t_w, t_h, dfr_col)
+        index = 2
+        pfl_col = tyrePressureColor(self.press[index])
+        wfl_col = tyreWearColor(self.wear[index])
+        tfl_col = [tyreTempColor(self.temp[index][0]),
+                   tyreTempColor(self.temp[index][1]),
+                   tyreTempColor(self.temp[index][2]),
+                   tyreTempColor(self.temp[index][3])]
 
-        trl = self.temp[2]
-        trl_i_col = tyreTempColor(trl[2])
-        trl_m_col = tyreTempColor(trl[1])
-        trl_o_col = tyreTempColor(trl[0])
-        trl_c_col = tyreTempColor(trl[3])
-        quad(x + dirt_space, y + t_h + v_space + dirt_space, t_w / 2 - dirt_space, t_h - dirt_space * 2,
-             colors=[trl_o_col, trl_o_col, trl_m_col, trl_m_col])
-        quad(x + t_w / 2, y + t_h + v_space + dirt_space, t_w / 2 - dirt_space, t_h - dirt_space * 2,
-             colors=[trl_m_col, trl_m_col, trl_i_col, trl_i_col])
-        rect(x + dirt_space + t_w * 0.3, y + t_h + v_space + dirt_space + t_h * 0.2,
-             (t_w - 2 * dirt_space) * 0.3, (t_h - 2 * dirt_space) * 0.3, trl_c_col)
-        rect(x + dirt_space + t_w * 0.3, y + t_h + v_space + dirt_space + t_h * 0.2,
-             (t_w - 2 * dirt_space) * 0.3, (t_h - 2 * dirt_space) * 0.3, Color(0, 0, 0), False)
+        if self.dirt[index] > 0:
+            colors1 = [tyreDirtColor(self.dirt[index])] * 4
+            colors2 = colors1
+            colors3 = colors1
+            colors4 = colors1
+        else:
+            colors1 = [tfl_col[0], tfl_col[0], tfl_col[3], tfl_col[1]]
+            colors2 = [tfl_col[1], tfl_col[3], tfl_col[2], tfl_col[2]]
+            colors3 = [tfl_col[0], tfl_col[0], tfl_col[1], tfl_col[3]]
+            colors4 = [tfl_col[3], tfl_col[1], tfl_col[2], tfl_col[2]]
 
-        prl_col = tyrePressureColor(self.press[2])
-        rect(x + dirt_space + t_w * 0.2, y + t_h + v_space + dirt_space + t_h * 0.6,
-             (t_w - 2 * dirt_space) * 0.6, (t_h - 2 * dirt_space) * 0.2, trl_c_col)
-        rect(x + dirt_space + t_w * 0.2, y + t_h + v_space + dirt_space + t_h * 0.6,
-             (t_w - 2 * dirt_space) * 0.6, (t_h - 2 * dirt_space) * 0.2, Color(0, 0, 0), False)
-
-        wrl_col = tyreWearColor(self.wear[2])
-        wrl_offset = self.wear[2] / 100 * t_h
-        rect(x + dirt_space * 2 + t_w, y + t_h + v_space + t_h - wrl_offset, h_space * 0.5, wrl_offset, wrl_col)
-        rect(x + dirt_space * 2 + t_w, y + t_h + v_space, h_space * 0.5, t_h, Color(0, 0, 0), False)
+        base = Rect(x, y + t_h + v_space, t_w / 2, t_h / 2)
+        quad(colors=colors1, r=base)
+        quad(colors=colors2, r=base + Rect(t_w / 2))
+        quad(colors=colors3, r=base + Rect(y=t_h / 2))
+        quad(colors=colors4, r=base + Rect(t_w / 2, t_h / 2))
 
         # tyre 4
 
-        drr_col = tyreDirtColor(self.dirt[3])
-        rect(x + t_w + h_space, y + t_h + v_space, t_w, t_h, dfr_col)
+        index = 3
+        pfl_col = tyrePressureColor(self.press[index])
+        wfl_col = tyreWearColor(self.wear[index])
+        tfl_col = [tyreTempColor(self.temp[index][0]),
+                   tyreTempColor(self.temp[index][1]),
+                   tyreTempColor(self.temp[index][2]),
+                   tyreTempColor(self.temp[index][3])]
 
-        trr = self.temp[3]
-        trr_i_col = tyreTempColor(trr[0])
-        trr_m_col = tyreTempColor(trr[1])
-        trr_o_col = tyreTempColor(trr[2])
-        trr_c_col = tyreTempColor(trr[3])
-        quad(x + t_w + h_space + dirt_space, y + t_h + v_space + dirt_space, t_w / 2 - dirt_space, t_h - dirt_space * 2,
-             colors=[trr_i_col, trr_i_col, trr_m_col, trr_m_col])
-        quad(x + t_w + h_space + t_w / 2, y + t_h + v_space + dirt_space, t_w / 2 - dirt_space, t_h - dirt_space * 2,
-             colors=[trr_m_col, trr_m_col, trr_o_col, trr_o_col])
-        rect(x + t_w + h_space + dirt_space + t_w * 0.3, y + t_h + v_space + dirt_space + t_h * 0.2,
-             (t_w - 2 * dirt_space) * 0.3, (t_h - 2 * dirt_space) * 0.3, trr_c_col)
-        rect(x + t_w + h_space + dirt_space + t_w * 0.3, y + t_h + v_space + dirt_space + t_h * 0.2,
-             (t_w - 2 * dirt_space) * 0.3, (t_h - 2 * dirt_space) * 0.3, Color(0, 0, 0), False)
+        if self.dirt[index] > 0:
+            colors1 = [tyreDirtColor(self.dirt[index])] * 4
+            colors2 = colors1
+            colors3 = colors1
+            colors4 = colors1
+        else:
+            colors1 = [tfl_col[0], tfl_col[0], tfl_col[3], tfl_col[1]]
+            colors2 = [tfl_col[1], tfl_col[3], tfl_col[2], tfl_col[2]]
+            colors3 = [tfl_col[0], tfl_col[0], tfl_col[1], tfl_col[3]]
+            colors4 = [tfl_col[3], tfl_col[1], tfl_col[2], tfl_col[2]]
 
-        prr_col = tyrePressureColor(self.press[3])
-        rect(x + t_w + h_space + dirt_space + t_w * 0.2, y + t_h + v_space + dirt_space + t_h * 0.6,
-             (t_w - 2 * dirt_space) * 0.6, (t_h - 2 * dirt_space) * 0.2, trr_c_col)
-        rect(x + t_w + h_space + dirt_space + t_w * 0.2, y + t_h + v_space + dirt_space + t_h * 0.6,
-             (t_w - 2 * dirt_space) * 0.6, (t_h - 2 * dirt_space) * 0.2, Color(0, 0, 0), False)
+        base = Rect(x + t_w + h_space, y + t_h + v_space, t_w / 2, t_h / 2)
+        quad(colors=colors1, r=base)
+        quad(colors=colors2, r=base + Rect(t_w / 2))
+        quad(colors=colors3, r=base + Rect(y=t_h / 2))
+        quad(colors=colors4, r=base + Rect(t_w / 2, t_h / 2))
 
         return self
 
@@ -231,7 +242,6 @@ def tyreWearColor(wear):
 
 
 def tyreDirtColor(dirt):
-    r = 0.8 - dirt * 0.75
-    g = 0.6 - dirt * 0.75
-    b = 0.2 - dirt * 0.5
-    return Color(r, g, b, dirt * 2)
+    r = 1 - (dirt / 5) * 0.7
+    g = 0.75 - (dirt / 5) * 0.6
+    return Color(r, g, 0, dirt * 2)
