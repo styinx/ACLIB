@@ -44,7 +44,6 @@ class ACWidget(object):
         self.border = 0
         self.border_color = Color(1, 1, 1, 1)
         self.event_callback = {}
-        self.render_callback = None
         self.animation = None
         self.animation_queue = []
 
@@ -63,8 +62,6 @@ class ACWidget(object):
             self.setPos((0, 0))
 
         self.on_click = None
-        self.func = None
-        self.param = None
 
     @staticmethod
     def getPosition(obj):
@@ -136,7 +133,6 @@ class ACWidget(object):
             ac.setPosition(self.ac_obj, self.geometry.x, self.geometry.y)
 
         self.dispatchEvent(GUI_EVENT.ON_POSITION_CHANGED)
-
         return self
 
     def getSize(self):
@@ -152,7 +148,6 @@ class ACWidget(object):
             ac.setSize(self.ac_obj, self.geometry.w, self.geometry.h)
 
         self.dispatchEvent(GUI_EVENT.ON_SIZE_CHANGED)
-
         return self
 
     def isVisible(self):
@@ -162,10 +157,9 @@ class ACWidget(object):
         self.visible = visible
 
         if self.ac_obj is not None:
-            ac.setVisible(visible)
+            ac.setVisible(self.ac_obj, visible)
 
         self.dispatchEvent(GUI_EVENT.ON_VISIBILITY_CHANGED)
-
         return self
 
     def getBackgroundTexture(self):
@@ -179,7 +173,6 @@ class ACWidget(object):
 
         if self.ac_obj is not None:
             ac.setBackgroundTexture(self.ac_obj, self.background_texture.path)
-
         return self
 
     def isBackgroundDrawn(self):
@@ -190,7 +183,6 @@ class ACWidget(object):
 
         if self.ac_obj is not None:
             ac.drawBackground(self.ac_obj, self.background)
-
         return self
 
     def getBackgroundColor(self):
@@ -204,7 +196,6 @@ class ACWidget(object):
             col = self.background_color
             ac.setBackgroundColor(self.ac_obj, col.r, col.g, col.b)
             ac.setBackgroundOpacity(self.ac_obj, col.a)
-
         return self
 
     def getBackgroundOpacity(self):
@@ -215,7 +206,6 @@ class ACWidget(object):
 
         if self.ac_obj is not None:
             ac.setBackgroundOpacity(self.ac_obj, self.background_color.a)
-
         return self
 
     def isBorderDrawn(self):
@@ -268,9 +258,6 @@ class ACWidget(object):
         pass
 
     def update(self, delta):
-        if self.child is not None:
-            self.child.update(delta)
-
         if self.background:
             col = self.background_color
             if self.ac_obj is not None:
@@ -294,13 +281,14 @@ class ACWidget(object):
             if len(self.animation_queue) > 0:
                 self.animation = self.animation_queue.pop(0)
                 self.animation.init()
-
         else:
             if not self.animation.isFinished():
                 self.animation.update(delta)
             else:
                 self.animation = None
 
+        if self.child is not None:
+            self.child.update(delta)
         return self
 
     def render(self, delta):
@@ -313,7 +301,6 @@ class ACWidget(object):
 
         if self.child is not None:
             self.child.render(delta)
-
         return self
 
 
@@ -338,7 +325,7 @@ class DockingWidget(ACWidget):
 
 
 class ACApp(ACWidget):
-    def __init__(self, app_name, x, y, w, h, main=None):
+    def __init__(self, app_name, x, y, w, h):
         super().__init__()
 
         self.ac_obj = ac.newApp(app_name)
@@ -349,17 +336,20 @@ class ACApp(ACWidget):
         self.icon_position = (0, 0)
         self.position_changed = False
         self.suspended = False
-        self.main_app = False
         self.attached = False
         self.attached_apps = []
-        self.render_callback = None
-        self.activated_callback = None
-        self.dismissed_callback = None
+        self._render_callback = None
+        self._activated_callback = None
+        self._dismissed_callback = None
+        self.update_timer = 0.005
+        self.update_time = 0.005
+        self.render_timer = 0.005
+        self.render_time = 0.005
         self.config_file = ""
         self.config_time = 0
 
-        self.activated = self.activate
-        self.dismissed = self.dismiss
+        self._activated = self.activate
+        self._dismissed = self.dismiss
         self._render = self.render
 
         a_x, a_y = ac.getPosition(self.ac_obj)
@@ -369,15 +359,12 @@ class ACApp(ACWidget):
             self.setPos((x, y))
         self.setSize((int(w), int(h)))
 
-        if main is not None:
-            main.attach(self)
-
-        self.activated_callback = self.activated
-        self.dismissed_callback = self.dismissed
-        self.render_callback = self._render
+        self._activated_callback = self._activated
+        self._dismissed_callback = self._dismissed
+        self._render_callback = self._render
 
         self.drawBorder(0)
-        self.setRenderCallback(self.render_callback)
+        self.setRenderCallback(self._render_callback)
 
     def readConfig(self, filename):
         try:
@@ -399,39 +386,36 @@ class ACApp(ACWidget):
                 return True
         return False
 
-    def isMainApp(self):
-        return self.main_app
-
     def getRenderCallback(self):
-        return self.render_callback
+        return self._render_callback
 
     def setRenderCallback(self, render_callback):
-        self.render_callback = render_callback
+        self._render_callback = render_callback
 
         if self.ac_obj is not None:
-            ac.addRenderCallback(self.ac_obj, self.render_callback)
+            ac.addRenderCallback(self.ac_obj, self._render_callback)
 
         return self
 
     def getActivatedCallback(self):
-        return self.activated_callback
+        return self._activated_callback
 
     def setActivatedCallback(self, activated_callback):
-        self.activated_callback = activated_callback
+        self._activated_callback = activated_callback
 
         if self.ac_obj is not None:
-            ac.addOnAppActivatedListener(self.ac_obj, self.activated_callback)
+            ac.addOnAppActivatedListener(self.ac_obj, self._activated_callback)
 
         return self
 
     def getDismissedCallback(self):
-        return self.dismissed_callback
+        return self._dismissed_callback
 
     def setDismissedCallback(self, dismissed_callback):
-        self.dismissed_callback = dismissed_callback
+        self._dismissed_callback = dismissed_callback
 
         if self.ac_obj is not None:
-            ac.addOnAppDismissedListener(self.ac_obj, self.dismissed_callback)
+            ac.addOnAppDismissedListener(self.ac_obj, self._dismissed_callback)
 
         return self
 
@@ -570,12 +554,11 @@ class ACApp(ACWidget):
         return self
 
     def render(self, delta):
+        super().render(delta)
+
         if self.border:
             s = self.getSize()
             rect(0, 0, s[0], s[1], self.border_color, False)
-
-        if self.child is not None:
-            self.child.render(delta)
 
         return self
 
@@ -673,7 +656,6 @@ class ACGrid(ACLayout):
             widget.setSize((round(w * self.cell_width), round(h * self.cell_height)))
 
             widget.updateSize()
-
         return self
 
     def updateSize(self):
@@ -698,7 +680,6 @@ class ACGrid(ACLayout):
             for cell in row:
                 if isinstance(cell, ACWidget):
                     cell.update(delta)
-
         return self
 
     def render(self, delta):
@@ -708,7 +689,6 @@ class ACGrid(ACLayout):
             for cell in row:
                 if isinstance(cell, ACWidget):
                     cell.render(delta)
-
         return self
 
 
@@ -736,7 +716,6 @@ class ACLabelPair(ACGrid):
                 self.addWidget(self.label_widget, 1, 0)
             elif self.label_position == "bottom":
                 self.addWidget(self.label_widget, 0, 1)
-
         return self
 
     def addPairWidget(self, widget):

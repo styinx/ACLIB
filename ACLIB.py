@@ -1,15 +1,14 @@
 import os
 import sys
 import importlib
-
-#from source.db import DB
 from source.aclib import ACLIB, SESSION
 
+
 def acMain(version):
-    global init, apps
+    global init, apps, loops
 
     init = False
-    loop = -100
+    loops = 50
     apps = []
 
     ACLIB.setup()
@@ -23,20 +22,27 @@ def acMain(version):
 
 
 def acUpdate(delta):
-    global init, apps
+    global init, apps, loops
 
-    if ACLIB.getSessionStatusId() != 2 and not init:
+    if ACLIB.getSessionStatusId() != 2 and not init and loops == 0:
         SESSION.init()
         ACLIB.init()
         for app in apps:
             app.init()
         init = True
+        loops -= 1
+    elif loops >= 0:
+        loops -= 1
 
     SESSION.update()
     ACLIB.update(delta)
 
     for app in apps:
-        app.update(delta)
+        if app.update_timer >= app.update_time:
+            app.update(delta)
+            app.update_timer = 0
+        else:
+            app.update_timer += delta
 
 
 def acShutdown():
