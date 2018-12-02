@@ -1,10 +1,13 @@
+import json
 import sys
 import os
+import re
 import platform
 from math import isinf
 import ac
 from source.event import LIB_EVENT
 from source.gl import Texture
+from source.color import Color
 
 if platform.architecture()[0] == "64bit":
     sysdir = os.path.dirname(__file__) + '/../stdlib64'
@@ -40,7 +43,7 @@ def formatTime(millis, form="{:02d}:{:02d}.{:03d}"):
 
 def formatTimeCar(time, dist, track_len):
     if dist > track_len:
-        laps = dist / track_len
+        laps = dist / max(track_len, 1)
         if laps > 1.05:
             return "{:3.1f}".format(laps) + " Laps"
         elif laps < 1.05:
@@ -200,7 +203,10 @@ class Car:
         self.tyre_compound = ""
         self.tyre_compound_symbol = ""
 
-        self.init()
+        self.tyre_ideal_pressure_front = 0
+        self.tyre_ideal_pressure_rear = 0
+        self.tyre_ideal_temp_min = 0
+        self.tyre_ideal_temp_max = 0
 
     def reset(self):
         self.gear = 0
@@ -277,6 +283,11 @@ class Car:
         self.tyre_compound = ""
         self.tyre_compound_symbol = ""
 
+        self.tyre_ideal_pressure_front = 0
+        self.tyre_ideal_pressure_rear = 0
+        self.tyre_ideal_temp_min = 0
+        self.tyre_ideal_temp_max = 0
+
     def init(self):
         self.player_nick = ACLIB.getPlayerNickname(self.number)
         self.player_name = ACLIB.getPlayerFirstname(self.number) + ACLIB.getPlayerLastname(self.number)
@@ -314,6 +325,13 @@ class Car:
 
         self.tyre_compound = ACLIB.getTyreCompund(symbol=False)
         self.tyre_compound_symbol = ACLIB.getTyreCompund()
+
+        ideal = CarIdealData(self.number)
+
+        self.tyre_ideal_pressure_front = ideal.ideal_pressure_front
+        self.tyre_ideal_pressure_rear = ideal.ideal_pressure_rear
+        self.tyre_ideal_temp_min = ideal.ideal_temp_min
+        self.tyre_ideal_temp_max = ideal.ideal_temp_max
 
     def setEvent(self, event, callback):
         self.events[event] = callback
@@ -545,6 +563,64 @@ class Car:
             self.loops = 0
 
 
+class CarIdealData:
+    def __init__(self, car=0):
+        self.ideal_pressure_front = -1
+        self.ideal_pressure_rear = -1
+        self.ideal_temp_min = -1
+        self.ideal_temp_max = -1
+
+        name = ACLIB.getCarId(car)
+
+        ACLIB.CONSOLE(name)
+
+        if os.path.exists("sdk/dev/v1.5_tyres_ac/" + name + "/data/tyres.ini"):
+
+            compound_symbol = ACLIB.getTyreCompund(car)
+            file = open("sdk/dev/v1.5_tyres_ac/" + name + "/data/tyres.ini")
+            location = "None"
+            collect = False
+
+            ACLIB.CONSOLE(name, "\"", compound_symbol, "\"")
+
+            for line in file.readlines():
+                kvp = line.strip("\n").split("=")
+                if re.match("\[FRONT(_\d+)?\]", kvp[0]):
+                    location = "Front"
+                elif re.match("\[REAR(_\d+)?\]", kvp[0]):
+                    location = "Rear"
+                elif kvp[0] == "SHORT_NAME":
+                    if kvp[1] == compound_symbol:
+                        collect = True
+                    else:
+                        collect = False
+                elif kvp[0] == "PRESSURE_IDEAL" and collect:
+                    if location == "Front":
+                        self.ideal_pressure_front = int(kvp[1].split(";")[0].strip(" "))
+                    if location == "Rear":
+                        self.ideal_pressure_rear = int(kvp[1].split(";")[0].strip(" "))
+                elif kvp[0] == "PERFORMANCE_CURVE" and collect:
+
+                    ACLIB.CONSOLE("temp")
+
+                    if os.path.exists("apps/python/ACLIB/lib/temperature/" + kvp[1]):
+
+                        tfile = open("apps/python/ACLIB/lib/temperature/" + kvp[1])
+                        first = False
+                        last = []
+
+                        for tline in tfile:
+                            tkvp = tline.strip("\n").split("|")
+                            if tkvp[1] == "1.0" and not first:
+                                self.ideal_temp_min = int(tkvp[0])
+                                first = True
+                            if tkvp[1] != "1.0" and first:
+                                self.ideal_temp_max = int(last[0])
+                                break
+                            last = tkvp
+                        break
+
+
 class ACLIB:
     CARS = [Car] * ac.getCarsCount()
 
@@ -558,11 +634,11 @@ class ACLIB:
         ac.log(s)
 
     @staticmethod
-    def CONSOLE(*msg, sep=""):
+    def CONSOLE(*msg, sep="", end=""):
         s = ""
         for m in msg:
             s += str(m) + sep
-        ac.console("ACLIB: " + s)
+        ac.console("ACLIB: " + s + end)
 
     # Functions for all cars
 
@@ -599,14 +675,14 @@ class ACLIB:
 
     @staticmethod
     def getPlayerFirstname(car=0):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.static.playerName
         else:
             return ""
 
     @staticmethod
     def getPlayerLastname(car=0):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.static.playerSurname
         else:
             return ""
@@ -722,6 +798,16 @@ class ACLIB:
         return info.static.trackConfiguration
 
     @staticmethod
+    def getTrackMetaData():
+        name = ACLIB.getTrackName()
+        conf = ACLIB.getTrackConfiguration()
+        if conf != "":
+            file = open("content/tracks/" + name + "/ui/ui_track.json")
+        else:
+            file = open("content/tracks/" + name + "/ui/" + conf + "/ui_track.json")
+        return json.loads(file.read())
+
+    @staticmethod
     def getCarsCount():
         return ac.getCarsCount()
 
@@ -753,14 +839,14 @@ class ACLIB:
 
     @staticmethod
     def isIdealLineOn(car=0):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.graphics.idealLineOn
         else:
             return False
 
     @staticmethod
     def isAutoShifterOn(car=0):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.physics.autoShifterOn
         else:
             return False
@@ -798,6 +884,26 @@ class ACLIB:
     @staticmethod
     def getCarId(car=0):
         return ac.getCarName(car)
+
+    @staticmethod
+    def getCarMetadata(car):
+        name = ACLIB.getCarId(car)
+        file = open("content/cars/" + name + "/ui/ui_car.json")
+        return json.loads(file.read())
+
+    @staticmethod
+    def getCarIdealSetup(car=0):
+        name = ACLIB.getCarId(car)
+        file = open("sdk/dev/v1.5_tyres_ac/" + name + "/data/tyres.ini")
+
+        for line in file.readlines():
+            class_line = line.split(":")
+            if class_line[0].strip() == "\"tags\"":
+                try:
+                    class_index = class_line[1].index("#")
+                    return class_line[1][class_index + 1:class_line[1].index("\"", class_index)].lower()
+                except ValueError:
+                    return ""
 
     @staticmethod
     def getCarClass(car=0):
@@ -846,7 +952,7 @@ class ACLIB:
 
     @staticmethod
     def getCarSkin(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.static.carSkin
         else:
             return ""
@@ -881,28 +987,28 @@ class ACLIB:
 
     @staticmethod
     def getSectorIndex(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.graphics.currentSectorIndex
         else:
             return -1
 
     @staticmethod
     def getLastSector(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.graphics.lastSectorTime
         else:
             return -1
 
     @staticmethod
     def getSectorCount(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.static.sectorCount
         else:
             return -1
 
     @staticmethod
     def getSplit(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.graphics.split
         else:
             return -1
@@ -933,7 +1039,7 @@ class ACLIB:
 
     @staticmethod
     def getLapDelta(car=0):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             time = ACLIB.getLapDeltaTime(car) * 1000
             if time != 0:
                 if time < 0:
@@ -962,21 +1068,21 @@ class ACLIB:
 
     @staticmethod
     def lastSectorTime(car=0):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.graphics.lastSectorTime
         else:
             return -1
 
     @staticmethod
     def getSectors(car=0):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.static.sectorCount
         else:
             return -1
 
     @staticmethod
     def getTraveledDistance(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if form:
                 return form.format(info.graphics.distanceTraveled)
             return info.graphics.distanceTraveled
@@ -985,7 +1091,7 @@ class ACLIB:
 
     @staticmethod
     def getCarDamage(car=0, loc=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if form:
                 return form.format(info.physics.carDamage[loc])
             return info.physics.carDamage[loc]  # 0: Front, 1: Rear, 2: Left, 3: Right, 4:?
@@ -994,7 +1100,7 @@ class ACLIB:
 
     @staticmethod
     def hasDRS(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.static.hasDRS
         else:
             return -1
@@ -1009,7 +1115,7 @@ class ACLIB:
 
     @staticmethod
     def hasERS(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.static.hasERS
         else:
             return -1
@@ -1032,7 +1138,7 @@ class ACLIB:
 
     @staticmethod
     def isERSCharging(car=0):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.static.ersIsCharging
         else:
             return -1
@@ -1051,7 +1157,7 @@ class ACLIB:
 
     @staticmethod
     def ERSPowerControllerCount(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if form:
                 return form.format(info.static.ersPowerControllerCount)
             return info.static.ersPowerControllerCount
@@ -1060,7 +1166,7 @@ class ACLIB:
 
     @staticmethod
     def engineBrakeSettingsCount(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if form:
                 return form.format(info.static.engineBrakeSettingsCount)
             return info.static.engineBrakeSettingsCount
@@ -1069,7 +1175,7 @@ class ACLIB:
 
     @staticmethod
     def hasKERS(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.static.hasKERS
         else:
             return -1
@@ -1094,7 +1200,7 @@ class ACLIB:
 
     @staticmethod
     def KERSMaxJ(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if form:
                 return form.format(info.static.kersMaxJ)
             return info.static.kersMaxJ
@@ -1103,7 +1209,7 @@ class ACLIB:
 
     @staticmethod
     def ABS(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.physics.abs
         else:
             return -1
@@ -1136,7 +1242,7 @@ class ACLIB:
 
     @staticmethod
     def getRPMMax(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             val = 8000
             if info.static.maxRpm:
                 val = info.static.maxRpm
@@ -1148,7 +1254,7 @@ class ACLIB:
 
     @staticmethod
     def getFuel(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if form:
                 return form.format(info.physics.fuel)
             return info.physics.fuel
@@ -1157,7 +1263,7 @@ class ACLIB:
 
     @staticmethod
     def getMaxFuel(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if form:
                 return form.format(info.static.maxFuel)
             return info.static.maxFuel
@@ -1186,9 +1292,16 @@ class ACLIB:
 
     @staticmethod
     def getClassPosition(car, form=None):
+        pos = 1
+        car_class = ACLIB.CARS[car].car_class
+        car_pos = ACLIB.CARS[car].position
+        for c in ACLIB.CARS:
+            if c.car_class == car_class and c.position > car_pos:
+                pos += 1
+
         if form:
-            return form.format(-1)
-        return -1  # TODO
+            return form.format(pos)
+        return pos
 
     @staticmethod
     def getLocation(car=0, form=None):
@@ -1198,7 +1311,7 @@ class ACLIB:
 
     @staticmethod
     def getPenaltyTime(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if form:
                 return form.format(info.graphics.penaltyTime)
             return info.graphics.penaltyTime
@@ -1215,7 +1328,7 @@ class ACLIB:
 
     @staticmethod
     def isAIDriven(car):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.physics.isAIControlled
         else:
             return -1
@@ -1247,14 +1360,14 @@ class ACLIB:
 
     @staticmethod
     def isPitLimiterOn(car=0):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.physics.pitLimiterOn
         else:
             return -1
 
     @staticmethod
     def mandatoryPitStopDone(car=0):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.graphics.mandatoryPitDone
         else:
             return -1
@@ -1276,16 +1389,17 @@ class ACLIB:
 
     @staticmethod
     def getTyreCompund(car=0, symbol=True):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
+            compound = info.graphics.tyreCompound
             if symbol:
-                info.graphics.tyreCompound.split("_")[-1].upper()
-            return info.graphics.tyreCompound
+                return compound[compound.find("(") + 1:compound.find(")")]
+            return compound
         else:
             return -1
 
     @staticmethod
     def getCamberRad(car, tyre=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if form:
                 return form.format(info.physics.camberRAD[tyre])
             return info.physics.camberRAD[tyre]
@@ -1294,7 +1408,7 @@ class ACLIB:
 
     @staticmethod
     def getMaxSuspensionTravel(car, tyre=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if form:
                 return form.format(info.static.suspensionMaxTravel[tyre])
             return info.static.suspensionMaxTravel[tyre]
@@ -1303,7 +1417,7 @@ class ACLIB:
 
     @staticmethod
     def getSuspensionTravel(car, tyre=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if form:
                 form.format(info.physics.suspensionTravel[tyre])
             return info.physics.suspensionTravel[tyre]
@@ -1312,14 +1426,14 @@ class ACLIB:
 
     @staticmethod
     def getTyresOut(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             return info.physics.numberOfTyresOut
         else:
             return -1
 
     @staticmethod
     def getTyreWearValue(car, tyre=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if form:
                 return form.format(info.physics.tyreWear[tyre])
             return info.physics.tyreWear[tyre]
@@ -1328,7 +1442,7 @@ class ACLIB:
 
     @staticmethod
     def getTyreWear(car, tyre=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if form:
                 return form.format((ACLIB.getTyreWearValue(tyre) - 94) * 16.6)
             return (ACLIB.getTyreWearValue(tyre) - 94) * 16.6
@@ -1337,7 +1451,7 @@ class ACLIB:
 
     @staticmethod
     def getTyreDirtyLevel(car=0, tyre=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if form:
                 form.format(info.physics.tyreDirtyLevel[tyre])
             return info.physics.tyreDirtyLevel[tyre]
@@ -1346,7 +1460,7 @@ class ACLIB:
 
     @staticmethod
     def getTyreTemp(car, tyre=0, loc="m", form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if loc == "i":
                 if form:
                     form.format(info.physics.tyreTempI[tyre])
@@ -1378,7 +1492,7 @@ class ACLIB:
 
     @staticmethod
     def getTyrePressure(car, tyre=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if form:
                 return form.format(info.physics.wheelsPressure[tyre])
             return info.physics.wheelsPressure[tyre]
@@ -1389,7 +1503,7 @@ class ACLIB:
 
     @staticmethod
     def getBrakeTemperature(car, tyre=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             if form:
                 return form.format(info.physics.brakeTemp[tyre])
             return info.physics.brakeTemp[tyre]
@@ -1400,7 +1514,7 @@ class ACLIB:
 
     @staticmethod
     def getPrevCarDiffTimeDist(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             time = 0
             dist = 0
             track_len = ACLIB.getTrackLength()
@@ -1417,7 +1531,7 @@ class ACLIB:
                     break
             if form:
                 if dist > track_len:
-                    laps = dist / track_len
+                    laps = dist / max(track_len, 1)
                     if laps > 1:
                         return "+{:3.1f}".format(laps) + " Laps"
                     else:
@@ -1437,7 +1551,7 @@ class ACLIB:
 
     @staticmethod
     def getNextCarDiffTimeDist(car=0, form=None):
-        if car == 0:
+        if car == ACLIB.getFocusedCar():
             time = 0
             dist = 0
             track_len = ACLIB.getTrackLength()
@@ -1454,7 +1568,7 @@ class ACLIB:
                     break
             if form:
                 if dist > track_len:
-                    laps = dist / track_len
+                    laps = dist / max(track_len, 1)
                     if laps > 1:
                         return "-{:3.1f}".format(laps) + " Laps"
                     else:
