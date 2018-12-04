@@ -31,7 +31,7 @@ class Tower(ACApp):
         self.entries = {}
         self.time = 0
 
-        self.max_rows = max(24, ACLIB.getCarsCount())
+        self.max_rows = min(24, ACLIB.getCarsCount())
         self.row_width = 432
         self.row_height = 32
         self.col_width = 6
@@ -158,20 +158,11 @@ class TowerEntry:
         self.time.update(delta)
         self.info.update(delta)
 
-        if not self.is_init:
-            self.is_init = True
-
-            c = self.name.background_color
-            start = Color(0, 0, 0, 0)
-            step = Color(c.r / 1000, c.g / 1000, c.b / 1000, c.a / 1000)
-            stop = c
-            self.name.addAnimation(Animation(self.name, "background_color", start, step, stop))
-
         self.position.setText(str(self.car.position))
         self.name.setText(pad(self.car.number) + " | " + self.car.player_nick)
 
         if self.car.number == ACLIB.getFocusedCar():
-            self.name.setBackgroundColor(Color(1, 0.5, 0, 0.75))
+            self.name.setBackgroundColor(Color(0.1, 0.15, 0.2, 1))
         else:
             self.name.setBackgroundColor(Color(0, 0, 0, 0.75))
 
@@ -182,6 +173,15 @@ class TowerEntry:
                 self.time.setText("+" + formatTime(self.car.next_time * 1000))
         else:
             self.time.setText(" " + formatTime(self.car.lap_time))
+
+        if not self.is_init:
+            self.is_init = True
+
+            c = self.name.background_color
+            start = Color(0, 0, 0, 0)
+            step = Color(c.r / 1000, c.g / 1000, c.b / 1000, c.a / 1000)
+            stop = c
+            self.name.addAnimation(Animation(self.name, "background_color", start, step, stop))
 
         if self.car.in_pit:
             self.info.setText("PIT")

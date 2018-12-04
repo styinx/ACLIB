@@ -1,56 +1,30 @@
-from source.color import Color
-from source.animation import Animation
-from source.gui import ACApp, ACLabel
 from source.aclib import ACLIB
-from source.math import Rect
-from source.gl import rect
+from source.gui import ACApp, ACGrid, ACLabel
+from source.widget import ACShiftLightBarWidget, ACShiftLightWidget, ACTwinShiftLightWidget
 
 
 class Test(ACApp):
     def __init__(self):
-        super().__init__("ACLIB_Test", 200, 200, 32, 32)
+        super().__init__("ACLIB_Test", 200, 200, 512, 96)
 
         self.hideDecoration()
 
-        self.loops = 0
+        self.grid = ACGrid(self, 5, 5)
 
-        self.my_widget = ACLabel("", self, self, text_color=Color(1, 0, 0, 1))
+        self.s1 = ACShiftLightWidget()
+        self.s2 = ACTwinShiftLightWidget()
+        self.s3 = ACShiftLightBarWidget()
+        self.text = ACLabel("", self, font_size=16, bold=1, text_h_alignment="center")
+
+        self.grid.addWidget(self.s1, 0, 0, 5, 1)
+        self.grid.addWidget(self.s2, 0, 2, 5, 1)
+        self.grid.addWidget(self.text, 2, 2, 1, 1)
+        self.grid.addWidget(self.s3, 0, 4, 5, 1)
 
     def update(self, delta):
         super().update(delta)
 
-        self.my_widget.setText("widget text: " + str(delta))
-
-        # blue
-        if ACLIB.CARS[0].flag == 1:
-            start = Color(0, 0, 0, 1)
-            step = Color(0, 0, 0.01, 0)
-            stop = Color(0, 0, 1, 1)
-            self.addAnimation(Animation(self, "background_color", start, step, stop, direction="Alternate"))
-
-        if self.loops % 100 == 0:
-            start = Color(0, 0, 0, 1)
-            step = Color(0.05, 0.05, 0, 0)
-            stop = Color(1, 1, 0, 1)
-            self.addAnimation(Animation(self, "background_color", start, step, stop, 0, "Alternate"))
-            self.setBackgroundColor(Color(1, 1, 0))
-
-        if self.loops % 500 == 0:
-            x, y = self.getPos()
-            w, h = self.getSize()
-            start = Rect().set(x, y, w, h)
-            step = Rect().set(0, 0, 1, 1)
-            stop = Rect().set(x, y, w + 25, h + 25)
-            self.addAnimation(Animation(self, "geometry", start, step, stop, 0, "Alternate"))
-
-        if self.loops == 1000:
-            self.loops = 0
-
-        self.loops += 1
+        self.text.setText("{:4.0f}".format(ACLIB.CARS[0].rpm))
 
     def render(self, delta):
         super().render(delta)
-
-        r = self.geometry
-        rect(r=Rect(x=0, y=r.h + 5, w=r.w, h=5))
-        rect(r=Rect(x=0, y=r.h + 5, w=r.w, h=5), color=Color(1, 0, 0))
