@@ -15,7 +15,7 @@ class ACDeltaBarWidget(ACWidget):
         self.delta_val = 0
 
     def update(self, delta):
-        self.delta = ACLIB.CARS[0].lap_diff
+        self.delta = ACLIB.CARS[ACLIB.getFocusedCar()].lap_diff
         self.delta_val = max(0.0, log10(abs(delta) + 1)) * self.geometry.w / 2
         return self
 
@@ -43,12 +43,12 @@ class ACFuelWidget(ACGrid):
 
         self.fuel_level.color = Color(1, 1, 0)
         self.fuel_level.background_color = Color(0.75, 0.75, 0.75, 0.5)
-        self.fuel_level.max_val = ACLIB.getMaxFuel(0)
+        self.fuel_level.max_val = ACLIB.getMaxFuel(ACLIB.getFocusedCar())
 
         self.addWidget(self.fuel_level, 0, 0, 1, 3)
 
     def update(self, delta):
-        self.fuel_level.value = ACLIB.CARS[0].fuel
+        self.fuel_level.value = ACLIB.CARS[ACLIB.getFocusedCar()].fuel
 
     def render(self, delta):
         super().render(delta)
@@ -56,8 +56,48 @@ class ACFuelWidget(ACGrid):
         self.fuel_level.render(delta)
 
 
+# Mirrored single bar elements
 class ACTwinShiftLightWidget(ACWidget):
-    def __init__(self, number_of_lights=5, texture=None):
+    def __init__(self, number_of_lights=10, texture=None):
+        super().__init__(None)
+
+        self.lights = number_of_lights
+        self.middle_gap = 100
+        self.texture = texture
+        self.rpm = 0
+        self.max_rpm = 0
+
+    def update(self, delta):
+        car = ACLIB.getFocusedCar()
+        self.rpm = ACLIB.CARS[car].rpm
+        self.max_rpm = ACLIB.CARS[car].max_rpm
+        return self
+
+    def render(self, delta):
+        x, y = self.getPos()
+        w, h = self.getSize()
+        light_w, light_h = (w - self.middle_gap) / 4 / self.lights, h
+        pos = x
+        progress = min(self.rpm / self.max_rpm, 1)
+
+        for i in range(0, min(self.lights, int(progress * self.lights))):
+            col = Color(2 * (i * progress / self.lights), 2 * (1 - (i * progress / self.lights)), 0)
+            rect(pos, y, light_w, light_h, col)
+            rect(pos, y, light_w, light_h, Color(0.25, 0.25, 0.25), False)
+            pos += light_w * 2
+
+        pos = x + w - light_w
+
+        for i in range(0, min(self.lights, int(progress * self.lights))):
+            col = Color(2 * (i * progress / self.lights), 2 * (1 - (i * progress / self.lights)), 0)
+            rect(pos, y, light_w, light_h, col)
+            rect(pos, y, light_w, light_h, Color(0.25, 0.25, 0.25), False)
+            pos -= light_w * 2
+
+
+# Single bar elements
+class ACShiftLightWidget(ACWidget):
+    def __init__(self, number_of_lights=15, texture=None):
         super().__init__(None)
 
         self.lights = number_of_lights
@@ -66,28 +106,48 @@ class ACTwinShiftLightWidget(ACWidget):
         self.max_rpm = 0
 
     def update(self, delta):
-        self.rpm = ACLIB.CARS[0].rpm
-        self.max_rpm = ACLIB.CARS[0].max_rpm
+        car = ACLIB.getFocusedCar()
+        self.rpm = ACLIB.CARS[car].rpm
+        self.max_rpm = ACLIB.CARS[car].max_rpm
         return self
 
     def render(self, delta):
         x, y = self.getPos()
         w, h = self.getSize()
-        middle_gap = 100
-        light_w, light_h = (w - middle_gap) / 4 / self.lights, h
+        light_w, light_h = w / 2 / self.lights, h
         pos = x
+        progress = min(self.rpm / self.max_rpm, 1)
 
-        for i in range(0, self.lights):
-            rect(pos, y, light_w, light_h)
-            rect(pos, y, light_w, light_h, Color(0, 0, 0), False)
-            pos += light_w * 2
+        for i in range(0, min(self.lights, int(progress * self.lights))):
+            col = Color(2 * (i * progress / self.lights), 2 * (1 - (i * progress / self.lights)), 0)
+            rect(pos, y, light_w, light_h, col)
+            rect(pos, y, light_w, light_h, Color(0.25, 0.25, 0.25), False)
+            pos += light_w * 2 + light_w / self.lights
 
-        pos = x + w - light_w
 
-        for i in range(0, self.lights):
-            rect(pos, y, light_w, light_h)
-            rect(pos, y, light_w, light_h, Color(0, 0, 0), False)
-            pos -= light_w * 2
+# Continuous bar
+class ACShiftLightBarWidget(ACWidget):
+    def __init__(self, texture=None):
+        super().__init__(None)
+
+        self.texture = texture
+        self.rpm = 0
+        self.max_rpm = 0
+
+    def update(self, delta):
+        car = ACLIB.getFocusedCar()
+        self.rpm = ACLIB.CARS[car].rpm
+        self.max_rpm = ACLIB.CARS[car].max_rpm
+        return self
+
+    def render(self, delta):
+        x, y = self.getPos()
+        w, h = self.getSize()
+
+        progress = min(self.rpm / self.max_rpm, 1)
+        progress_color = Color(2 * progress, 2 * (1 - progress), 0)
+        quad(x, y, w * progress, h, [Color(0, 1, 0), Color(0, 1, 0), progress_color, progress_color])
+        rect(x, y, w * progress, h, Color(0.25, 0.25, 0.25), False)
 
 
 class ACTyreWidget(ACWidget):
@@ -100,10 +160,12 @@ class ACTyreWidget(ACWidget):
         self.dirt = [0, 0, 0, 0]
 
     def update(self, delta):
-        self.temp = ACLIB.CARS[0].tyre_temp
-        self.press = ACLIB.CARS[0].tyre_pressure
-        self.wear = ACLIB.CARS[0].tyre_wear
-        self.dirt = ACLIB.CARS[0].tyre_dirt
+        car = ACLIB.getFocusedCar()
+        self.temp = ACLIB.CARS[car].tyre_temp
+        self.press = ACLIB.CARS[car].tyre_pressure
+        self.wear = ACLIB.CARS[car].tyre_wear
+        self.dirt = ACLIB.CARS[car].tyre_dirt
+        return self
 
     def render(self, delta):
         t_w, t_h = 24, 34
@@ -217,14 +279,16 @@ class ACTyreWidget(ACWidget):
         quad(colors=colors2, r=base + Rect(t_w / 2))
         quad(colors=colors3, r=base + Rect(y=t_h / 2))
         quad(colors=colors4, r=base + Rect(t_w / 2, t_h / 2))
-
         return self
 
 
 def tyreTempColor(temp):
-    r = 0.05 * (temp - 120) + 1  # 80
-    g = -0.00125 * ((temp - 90) ** 2) + 1  # 70 | 90 | 110
-    b = -0.05 * (temp - 60) + 1  # 110
+    c = ACLIB.CARS[ACLIB.getFocusedCar()]
+    mid = c.tyre_ideal_temp_min + (c.tyre_ideal_temp_max - c.tyre_ideal_temp_min) / 2
+
+    r = 0.025 * (temp - c.tyre_ideal_temp_max) + 0.3
+    g = -0.00125 * ((temp - mid) ** 2) + 1
+    b = -0.025 * (temp - c.tyre_ideal_temp_min) + 0.3
     return Color(r, g, b)
 
 
