@@ -20,13 +20,5 @@ class LIB_EVENT:
     ON_FLAG_CHANGED = 7
     ON_PIT_ENTERED = 8
     ON_PIT_LEFT = 9
-
-
-# class EventDispatcher:
-#     events = {}
-#
-#     def addEvent(self, name, event):
-#         EventDispatcher.events[name] = event
-#
-#     def dispatchEvent(self, name):
-#         EventDispatcher.events[name]()
+    ON_COMPOUND_CHANGED = 10
+    ON_LAP_INVALIDATED = 11
