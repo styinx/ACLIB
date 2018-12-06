@@ -140,3 +140,14 @@ def interpolateHSV(start, stop, steps):
         colors.append(Color(round(r, 2), round(g, 2), round(b, 2), round(a, 2)))
 
     return colors
+
+
+TRANSPARENT = Color(0, 0, 0, 0)
+BLACK = Color(0, 0, 0)
+BLACK50 = Color(0, 0, 0, 0.5)
+BLUE = Color(0, 0, 1)
+GREEN = Color(0, 1, 0)
+CYAN = Color(0, 1, 1)
+RED = Color(1, 0, 0)
+MAGENTA = Color(1, 0, 1)
+YELLOW = Color(1, 1, 0)
