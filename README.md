@@ -2,15 +2,20 @@
 
 _Assetto Corsa App Library_
 
+<br>
+
 ## Features
 
 - Assetto Corsa GUI
 - Extensible Widget Collection
+- Car Data in one place
 - Animations
 - ~~Overhead detection~~
 - ~~SQLite3 Database Connection~~
 - GUI Events / ACLIB Events
-- Realtime App Configuration 
+- Realtime App Configuration and Stylesheets
+
+<br> 
 
 ## Install
 
@@ -28,6 +33,7 @@ _Assetto Corsa App Library_
   - run Assetto Corsa
   - enable ACLIB in the settings
   
+<br>
 
 ## Getting Started
 
@@ -53,8 +59,7 @@ class MyNewApp(ACApp):
     def __init__(self):
         super().__init__("MyCustom App Name", 0, 0, 200, 200)
         
-        self.my_widget = ACLabel("", self, self)
-        
+my_widget,         
     # update is called in 'acUpdate(delta)'
     def update(self, delta):
         super().update(delta)
@@ -71,9 +76,11 @@ class MyNewApp(ACApp):
 Afterward, you can extend the app with widgets and custom elements.
 Please note, that you can look into existing apps to see how to create a new app.
 
+<br>
+
 ## Features in Detail
 
-**Assetto Corsa GUI**:
+###Assetto Corsa GUI:
 
 - Composite Model wrapped around AC GUI elements
 - Layout Elements (grid, box, ...)
@@ -112,25 +119,74 @@ def acUpdate(delta):
 
 ---
 
-**Widget Collection**:
+<br>
+
+###Widget Collection:
 
 - GUI Widgets (progress bar, ...)
 - Car Widgets (tyres, shift indicators, fuel, ...)
 
 ---
 
-**Animations**:
+<br>
 
-- Animations for supported classes
+###Car Data in one place:
 
-Important:
-- the property that is changed in the animation requires the implementation of the following class methods:
+- Data from all cars on the grid is updated and saved in the Car class.
+- Common data fields like distance to next car is managed here.
+- Reimplementation of those fields is therefore not necessary.
+- Managed Fields:
+    - gear, speed, rpm
+    - position, class position, benefit (gained positions per lap) 
+    - location, fuel, flag, pit status, penalties, 
+    - other car distances and times (absolute and relative)
+    - lap data (fastest km/mini sector/sector, current lap performance)
+    - fuel per lap/sector/mini/km sector, estimated laps/sectors/mini sectors/km from fuel
+    - tyre information (temperature, pressure, dirt, compound), also ideal temperature and pressure
+    - and more ... 
+- Session information is also stored:
+    - fastest km/mini sector/sector/lap
+    - session time
+---
+
+<br>
+
+###Animations:
+
+- Animations are supported for specific classes.
+- These classes require the implementation of the following class methods:
     - \_\_add__ (val + other)
     - \_\_imul__ (val *= other)
     - \_\_ne__ (val != other)
     - \_\_eq__ (val == other)
+    
+A supported animation class looks like this:
+```python
+class Color:
+    def __init__(self, r, g, b, a=1.0):
+r, g, b, a, 
+    def __add__(self, other):
+        return Color(max(min(self.r + other.r, 1), 0),
+                     max(min(self.g + other.g, 1), 0),
+                     max(min(self.b + other.b, 1), 0),
+                     max(min(self.a + other.a, 1), 0))
+     
+    def __imul__(self, other):
+        self.r *= other
+        self.g *= other
+        self.b *= other
+        self.a *= other
+        return self
 
-Example:
+    def __eq__(self, other):
+        return self.r == other.r and self.g == other.g and self.b == other.b and self.a == other.a
+
+    def __ne__(self, other):
+        return not (self == other)
+```
+
+
+An applied animation looks like this:
 ```python
 from source.color import Color
 from source.animation import Animation
@@ -154,7 +210,7 @@ my_widget.addAnimation(my_forward_color_animation)
 my_widget.addAnimation(my_alternate_color_animation)
 ```
 
-![Animation](https://github.com/styinx/ACLIB/blob/master/images/animation.gif "Animation")
+The following animation produces the animation shown in the image below:
 ```python
 from source.color import Color
 from source.math import Rect
@@ -179,37 +235,62 @@ def update(self, delta):
         self.addAnimation(Animation(self, "geometry", start, step, stop, 0, "Alternate"))
 
     if self.loops == 1000:
-        self.loops = 0
-
+loops, 
     self.loops += 1
 ```
 
+![Animation](https://github.com/styinx/ACLIB/blob/master/images/animation.gif "Animation")
+
 ---
 
-**~~Overhead Detection~~**:
+<br>
+
+###~~Overhead Detection~~:
 
 - ~~Based on the systems performance the apps used with ACLIB can suspend/resume expensive calculations.~~
 ---
 
-**~~SQLite3 Database~~**:
+<br>
+
+###~~SQLite3 Database~~:
 
 - ~~useful to store cross sessions or other more complex data~~
 
 ---
 
-**GUI Events / ACLIB Events**:
+<br>
+
+###GUI Events / ACLIB Events:
 
 - Ingame events can trigger custom functions
 - Examples: Position change, Lap change, ...
 
 ---
 
-**Realtime App Configuration**:
+###Realtime App Configuration (and Stylesheets):
 
 - apps can be styled with configuration
 - changes are applied in real time without reloading
 - enables app customization without altering code
+- stylesheets are not yet working
 
 ![Realtime Config](https://github.com/styinx/ACLIB/blob/master/images/config.gif "Realtime Config")
 
 ---
+
+##Default Apps in ACLIB
+
+Driver App:
+- Shows the basic car and driver information.
+
+![Driver](https://github.com/styinx/ACLIB/blob/master/images/driver.png "Driver App")
+
+Tower App:
+- Shows current standings.
+
+![Tower](https://github.com/styinx/ACLIB/blob/master/images/tower.png "Tower App")
+
+Notification App:
+- Notifies driver when events occur.
+- yellow flag, faster car behind, position gained/lost, penalty
+
