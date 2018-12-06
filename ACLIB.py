@@ -8,17 +8,20 @@ def acMain(version):
     global init, apps, loops
 
     init = False
-    loops = 50
+    loops = 500
     apps = []
 
     ACLIB.setup()
 
     for module in os.listdir("apps/python/ACLIB/apps/"):
-        module = "apps." + module[:module.rfind(".")]
-        if module not in sys.modules.keys():
-            importlib.import_module(module)
-        class_init = getattr(sys.modules[module], module[module.find("_") + 1:])
-        apps.append(class_init())
+        try:
+            module = "apps." + module[:module.rfind(".")]
+            if module not in sys.modules.keys():
+                importlib.import_module(module)
+            class_init = getattr(sys.modules[module], module[module.find("_") + 1:])
+            apps.append(class_init())
+        except Exception as e:
+            ACLIB.CONSOLE("Module '" + module + "' made some problems: " + str(e))
 
 
 def acUpdate(delta):
