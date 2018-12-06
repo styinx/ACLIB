@@ -1,7 +1,7 @@
 from source.animation import Animation
 from source.color import Color
 from source.math import Rect
-from source.gui import ACApp, ACGrid, ACLabel
+from source.gui import ACApp, ACLabel
 from source.aclib import ACLIB, SESSION, formatTime, pad
 from source.gl import rect, Texture
 from source.event import LIB_EVENT
@@ -45,17 +45,19 @@ class Tower(ACApp):
                 self.show_classes = True
                 break
 
+        x, y = 0, 0
         for car in ACLIB.CARS:
             x = int((car.position - 1) / self.max_rows) * self.row_width
             y = (car.position - 1) % self.max_rows * self.row_height
             self.entries[car.number] = TowerEntry(x, y, self.row_width, self.row_height, self, car.number,
                                                   self.show_classes)
-            self.entries[car.number].setPos(0, (car.position - 1) % self.max_rows * self.row_height)
+            self.entries[car.number].setPos()
             car.setEvent(LIB_EVENT.ON_POSITION_CHANGED, self.swap)
 
     def swap(self, car_index):
         car_entry = self.entries[car_index]
-        car_entry.setPos(0, (ACLIB.CARS[car_index].position - 1) % self.max_rows * self.row_height)
+        car_entry.y = (ACLIB.CARS[car_index].position - 1) % self.max_rows * self.row_height
+        car_entry.setPos()
 
     def update(self, delta):
         super().update(delta)
@@ -64,15 +66,10 @@ class Tower(ACApp):
             self.entries[entry].update(delta)
 
     def render(self, delta):
-        if self.render_timer >= self.render_time:
-            super().render(delta)
+        super().render(delta)
 
-            for entry in self.entries:
-                self.entries[entry].render(delta)
-
-            self.render_timer = 0
-        else:
-            self.render_timer += delta
+        for entry in self.entries:
+            self.entries[entry].render(delta)
 
     @staticmethod
     def getClassColor(class_name):
@@ -117,7 +114,8 @@ class TowerEntry:
         self.y = y
         self.w = w
         self.h = h
-        self.benefit_marker = True
+        self.timeout = 3
+        self.timer = 0
         self.car_index = car_index
         self.car = ACLIB.CARS[self.car_index]
 
@@ -138,21 +136,37 @@ class TowerEntry:
             self.position.setBackgroundColor(Tower.getClassColor(self.car.car_class))
         self.position.setBackgroundTexture(Texture("apps/python/ACLIB/resources/tower_position_background.png"))
         self.car_class.setBackgroundTexture(self.car.car_badge)
-
-        self.car.setEvent(LIB_EVENT.ON_LAP_CHANGED, self.reset)
         self.name.onClick(changeCar, car_index)
 
-    def reset(self, car_index):
-        self.benefit_marker = True
+    def setPos(self):
+        self.timer = 0
+        self.info.animation = None
+        x, y = self.x, self.y
+        self.position.setGeometry(Rect(x, y, 32, 30))
+        self.car_class.setGeometry(Rect(x + 32, y, 32, 30))
+        self.name.setGeometry(Rect(x + 64, y, 240, 30))
+        self.time.setGeometry(Rect(x + 304, y, 96, 30))
+        self.info.setGeometry(Rect(x + 400, y, 32, 30))
 
-    def setPos(self, x, y):
-        self.position.setGeometry(Rect(0, y, 32, 30))
-        self.car_class.setGeometry(Rect(32, y, 32, 30))
-        self.name.setGeometry(Rect(64, y, 240, 30))
-        self.time.setGeometry(Rect(304, y, 96, 30))
-        self.info.setGeometry(Rect(400, y, 32, 30))
+        if self.car.benefit > 0:
+            start = Color(0, 0, 0, 1)
+            step = Color(0, 0.01, 0, 0)
+            stop = Color(0, 1, 0, 1)
+            self.info.setText("+" + self.car.benefit)
+            self.info.addAnimation(Animation(self.info, "background_color", start, step, stop, direction="Alternate"))
+        elif self.car.benefit < 0:
+            start = Color(0, 0, 0, 1)
+            step = Color(0.01, 0, 0, 0)
+            stop = Color(1, 0, 0, 1)
+            self.info.setText(self.car.benefit)
+            self.info.addAnimation(Animation(self.info, "background_color", start, step, stop, direction="Alternate"))
 
     def update(self, delta):
+        if self.timer > self.timeout:
+            self.info.animation = None
+        else:
+            self.timer += delta
+
         self.position.update(delta)
         self.name.update(delta)
         self.time.update(delta)
@@ -162,7 +176,7 @@ class TowerEntry:
         self.name.setText(pad(self.car.number) + " | " + self.car.player_nick)
 
         if self.car.number == ACLIB.getFocusedCar():
-            self.name.setBackgroundColor(Color(0.1, 0.15, 0.2, 1))
+            self.name.setBackgroundColor(Color(0.1, 0.3, 0.4, 1))
         else:
             self.name.setBackgroundColor(Color(0, 0, 0, 0.75))
 
@@ -193,29 +207,8 @@ class TowerEntry:
                 self.info.setBackgroundColor(Color(1, 0.25, 0, 1))
 
             else:
-                if self.car.benefit > 0 and self.benefit_marker:
-                    if not self.info.hasAnimation():
-                        start = Color(0, 0, 0, 1)
-                        step = Color(0, 0.01, 0, 0)
-                        stop = Color(0, 1, 0, 1)
-                        self.info.addAnimation(Animation(self.info, "background_color", start, step, stop,
-                                                         direction="Alternate"))
-                        self.benefit_marker = False
-                    self.info.setText("+" + str(self.car.benefit))
-
-                elif self.car.benefit < 0 and self.benefit_marker:
-                    if not self.info.hasAnimation():
-                        start = Color(0, 0, 0, 1)
-                        step = Color(0.01, 0, 0, 0)
-                        stop = Color(1, 0, 0, 1)
-                        self.info.addAnimation(Animation(self.info, "background_color", start, step, stop,
-                                                         direction="Alternate"))
-                    self.benefit_marker = False
-                    self.info.setText(str(self.car.benefit))
-
-                else:
-                    self.info.setText("")
-                    self.info.setBackgroundColor(Color(0, 0, 0, 0))
+                self.info.setText("")
+                self.info.setBackgroundColor(Color(0, 0, 0, 0))
 
         return self
 

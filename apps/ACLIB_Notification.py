@@ -51,7 +51,7 @@ class Notification(ACApp):
             start = Color(0, 0, 0, 0.5)
             step = Color(0.1, 0.1, 0, 0)
             stop = Color(1, 1, 0, 0.5)
-            self.addAnimation(Animation(self, "background_color", start, step, stop, direction="Alternate"))
+            self.addAnimation(Animation(self, "background_color", start, step, stop, 0, "Alternate"))
             self.text.setText("Yellow Flag ahead!").setTextColor(Color(0, 0, 0))
         elif self.car.flag == 3 or self.car.flag == 6:
             self.setBackgroundColor(Color(1, 0.75, 0, 0.5))
@@ -78,9 +78,9 @@ class Notification(ACApp):
         self.reset()
 
         self.setBackgroundColor(Color(0, 0.75, 0, 0.5))
-        next_car = formatTimeCar(self.car.next_time, self.car.next_dist, ACLIB.getTrackLength())
+        prev_car = formatTimeCar(self.car.next_time, self.car.next_dist, ACLIB.getTrackLength())
 
         if self.car.position == 1:
             self.text.setText("You gained a position!\nNo car ahead, you are first!")
         else:
-            self.text.setText("You gained a position!\nNext car is " + next_car + " ahead")
+            self.text.setText("You gained a position!\nNext car is " + prev_car + " ahead")

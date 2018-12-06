@@ -1,9 +1,10 @@
 from time import strftime, localtime
-from source.gui import ACApp, ACLabel, ACGrid, ACLabelPair
+from source.gui import ACApp, ACLabel, ACGrid, ACLabelPair, ACWidget
 from source.widget import ACDeltaBarWidget, ACTyreWidget, ACFuelWidget, ACShiftLightBarWidget
 from source.aclib import ACLIB, SESSION, formatTime, formatTimeCar, formatDistance, formatGear, CarIdealData
 from source.gl import Texture
 from source.color import Color
+
 # import sqlite3
 
 DRIVER_BG_COLOR = Color(0.1, 0.1, 0.1, 0.75)
@@ -24,7 +25,7 @@ class Driver(ACApp):
     def __init__(self):
         super().__init__("ACLIB_Driver", 200, 200, 576, 224)
 
-        self.hideDecoration().setBackgroundColor(Color(0.2, 0.2, 0.2, 0.75))
+        self.hideDecoration().setBackgroundColor(Color(0, 0, 0, 0))
 
         self.car = ACLIB.CARS[ACLIB.getFocusedCar()]
         self.grid = ACGrid(self, 18, 8)
@@ -37,10 +38,12 @@ class Driver(ACApp):
         self.status_tex = Texture("apps/python/ACLIB/resources/status.png")
         self.shift_tex = Texture("apps/python/ACLIB/resources/shift.png")
 
-        self.lap = ACLabel("", self, font_size=20, italic=1, bold=1, background_color=DRIVER_BG_COLOR)
-        self.pos = ACLabel("", self, font_size=20, italic=1, bold=1, background_color=DRIVER_BG_COLOR)
-        self.last = ACLabel("", self, font_size=16, bold=1, background_color=DRIVER_BG_COLOR, text_h_alignment="center")
-        self.best = ACLabel("", self, font_size=16, bold=1, background_color=DRIVER_BG_COLOR, text_h_alignment="center")
+        self.lap = ACLabel("", self, font_size=20, italic=1, bold=1, background_color=DRIVER_BG_COLOR,
+                           text_h_alignment="center")
+        self.pos = ACLabel("", self, font_size=20, italic=1, bold=1, background_color=DRIVER_BG_COLOR,
+                           text_h_alignment="center")
+        self.last = ACLabel("", self, font_size=16, bold=1, background_color=DRIVER_BG_COLOR)
+        self.best = ACLabel("", self, font_size=16, bold=1, background_color=DRIVER_BG_COLOR)
 
         self.gear = ACLabel("", self, font_size=100, bold=1, background_color=DRIVER_BG_COLOR,
                             text_h_alignment="center")
@@ -105,8 +108,6 @@ class Driver(ACApp):
         self.grid.addWidget(self.next_time, 12, 6, 4, 1)
 
         self.grid.updateSize()
-
-        self.readConfig("apps/python/ACLIB/config/ACLIB_Driver.ini")
 
     def init(self):
         if ACLIB.hasDRS(self.car.number):
@@ -211,7 +212,7 @@ class Driver(ACApp):
         self.gear.setText(formatGear(self.car.gear))
         self.speed.setText("{:3.0f} km/h".format(self.car.speed))
         self.local_time.setText(strftime("%H:%M:%S", localtime()))
-        self.race_time.setText(formatTime(SESSION.time_left, form="{:02d}:{:02d}.{:02d}"))
+        # self.race_time.setText(formatTime(max(SESSION.time_left, 1))) # throws division by zero ... ?
 
         self.s1.setText(formatTime(self.car.sector_time[0], "{:d}:{:02d}.{:03d}"))
         self.s2.setText(formatTime(self.car.sector_time[1], "{:d}:{:02d}.{:03d}"))
