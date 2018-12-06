@@ -80,7 +80,7 @@ Please note, that you can look into existing apps to see how to create a new app
 
 ## Features in Detail
 
-###Assetto Corsa GUI:
+### Assetto Corsa GUI:
 
 - Composite Model wrapped around AC GUI elements
 - Layout Elements (grid, box, ...)
@@ -121,7 +121,7 @@ def acUpdate(delta):
 
 <br>
 
-###Widget Collection:
+### Widget Collection:
 
 - GUI Widgets (progress bar, ...)
 - Car Widgets (tyres, shift indicators, fuel, ...)
@@ -130,7 +130,7 @@ def acUpdate(delta):
 
 <br>
 
-###Car Data in one place:
+### Car Data in one place:
 
 - Data from all cars on the grid is updated and saved in the Car class.
 - Common data fields like distance to next car is managed here.
@@ -151,7 +151,7 @@ def acUpdate(delta):
 
 <br>
 
-###Animations:
+### Animations:
 
 - Animations are supported for specific classes.
 - These classes require the implementation of the following class methods:
@@ -245,14 +245,14 @@ loops,
 
 <br>
 
-###~~Overhead Detection~~:
+### ~~Overhead Detection~~:
 
 - ~~Based on the systems performance the apps used with ACLIB can suspend/resume expensive calculations.~~
 ---
 
 <br>
 
-###~~SQLite3 Database~~:
+### ~~SQLite3 Database~~:
 
 - ~~useful to store cross sessions or other more complex data~~
 
@@ -260,14 +260,14 @@ loops,
 
 <br>
 
-###GUI Events / ACLIB Events:
+### GUI Events / ACLIB Events:
 
 - Ingame events can trigger custom functions
 - Examples: Position change, Lap change, ...
 
 ---
 
-###Realtime App Configuration (and Stylesheets):
+### Realtime App Configuration (and Stylesheets):
 
 - apps can be styled with configuration
 - changes are applied in real time without reloading
@@ -278,7 +278,7 @@ loops,
 
 ---
 
-##Default Apps in ACLIB
+## Default Apps in ACLIB
 
 Driver App:
 - Shows the basic car and driver information.
