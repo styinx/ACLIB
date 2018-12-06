@@ -374,6 +374,8 @@ class Car:
         self.speed = round(ACLIB.getSpeed(self.number), 2)
         self.traveled_distance = ACLIB.getTraveledDistance(self.number)
         self.fuel = round(ACLIB.getFuel(self.number), 2)
+        self.tc = ACLIB.getTC(self.number)
+        self.abs = ACLIB.getABS(self.number)
         self.max_fuel = round(ACLIB.getMaxFuel(self.number), 2)
         self.penalty_time = ACLIB.getPenaltyTime(self.number)
         self.lap_time = ACLIB.getCurrentLapTime(self.number)
@@ -1146,6 +1148,20 @@ class ACLIB:
             if form:
                 return form.format(info.physics.carDamage[loc])
             return info.physics.carDamage[loc]  # 0: Front, 1: Rear, 2: Left, 3: Right, 4:?
+        else:
+            return -1
+
+    @staticmethod
+    def ABS(car=0, form=None):
+        if car == ACLIB.getFocusedCar():
+            return info.physics.abs
+        else:
+            return -1
+
+    @staticmethod
+    def TC(car=0, form=None):
+        if car == ACLIB.getFocusedCar():
+            return info.physics.tc
         else:
             return -1
 
