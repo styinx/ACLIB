@@ -1,8 +1,9 @@
-from os import stat
+import sys
+from os import stat, path
 import functools
 import ac
 from source.color import Color
-from source.config import loadAppConfig
+from source.config import loadAppConfig, Config
 from source.gl import Texture, rect, texture_rect
 from source.event import GUI_EVENT
 from source.math import Rect
@@ -28,9 +29,14 @@ class Font:
         return self.bold > 0
 
 
+def props(cls):
+  return [i for i in cls.__dict__.keys() if i[:1] != '_']
+
+
 class ACWidget(object):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, app=None):
         self.ac_obj = None
+        self.app = app
         self.child = None
         self.parent = None
         self.ac_size = (0, 0)
@@ -51,7 +57,11 @@ class ACWidget(object):
             self.parent = parent
             parent.child = self
 
+            if parent.app is not None:
+                self.app = parent.app
+
             if isinstance(parent, ACApp):
+                self.app = parent
                 self.setPos((0, 0))
             elif isinstance(parent, ACWidget):
                 self.setPos(parent.getPos())
@@ -63,15 +73,30 @@ class ACWidget(object):
 
         self.on_click = None
 
+        self.loadStyle()
+
     @staticmethod
     def getPosition(obj):
         return ac.getPosition(obj)
+
+    def loadStyle(self):
+        if self.app is not None:
+            if self.app.style is not None:
+                d = self.app.style.dictionary
+                name = self.__class__.__name__
+                ac.log(str(props(ACLabel)))
+                if name in d:
+                    for option in d[name]:
+                        if option in props(getattr(sys.modules[__name__], name)):
+                            ac.console(str(self) + " " + str(option))
+                            setattr(self, option, d[name][option])
+        return self
 
     def onClick(self, func, params):
         self.on_click = functools.partial(func, param=params)
         ac.addOnClickedListener(self.ac_obj, self.on_click)
 
-    def obj(self):
+    def getObj(self):
         return self.ac_obj
 
     def getChild(self):
@@ -107,11 +132,16 @@ class ACWidget(object):
         return self
 
     def setEvent(self, event, callback):
-        self.event_callback[event] = callback
+        if event in self.event_callback:
+            self.event_callback[event].append(callback)
+        else:
+            self.event_callback[event] = []
+            self.event_callback[event].append(callback)
 
     def dispatchEvent(self, event):
         if event in self.event_callback:
-            self.event_callback[event]()
+            for callback in self.event_callback[event]:
+                callback()
 
     def getGeometry(self):
         return self.geometry
@@ -171,7 +201,7 @@ class ACWidget(object):
         elif isinstance(tex, str):
             self.background_texture = ac.newTexture(tex)
 
-        if self.ac_obj is not None:
+        if self.ac_obj is not None and isinstance(self.background_texture, Texture):
             ac.setBackgroundTexture(self.ac_obj, self.background_texture.path)
         return self
 
@@ -255,7 +285,9 @@ class ACWidget(object):
         return self.animation is not None
 
     def updateSize(self):
-        pass
+        if self.child is not None:
+            self.child.updateSize()
+        return self
 
     def update(self, delta):
         if self.background:
@@ -341,12 +373,15 @@ class ACApp(ACWidget):
         self._render_callback = None
         self._activated_callback = None
         self._dismissed_callback = None
-        self.update_timer = 0.005
+        self.update_timer = 0
         self.update_time = 0.005
-        self.render_timer = 0.005
-        self.render_time = 0.005
+        self.render_timer = 0
+        self.render_time = 0
         self.config_file = ""
         self.config_time = 0
+        self.style = None
+        self.style_file = ""
+        self.style_time = 0
 
         self._activated = self.activate
         self._dismissed = self.dismiss
@@ -366,14 +401,21 @@ class ACApp(ACWidget):
         self.drawBorder(0)
         self.setRenderCallback(self._render_callback)
 
+        self.readConfig("apps/python/ACLIB/config/" + self.app_name + ".ini")
+        self.readStyle("apps/python/ACLIB/style/" + self.app_name + ".ini")
+
     def readConfig(self, filename):
-        try:
+        if path.exists(filename):
             self.config_file = filename
             self.config_time = stat(self.config_file).st_mtime
             loadAppConfig(self, self.app_name, filename)
-        except IOError:
-            ac.console("Config file " + filename + " not found.")
+        return self
 
+    def readStyle(self, filename):
+        if path.exists(filename):
+            self.style_file = filename
+            self.style_time = stat(self.style_file).st_mtime
+            self.style = Config(filename)
         return self
 
     def configChanged(self):
@@ -469,7 +511,7 @@ class ACApp(ACWidget):
     def init(self):
         pass
 
-    def app(self):
+    def getApp(self):
         return self.ac_obj
 
     def attach(self, app):
@@ -739,8 +781,8 @@ class ACLabelPair(ACGrid):
 
 
 class ACTextWidget(ACWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self, parent=None, app=None):
+        super().__init__(parent, app)
 
         self.text = ""
         self.text_h_alignment = "center"
@@ -878,9 +920,9 @@ class ACLabel(ACTextWidget):
     def __init__(self, text, app, parent=None, font_size=12, bold=0, italic=0,
                  text_h_alignment="left", text_v_alignment="top",
                  text_color=Color(1, 1, 1, 1), background_color=Color(0, 0, 0, 0)):
-        super().__init__(parent)
+        super().__init__(parent, app)
 
-        self.ac_obj = ac.addLabel(app.app(), text)
+        self.ac_obj = ac.addLabel(app.getApp(), text)
         self.text = text
         self.font_size = font_size
         self.font_bold = bold
@@ -905,7 +947,7 @@ class ACButton(ACTextWidget):
                  text_color=Color(1, 1, 1, 1), background_color=Color(0, 0, 0, 0)):
         super().__init__(parent)
 
-        self.ac_obj = ac.addButton(app.app(), text)
+        self.ac_obj = ac.addButton(app.getApp(), text)
         self.text = text
         self.font_size = font_size
         self.font_bold = bold
@@ -952,21 +994,20 @@ class ACProgressBar(ACLabel):
         x, y = self.getPos()
         w, h = self.getSize()
 
-        if self.orientation == 0:
-            v_margin = h * self.v_margin
-            ratio = w * (self.value / self.max_val)
-            rect(x, y + v_margin, ratio, h - 2 * v_margin, self.color)
-
-            if self.border:
-                rect(x, y + v_margin, w, h - 2 * v_margin, self.border_color, False)
-        else:
-            h_margin = h * self.h_margin
-            ratio = h * (self.value / self.max_val)
-            rect(x + h_margin, y + h - ratio, w - 2 * h_margin, ratio, self.color)
-
-            if self.border:
-                rect(x + h_margin, y, w - 2 * h_margin, h, self.border_color, False)
-
+        # if self.orientation == 0:
+        #     v_margin = h * self.v_margin
+        #     ratio = w * (self.value / self.max_val)
+        #     rect(x, y + v_margin, ratio, h - 2 * v_margin, self.color)
+        #
+        #     if self.border:
+        #         rect(x, y + v_margin, w, h - 2 * v_margin, self.border_color, False)
+        # else:
+        #     h_margin = h * self.h_margin
+        #     ratio = h * (self.value / self.max_val)
+        #     rect(x + h_margin, y + h - ratio, w - 2 * h_margin, ratio, self.color)
+        #
+        #     if self.border:
+        #         rect(x + h_margin, y, w - 2 * h_margin, h, self.border_color, False)
         return self
 
 
