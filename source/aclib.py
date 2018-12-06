@@ -107,7 +107,7 @@ class SESSION:
 class Car:
     def __init__(self, number):
         self.priority = 10  # more means a higher effort to compute but more precise results
-        self.loops = 100
+        self.timer = 0
         self.initialized = False
         self.max_delta = 0.2  # 0.02
         self.last_interval = 0
@@ -158,7 +158,11 @@ class Car:
         self.rel_prev_dist = 0
         self.rel_prev_time = 0
 
-        self.performance = {}  # time difference for intervals of x
+        self.performance_location = 0
+        self.performance = 0  # time at specific location compared to last / best
+        self.lap_performance = {}
+        self.last_performance = {}
+        self.best_performance = {}
         self.lap = 0  # current lap
         self.lap_invalid = False  # 4 tyres out of track
         self.lap_diff = 0.0  # performance meter
@@ -243,7 +247,11 @@ class Car:
         self.rel_prev_dist = 0
         self.rel_prev_time = 0
 
-        self.performance = {}
+        self.performance_location = 0
+        self.performance = 0
+        self.lap_performance = {}
+        self.last_performance = {}
+        self.best_performance = {}
         self.lap = 0
         self.lap_invalid = False
         self.lap_diff = 0.0
@@ -343,13 +351,22 @@ class Car:
         self.tyre_ideal_temp_max = ideal.ideal_temp_max
 
     def setEvent(self, event, callback):
-        self.events[event] = callback
+        if event in self.events:
+            self.events[event].append(callback)
+        else:
+            self.events[event] = []
+            self.events[event].append(callback)
 
     def dispatchEvent(self, event):
         if event in self.events:
-            self.events[event](self.number)
+            for callback in self.events[event]:
+                callback(self.number)
 
     def update(self, delta):
+        if self.timer < 3:
+            self.timer += delta
+            self.init()
+
         self.gear = ACLIB.getGear(self.number)
         self.max_rpm = ACLIB.getRPMMax(self.number)
         self.rpm = ACLIB.getRPM(self.number)
@@ -361,8 +378,22 @@ class Car:
         self.penalty_time = ACLIB.getPenaltyTime(self.number)
         self.lap_time = ACLIB.getCurrentLapTime(self.number)
         self.lap_diff = ACLIB.getLapDeltaTime(self.number)
-        self.performance[self.location] = max(self.lap_time - self.last_interval, 0)
-        self.last_interval = self.lap_time
+
+        self.performance_location = round(self.location * ACLIB.getTrackLength())
+
+        if self.performance_location not in self.last_performance:
+            self.last_performance[self.performance_location] = self.speed
+
+        if self.performance_location not in self.best_performance:
+            self.best_performance[self.performance_location] = self.speed
+        else:
+            if self.lap_time < self.best_performance[self.performance_location]:
+                self.best_performance[self.performance_location] = self.speed
+
+        if self.performance_location not in self.lap_performance:
+            self.lap_performance[self.performance_location] = self.speed
+
+        self.performance = self.best_performance[self.performance_location] - self.lap_performance[self.performance_location]
 
         # init components that require shared memory to be loaded
         # init fuel
@@ -374,18 +405,12 @@ class Car:
             self.mini_sector_fuel_level = self.fuel
         if self.km_fuel_level <= 0:
             self.km_fuel_level = self.fuel
-        # if self.tyre_compound == "":
-        #     self.tyre_compound = ACLIB.getTyreCompund(symbol=False)
-        #     self.tyre_compound_symbol = ACLIB.getTyreCompund()
-        #     ideal = CarIdealData(self.number)
-        #     self.tyre_ideal_pressure_front = ideal.ideal_pressure_front
-        #     self.tyre_ideal_pressure_rear = ideal.ideal_pressure_rear
-        #     self.tyre_ideal_temp_min = ideal.ideal_temp_min
-        #     self.tyre_ideal_temp_max = ideal.ideal_temp_max
 
         # check penalty
         if self.penalty_time > 0:
             self.penalty = True
+
+            self.dispatchEvent(LIB_EVENT.ON_PENALTY_RECEIVED)
         else:
             self.penalty = False
 
@@ -441,40 +466,37 @@ class Car:
             self.tyre_pressure[i] = ACLIB.getTyrePressure(self.number, i)
             self.tyre_dirt[i] = ACLIB.getTyreDirtyLevel(self.number, i)
 
-        # Time and Distance to next and previous car
+        # Time and Distance to next and previous cars (relative and absolute)
         min_prev = float("-inf")
         min_next = float("inf")
-        for c in range(ACLIB.getCarsCount()):
+        for c in range(0, ACLIB.getCarsCount()):
             if c != self.number:
+                lap = self.lap
+                pos = self.location
                 track_len = ACLIB.getTrackLength()
                 c_pos = ACLIB.getLocation(c)
+                c_lap = ACLIB.getLap(c)
 
-                if c_pos - self.location < min_next and c_pos > 0:
+                if min_next > c_pos - self.location > 0:
+                    min_next = c_pos - self.location
                     self.rel_next = c
-                    self.rel_next_dist = c_pos * track_len
-                    self.rel_next_time = self.rel_next_dist / max(10.0, ACLIB.getSpeed(self.number, "ms"))
+                    self.rel_next_dist = max(0, ((c_pos + c_lap) * track_len) - ((pos + lap) * track_len))
+                    self.rel_next_time = max(0.0, self.rel_next_dist / max(10.0, ACLIB.getSpeed(self.number, "ms")))
 
-                if c_pos - self.location > min_prev and c_pos < 0:
+                if min_prev < c_pos - self.location < 0:
+                    min_prev = c_pos - self.location
                     self.rel_prev = c
-                    self.rel_prev_dist = c_pos * track_len
-                    self.rel_prev_time = self.rel_prev_dist / max(10.0, ACLIB.getSpeed(self.number, "ms"))
+                    self.rel_prev_dist = max(0, ((pos + lap) * track_len) - ((c_pos + c_lap) * track_len))
+                    self.rel_prev_time = max(0.0, self.rel_prev_dist / max(10.0, ACLIB.getSpeed(self.number, "ms")))
 
                 if ACLIB.getPosition(c) == self.position - 1:
-                    c_lap = ACLIB.getLap(c)
-                    lap = self.lap
-                    pos = self.location
-
                     self.next = c
                     self.next_dist = max(0, ((c_pos + c_lap) * track_len) - ((pos + lap) * track_len))
                     self.next_time = max(0.0, self.next_dist / max(10.0, ACLIB.getSpeed(self.number, "ms")))
 
                 elif ACLIB.getPosition(c) == self.position + 1:
-                    c_lap = ACLIB.getLap(c)
-                    lap = self.lap
-                    pos = self.location
-
                     self.prev = c
-                    self.prev_dist = max(0, (((pos + lap) * track_len) - (c_pos + c_lap) * track_len))
+                    self.prev_dist = max(0, ((pos + lap) * track_len) - ((c_pos + c_lap) * track_len))
                     self.prev_time = max(0.0, self.prev_dist / max(10.0, ACLIB.getSpeed(self.number, "ms")))
 
         # invalid Lap
@@ -489,6 +511,8 @@ class Car:
         if lap != self.lap:
             self.benefit = 0
 
+            self.last_performance = self.lap_performance
+            self.lap_performance = {}
             self.last_invalid = self.lap_invalid
             self.lap_invalid = False
             self.lap = ACLIB.getLap(self.number)
@@ -595,11 +619,6 @@ class Car:
             self.km_index = km
             self.km = km + 1
             self.dispatchEvent(LIB_EVENT.ON_KM_CHANGED)
-
-        self.loops += 1
-
-        if self.loops > 1000:
-            self.loops = 0
 
 
 class CarIdealData:
@@ -1282,7 +1301,7 @@ class ACLIB:
     @staticmethod
     def getRPMMax(car=0, form=None):
         if car == ACLIB.getFocusedCar():
-            val = info.static.maxRpm
+            val = max(info.static.maxRpm, 1)
             if val:
                 if form:
                     return form.format(val)
