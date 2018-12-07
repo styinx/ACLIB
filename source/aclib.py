@@ -214,6 +214,7 @@ class Car:
         self.tyre_ideal_temp_min = 0
         self.tyre_ideal_temp_max = 0
 
+        self.is_init = False
         self.init()
 
     def reset(self):
@@ -363,8 +364,10 @@ class Car:
                 callback(self.number)
 
     def update(self, delta):
-        if self.timer < 3:
+        if self.timer < 8:
             self.timer += delta
+        elif self.timer > 8 and not self.is_init:
+            self.is_init = True
             self.init()
 
         self.gear = ACLIB.getGear(self.number)
@@ -374,14 +377,14 @@ class Car:
         self.speed = round(ACLIB.getSpeed(self.number), 2)
         self.traveled_distance = ACLIB.getTraveledDistance(self.number)
         self.fuel = round(ACLIB.getFuel(self.number), 2)
-        self.tc = ACLIB.getTC(self.number)
-        self.abs = ACLIB.getABS(self.number)
+        self.tc = ACLIB.TC(self.number)
+        self.abs = ACLIB.ABS(self.number)
         self.max_fuel = round(ACLIB.getMaxFuel(self.number), 2)
         self.penalty_time = ACLIB.getPenaltyTime(self.number)
         self.lap_time = ACLIB.getCurrentLapTime(self.number)
         self.lap_diff = ACLIB.getLapDeltaTime(self.number)
 
-        self.performance_location = round(self.location * ACLIB.getTrackLength())
+        self.performance_location = round(self.location * ACLIB.getTrackLength() * 10)
 
         if self.performance_location not in self.last_performance:
             self.last_performance[self.performance_location] = self.speed
@@ -389,7 +392,7 @@ class Car:
         if self.performance_location not in self.best_performance:
             self.best_performance[self.performance_location] = self.speed
         else:
-            if self.lap_time < self.best_performance[self.performance_location]:
+            if self.speed < self.best_performance[self.performance_location]:
                 self.best_performance[self.performance_location] = self.speed
 
         if self.performance_location not in self.lap_performance:
@@ -468,7 +471,7 @@ class Car:
             self.tyre_pressure[i] = ACLIB.getTyrePressure(self.number, i)
             self.tyre_dirt[i] = ACLIB.getTyreDirtyLevel(self.number, i)
 
-        # Time and Distance to next and previous cars (relative and absolute)
+        # # Time and Distance to next and previous cars (relative and absolute)
         min_prev = float("-inf")
         min_next = float("inf")
         for c in range(0, ACLIB.getCarsCount()):
@@ -638,6 +641,8 @@ class CarIdealData:
             file = open("sdk/dev/v1.5_tyres_ac/" + name + "/data/tyres.ini")
             location = "None"
             collect = False
+
+            ACLIB.CONSOLE("read file")
 
             for line in file.readlines():
                 kvp = line.strip("\n").split("=")
@@ -1148,20 +1153,6 @@ class ACLIB:
             if form:
                 return form.format(info.physics.carDamage[loc])
             return info.physics.carDamage[loc]  # 0: Front, 1: Rear, 2: Left, 3: Right, 4:?
-        else:
-            return -1
-
-    @staticmethod
-    def ABS(car=0, form=None):
-        if car == ACLIB.getFocusedCar():
-            return info.physics.abs
-        else:
-            return -1
-
-    @staticmethod
-    def TC(car=0, form=None):
-        if car == ACLIB.getFocusedCar():
-            return info.physics.tc
         else:
             return -1
 
