@@ -1,9 +1,9 @@
 from time import strftime, localtime
-from source.gui import ACApp, ACLabel, ACGrid, ACLabelPair, ACWidget
+from source.gui import ACApp, ACLabel, ACGrid, ACLabelPair, ACLineGraph
 from source.widget import ACDeltaBarWidget, ACTyreWidget, ACFuelWidget, ACShiftLightBarWidget
-from source.aclib import ACLIB, SESSION, formatTime, formatTimeCar, formatDistance, formatGear, CarIdealData
+from source.aclib import ACLIB, SESSION, formatTime, formatTimeCar, formatGear
 from source.gl import Texture
-from source.color import Color
+from source.color import Color, TRANSPARENT
 
 # import sqlite3
 
@@ -38,46 +38,32 @@ class Driver(ACApp):
         self.status_tex = Texture("apps/python/ACLIB/resources/status.png")
         self.shift_tex = Texture("apps/python/ACLIB/resources/shift.png")
 
-        self.lap = ACLabel("", self, font_size=20, italic=1, bold=1, background_color=DRIVER_BG_COLOR,
-                           text_h_alignment="center")
-        self.pos = ACLabel("", self, font_size=20, italic=1, bold=1, background_color=DRIVER_BG_COLOR,
-                           text_h_alignment="center")
-        self.last = ACLabel("", self, font_size=16, bold=1, background_color=DRIVER_BG_COLOR)
-        self.best = ACLabel("", self, font_size=16, bold=1, background_color=DRIVER_BG_COLOR)
+        self.lap = ACLabel("", self, font_size=20, italic=1, bold=1)
+        self.pos = ACLabel("", self, font_size=20, italic=1, bold=1)
+        self.last = ACLabel("", self, font_size=16, bold=1)
+        self.best = ACLabel("", self, font_size=16, bold=1)
 
-        self.gear = ACLabel("", self, font_size=100, bold=1, background_color=DRIVER_BG_COLOR,
-                            text_h_alignment="center")
-        self.speed = ACLabel("", self, font_size=20, bold=1, text_h_alignment="center")
-        self.drs = ACLabel("", self, font_size=16, bold=1, background_color=DRIVER_BG_COLOR,
-                           text_h_alignment="center")
-        self.ers = ACLabel("", self, font_size=16, bold=1, background_color=DRIVER_BG_COLOR,
-                           text_h_alignment="center")
-        self.kers = ACLabel("", self, font_size=16, bold=1, background_color=DRIVER_BG_COLOR,
-                            text_h_alignment="center")
+        self.gear = ACLabel("", self, font_size=100, bold=1)
+        self.speed = ACLabel("", self, font_size=20, bold=1).setBackgroundColor(TRANSPARENT)
+        self.drs = ACLabel("", self, font_size=16, bold=1)
+        self.ers = ACLabel("", self, font_size=16, bold=1)
+        self.kers = ACLabel("", self, font_size=16, bold=1)
 
         self.fuel_widget = ACFuelWidget(self)
-        self.local_time = ACLabel("", self, font_size=20, bold=1, background_color=DRIVER_BG_COLOR)
-        self.race_time = ACLabel("", self, font_size=20, bold=1, background_color=DRIVER_BG_COLOR)
+        self.local_time = ACLabel("", self, font_size=20, bold=1)
+        self.race_time = ACLabel("", self, font_size=20, bold=1)
 
-        self.next_time = ACLabel("", self, font_size=20, bold=1, background_color=DRIVER_BG_COLOR,
-                                 text_h_alignment="center")
-        self.current = ACLabel("", self, font_size=20, bold=1, background_color=DRIVER_BG_COLOR,
-                               text_h_alignment="center")
-        self.s1 = ACLabel("", self, font_size=14, bold=1, background_color=DRIVER_BG_COLOR,
-                          text_h_alignment="center")
-        self.s2 = ACLabel("", self, font_size=14, bold=1, background_color=DRIVER_BG_COLOR,
-                          text_h_alignment="center")
-        self.s3 = ACLabel("", self, font_size=14, bold=1, background_color=DRIVER_BG_COLOR,
-                          text_h_alignment="center")
+        self.next_time = ACLabel("", self, font_size=20, bold=1)
+        self.current = ACLabel("", self, font_size=20, bold=1)
+        self.s1 = ACLabel("", self, font_size=14, bold=1)
+        self.s2 = ACLabel("", self, font_size=14, bold=1)
+        self.s3 = ACLabel("", self, font_size=14, bold=1)
         self.delta_widget = ACLabelPair(self, label_pos="top", widget=ACDeltaBarWidget(),
-                                        label=ACLabel("", self, font_size=16, bold=1, text_h_alignment="center",
-                                                      background_color=DRIVER_BG_COLOR))
+                                        label=ACLabel("", self, font_size=16, bold=1))
         self.shift_widget = ACShiftLightBarWidget()
         self.tyre_widget = ACTyreWidget()
-        self.status = ACLabel("", self, font_size=30, bold=1, background_color=DRIVER_BG_COLOR,
-                              text_h_alignment="center")
-        self.prev_time = ACLabel("", self, font_size=20, bold=1, background_color=DRIVER_BG_COLOR,
-                                 text_h_alignment="center")
+        self.status = ACLabel("", self, font_size=30, bold=1)
+        self.prev_time = ACLabel("", self, font_size=20, bold=1)
 
         self.next_time.setBackgroundTexture(self.next1_tex)
         self.current.setBackgroundTexture(self.m_panel_tex)
@@ -98,10 +84,10 @@ class Driver(ACApp):
         self.grid.addWidget(self.gear, 6, 1, 6, 5)
         self.grid.addWidget(self.speed, 6, 5, 6, 1)
 
-        self.grid.addWidget(self.fuel_widget, 12, 1, 3, 3)
+        self.grid.addWidget(self.tyre_widget, 12, 1, 3, 3)
         self.grid.addWidget(self.local_time, 15, 1, 3, 1)
         self.grid.addWidget(self.race_time, 15, 2, 3, 1)
-        self.grid.addWidget(self.tyre_widget, 12, 1, 3, 3)
+        self.grid.addWidget(self.fuel_widget, 17, 3, 2, 5)
 
         self.grid.addWidget(self.prev_time, 2, 6, 4, 1)
         self.grid.addWidget(self.delta_widget, 6, 6, 6, 2)

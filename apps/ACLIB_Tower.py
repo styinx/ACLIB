@@ -152,7 +152,7 @@ class TowerEntry:
             start = Color(0, 0, 0, 1)
             step = Color(0, 0.01, 0, 0)
             stop = Color(0, 1, 0, 1)
-            self.info.setText("+" + self.car.benefit)
+            self.info.setText("+" + str(self.car.benefit))
             self.info.addAnimation(Animation(self.info, "background_color", start, step, stop, direction="Alternate"))
         elif self.car.benefit < 0:
             start = Color(0, 0, 0, 1)
