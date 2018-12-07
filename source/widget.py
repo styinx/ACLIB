@@ -44,6 +44,7 @@ class ACTwinShiftLightWidget(ACWidget):
             rect(pos, y, light_w, light_h, col)
             rect(pos, y, light_w, light_h, Color(0.25, 0.25, 0.25), False)
             pos -= light_w * 2
+        return self
 
 
 # Single bar elements
@@ -74,6 +75,7 @@ class ACShiftLightWidget(ACWidget):
             rect(pos, y, light_w, light_h, col)
             rect(pos, y, light_w, light_h, Color(0.25, 0.25, 0.25), False)
             pos += light_w * 2 + light_w / self.lights
+        return self
 
 
 # Continuous bar
@@ -99,6 +101,7 @@ class ACShiftLightBarWidget(ACWidget):
         progress_color = Color(2 * progress, 2 * (1 - progress), 0)
         quad(x, y, w * progress, h, [Color(0, 1, 0), Color(0, 1, 0), progress_color, progress_color])
         rect(x, y, w * progress, h, Color(0.25, 0.25, 0.25), False)
+        return self
 
 
 class ACDeltaBarWidget(ACWidget):
@@ -110,12 +113,10 @@ class ACDeltaBarWidget(ACWidget):
 
     def update(self, delta):
         self.delta = ACLIB.CARS[ACLIB.getFocusedCar()].performance
-        self.delta_val = max(0.0, log10(abs(self.delta) + 1) / 5) * self.geometry.w / 2
+        self.delta_val = max(0.0, log10(abs(self.delta) + 1) / 2) * self.geometry.w / 2
         return self
 
     def render(self, delta):
-        super().render(delta)
-
         x, y = self.getPos()
         w, h = self.getSize()
 
@@ -123,6 +124,8 @@ class ACDeltaBarWidget(ACWidget):
             rect(x + (w / 2 - min(w / 2, self.delta_val)), y, min(w / 2, self.delta_val), h, Color(0.9, 0, 0, 1))
         elif self.delta < 0:
             rect(x + w / 2, y, min(w / 2, self.delta_val), h, Color(0, 0.9, 0, 1))
+        else:
+            pass
 
         rect(x, y, w, h, Color(1, 1, 1, 1), False)
         line(x + w / 2, y, x + w / 2, y + h, Color(1, 1, 1, 1))
@@ -130,44 +133,38 @@ class ACDeltaBarWidget(ACWidget):
 
 
 class ACDamageWidget(ACWidget):
-    def __init__(self, app):
-        super().__init__(None)
-
-        self.grid = ACGrid(self, 2, 3)
+    def __init__(self, app, parent=None):
+        super().__init__(parent)
 
     def update(self, delta):
-        pass
+        return self
 
     def render(self, delta):
-        super().render(delta)
+        return self
 
 
 class ACFuelWidget(ACWidget):
-    def __init__(self, app):
-        super().__init__(None)
-
-        self.grid = ACGrid(self, 2, 3)
-        self.fuel_level = ACProgressBar(app, 1)
-        self.fuel_text = ACLabel("", app)
-
-        self.fuel_level.color = Color(1, 1, 0)
-        self.fuel_level.background_color = Color(0.75, 0.75, 0.75, 0.5)
-        self.fuel_level.max_val = ACLIB.getMaxFuel(ACLIB.getFocusedCar())
-
-        self.grid.addWidget(self.fuel_level, 0, 0, 1, 3)
-        self.grid.addWidget(self.fuel_text, 1, 0, 1, 1)
-
-        self.updateSize()
+    def __init__(self, app, parent=None):
+        super().__init__(parent)
 
     def update(self, delta):
-        super().update(delta)
-        self.fuel_level.value = ACLIB.CARS[ACLIB.getFocusedCar()].fuel
-        self.fuel_text.setText(self.fuel_level.value)
+        return self
 
     def render(self, delta):
-        super().render(delta)
+        x, y = self.getPos()
+        w, h = self.getSize()
 
-        self.fuel_level.render(delta)
+        car = ACLIB.CARS[0]
+
+        fuel = h * car.fuel / car.max_fuel
+        lap = h * car.lap_fuel / car.max_fuel
+        km = h * car.km_fuel / car.max_fuel
+
+        rect(x, y + h - fuel, w / 2, fuel, Color(1, 1, 0))
+        rect(x + w * 0.25, y + h - fuel, w * 0.25, lap, Color(1, 0, 0))
+        rect(x, y + h - fuel, w * 0.125, km, Color(0, 0, 1))
+        rect(x, y, w / 2, h, Color(1, 1, 1), False)
+        return self
 
 
 class ACTyreWidget(ACWidget):
