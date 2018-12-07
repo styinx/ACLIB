@@ -7,6 +7,7 @@ class GUI_EVENT:
     ON_CLICK = 5
     ON_TEXT_CHANGED = 6
     ON_CONFIG_CHANGED = 7
+    ON_STYLE_CHANGED = 8
 
 
 class LIB_EVENT:
