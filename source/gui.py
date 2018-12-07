@@ -1,7 +1,7 @@
-import sys
 from os import stat, path
 import functools
 import ac
+from source import gl
 from source.color import Color
 from source.config import loadAppConfig, Config
 from source.gl import Texture, rect, texture_rect
@@ -27,10 +27,6 @@ class Font:
 
     def isBold(self):
         return self.bold > 0
-
-
-def props(cls):
-  return [i for i in cls.__dict__.keys() if i[:1] != '_']
 
 
 class ACWidget(object):
@@ -73,8 +69,6 @@ class ACWidget(object):
 
         self.on_click = None
 
-        self.loadStyle()
-
     @staticmethod
     def getPosition(obj):
         return ac.getPosition(obj)
@@ -84,12 +78,12 @@ class ACWidget(object):
             if self.app.style is not None:
                 d = self.app.style.dictionary
                 name = self.__class__.__name__
-                ac.log(str(props(ACLabel)))
                 if name in d:
                     for option in d[name]:
-                        if option in props(getattr(sys.modules[__name__], name)):
-                            ac.console(str(self) + " " + str(option))
+                        if hasattr(self, option):
                             setattr(self, option, d[name][option])
+        if self.child is not None:
+            self.child.loadStyle()
         return self
 
     def onClick(self, func, params):
@@ -416,6 +410,7 @@ class ACApp(ACWidget):
             self.style_file = filename
             self.style_time = stat(self.style_file).st_mtime
             self.style = Config(filename)
+            self.loadStyle()
         return self
 
     def configChanged(self):
@@ -425,6 +420,16 @@ class ACApp(ACWidget):
             if last_changed != self.config_time:
                 self.config_time = last_changed
                 self.dispatchEvent(GUI_EVENT.ON_CONFIG_CHANGED)
+                return True
+        return False
+
+    def styleChanged(self):
+        if self.style_file != "":
+            last_changed = stat(self.style_file).st_mtime
+
+            if last_changed != self.style_time:
+                self.style_time = last_changed
+                self.dispatchEvent(GUI_EVENT.ON_STYLE_CHANGED)
                 return True
         return False
 
@@ -593,6 +598,9 @@ class ACApp(ACWidget):
         if self.configChanged():
             self.readConfig(self.config_file)
 
+        if self.styleChanged():
+            self.readStyle(self.style_file)
+
         return self
 
     def render(self, delta):
@@ -626,6 +634,13 @@ class ACBox(ACLayout):
     def addWidget(self, widget):
         self.children.append(widget)
         self.children_count += 1
+
+    def loadStyle(self):
+        super().loadStyle()
+
+        for c in self.children:
+            if isinstance(c, ACWidget):
+                c.loadStyle()
 
     def update(self, delta):
         super().update(delta)
@@ -715,6 +730,15 @@ class ACGrid(ACLayout):
                     cell.updateSize()
         return self
 
+    def loadStyle(self):
+        super().loadStyle()
+
+        for row in self.children:
+            for cell in row:
+                if isinstance(cell, ACWidget):
+                    cell.loadStyle()
+        return self
+
     def update(self, delta):
         super().update(delta)
 
@@ -744,6 +768,8 @@ class ACLabelPair(ACGrid):
         self.label_widget = label
         self.pair_widget = widget
         self.label_position = label_pos
+
+        self.loadStyle()
 
         self.addLabelWidget(label)
         self.addPairWidget(widget)
@@ -792,6 +818,8 @@ class ACTextWidget(ACWidget):
         self.font_family = "Roboto Mono"
         self.font_italic = 0
         self.font_bold = 0
+
+        self.loadStyle()
 
     def getText(self):
         return self.text
@@ -932,6 +960,8 @@ class ACLabel(ACTextWidget):
         self.text_color = text_color
         self.background_color = background_color
 
+        self.loadStyle()
+
         self.setBackgroundColor(self.background_color)
         self.setTextAlignment()
         self.setTextColor(self.text_color)
@@ -957,6 +987,8 @@ class ACButton(ACTextWidget):
         self.text_color = text_color
         self.background_color = background_color
 
+        self.loadStyle()
+
         self.setBackgroundColor(self.background_color)
         self.setTextAlignment()
         self.setTextColor(self.text_color)
@@ -972,6 +1004,8 @@ class ACIcon(ACLabel):
 
         self.background_texture = path
 
+        self.loadStyle()
+
 
 class ACProgressBar(ACLabel):
     def __init__(self, app, orientation=0, value=0, min_val=0, max_val=100, parent=None):
@@ -979,29 +1013,31 @@ class ACProgressBar(ACLabel):
 
         self.orientation = orientation
         self.border = 1
-        self.color = self.background_color
+        self.color = Color(1, 0, 0)
         self.h_margin = 1
         self.v_margin = 0.05
         self.value = value
         self.min_val = min_val
-        self.max_val = max_val
+        self.max_val = max(max_val, 1)
 
         if orientation == 1:
             self.h_margin = 0.05
             self.v_margin = 1
 
+        self.loadStyle()
+
     def render(self, delta):
         x, y = self.getPos()
         w, h = self.getSize()
 
-        # if self.orientation == 0:
-        #     v_margin = h * self.v_margin
-        #     ratio = w * (self.value / self.max_val)
-        #     rect(x, y + v_margin, ratio, h - 2 * v_margin, self.color)
-        #
-        #     if self.border:
-        #         rect(x, y + v_margin, w, h - 2 * v_margin, self.border_color, False)
-        # else:
+        if self.orientation == 0:
+            v_margin = h * self.v_margin
+            ratio = w * (self.value / self.max_val)
+            rect(x, y + v_margin, ratio, h - 2 * v_margin, self.color)
+
+            if self.border:
+                rect(x, y + v_margin, w, h - 2 * v_margin, self.border_color, False)
+        # elif self.orientation == 1:
         #     h_margin = h * self.h_margin
         #     ratio = h * (self.value / self.max_val)
         #     rect(x + h_margin, y + h - ratio, w - 2 * h_margin, ratio, self.color)
@@ -1022,5 +1058,97 @@ class ACInput(ACWidget):
 
 
 class ACGraph(ACWidget):
-    def __init__(self, text, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
+
+        self.points = {}
+        self.key = 0
+
+        self.x_min = float("inf")
+        self.x_max = float("-inf")
+        self.y_min = float("inf")
+        self.y_max = float("-inf")
+
+        self.x_dist = 0
+        self.x_ratio = 0
+        self.y_dist = 0
+        self.y_ratio = 0
+
+        self.calc()
+
+    def calc(self):
+        if len(self.points) > 0:
+            self.x_dist = self.x_max - self.x_min
+            if self.x_dist > 0:
+                self.x_ratio = self.geometry.w / self.x_dist
+            else:
+                self.x_ratio = self.geometry.w / 100
+
+            # self.x_ratio = self.geometry.w / max(self.key, 1)
+
+            self.y_dist = self.y_max - self.y_min
+            if self.y_dist > 0:
+                self.y_ratio = self.geometry.h / self.y_dist
+            else:
+                self.y_ratio = self.geometry.h / 100
+
+    def __iter__(self):
+        return iter(self.points)
+
+    def __iadd__(self, other):
+        if isinstance(other, tuple):
+            self.x_max = max(self.x_max, other[0])
+            self.x_min = min(self.x_min, other[0])
+            self.y_max = max(self.y_max, other[1])
+            self.y_min = min(self.y_min, other[1])
+            self.points[other[0]] = other[1]
+            self.key = other[0] + 1
+        elif isinstance(other, list):
+            for i in other:
+                self.x_max = max(self.x_max, self.key)
+                self.x_min = min(self.x_min, self.key)
+                self.y_max = max(self.y_max, i)
+                self.y_min = min(self.y_min, i)
+                self.points[self.key] = i
+                self.key += 1
+        else:
+            self.x_max = max(self.x_max, self.key)
+            self.x_min = min(self.x_min, self.key)
+            self.y_max = max(self.y_max, other)
+            self.y_min = min(self.y_min, other)
+            self.points[self.key] = other
+            self.key += 1
+
+        self.calc()
+        return self
+
+    def __setitem__(self, key, value):
+        self.x_max = max(self.x_max, key)
+        self.x_min = min(self.x_min, key)
+        self.y_max = max(self.y_max, value)
+        self.y_min = min(self.y_min, value)
+        self.points[key] = value
+        self.key = key + 1
+
+        self.calc()
+        return self
+
+
+class ACLineGraph(ACGraph):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def render(self, delta):
+        x, y = self.getPos()
+        w, h = self.getSize()
+
+        ac.glBegin(1)
+
+        ac.glColor3f(1, 1, 1)
+
+        for p in sorted(self.points):
+            ac.glVertex2f(x + p * self.x_ratio, y + h - self.points[p] * self.y_ratio)
+
+        ac.glEnd()
+
+        return self
