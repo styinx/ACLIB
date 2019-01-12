@@ -1,4 +1,4 @@
-from source.aclib import ACLIB, formatTimeCar
+from source.aclib import ACLIB, formatTimeCar, SESSION
 from source.animation import Animation
 from source.color import Color
 from source.event import LIB_EVENT
@@ -30,6 +30,10 @@ class Notification(ACApp):
 
         if self.timer > self.timeout:
             self.reset()
+        if SESSION.time_left > 0:
+            self.setBackgroundColor(Color(0, 0, 0, 1))
+            self.text.setTextColor(Color(1, 1, 1))
+            self.text.setText("Start in: {: 2d}".format(round(SESSION.time_left / 1000)))
 
     def render(self, delta):
         super().render(delta)
@@ -51,11 +55,11 @@ class Notification(ACApp):
             start = Color(0, 0, 0, 0.5)
             step = Color(0.1, 0.1, 0, 0)
             stop = Color(1, 1, 0, 0.5)
-            self.addAnimation(Animation(self, "background_color", start, step, stop, 0, "Alternate"))
+            self.addAnimation(Animation(self, "background_color", start, step, stop, 10, "Alternate"))
             self.text.setText("Yellow Flag ahead!").setTextColor(Color(0, 0, 0))
         elif self.car.flag == 3 or self.car.flag == 6:
             self.setBackgroundColor(Color(1, 0.75, 0, 0.5))
-            self.text.setText("Penalty: " + self.car.penalty_time + "s").setTextColor(Color(0, 0, 0))
+            self.text.setText("Penalty: " + str(int(self.car.penalty_time)) + "s").setTextColor(Color(0, 0, 0))
         elif self.car.flag == 4:
             self.setBackgroundColor(Color(1, 1, 1, 1))
             self.text.setTextColor(Color(0, 0, 0))

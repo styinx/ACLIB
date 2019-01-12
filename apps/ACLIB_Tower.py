@@ -176,7 +176,7 @@ class TowerEntry:
         self.name.setText(pad(self.car.number) + " | " + self.car.player_nick)
 
         if self.car.number == ACLIB.getFocusedCar():
-            self.name.setBackgroundColor(Color(0.1, 0.3, 0.4, 1))
+            self.name.setBackgroundColor(Color(0.9, 0.7, 0, 0.75))
         else:
             self.name.setBackgroundColor(Color(0, 0, 0, 0.75))
 
@@ -193,7 +193,7 @@ class TowerEntry:
 
             c = self.name.background_color
             start = Color(0, 0, 0, 0)
-            step = Color(c.r / 1000, c.g / 1000, c.b / 1000, c.a / 1000)
+            step = Color(c.r / 100, c.g / 100, c.b / 100, c.a / 100)
             stop = c
             self.name.addAnimation(Animation(self.name, "background_color", start, step, stop))
 

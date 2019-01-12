@@ -17,6 +17,10 @@ _Assetto Corsa App Library_
 
 <br> 
 
+## Issues
+
+- tyre temperatures do not work for DLC cars
+
 ## Install
 
 - **1**
