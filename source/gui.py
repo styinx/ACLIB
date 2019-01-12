@@ -1,7 +1,6 @@
 from os import stat, path
 import functools
 import ac
-from source import gl
 from source.color import Color
 from source.config import loadAppConfig, Config
 from source.gl import Texture, rect, texture_rect
@@ -75,7 +74,7 @@ class ACWidget(object):
 
     def loadStyle(self):
         if self.app is not None:
-            if self.app.style is not None:
+            if self.app.style:
                 d = self.app.style.dictionary
                 name = self.__class__.__name__
                 if name in d:

@@ -147,7 +147,31 @@ class ACFuelWidget(ACWidget):
     def __init__(self, app, parent=None):
         super().__init__(parent)
 
+        self.car = ACLIB.CARS[0]
+        self.fuel = ACLabel("", app, self)
+        self.fuel_session = ACLabel("", app, self, text_color=Color(0, 1, 1))
+        self.lap_range = ACLabel("", app, self)
+        self.km_range = ACLabel("", app, self)
+
+    def init(self):
+        x, y = self.getPos()
+        w, h = self.getSize()
+
+        self.fuel.setPos((x, y)).setSize((w * 0.7, 16)).setTextHAlignment("right")
+        self.fuel_session.setPos((x, y + 16)).setSize((w * 0.7, 16)).setTextHAlignment("right")
+        self.lap_range.setPos((x, y + 32)).setSize((w * 0.7, 16)).setTextHAlignment("right")
+        self.km_range.setPos((x, y + 48)).setSize((w * 0.7, 16)).setTextHAlignment("right")
+
     def update(self, delta):
+        self.fuel.setText(str(self.car.fuel) + " l")
+        self.fuel_session.setText(str(round(self.car.fuel_session, 2)) + " l")
+        self.lap_range.setText("+" + str(round(self.car.lap_fuel_range, 2)) + " laps")
+        self.km_range.setText("+" + str(round(self.car.km_fuel_range, 2)) + " km")
+
+        if self.car.fuel_session > self.car.fuel:
+            self.lap_range.setTextColor(Color(1, 0, 0))
+            self.km_range.setTextColor(Color(1, 0, 0))
+
         return self
 
     def render(self, delta):
@@ -158,12 +182,17 @@ class ACFuelWidget(ACWidget):
 
         fuel = h * car.fuel / car.max_fuel
         lap = h * car.lap_fuel / car.max_fuel
-        km = h * car.km_fuel / car.max_fuel
+        laps_to_go = max(ACLIB.getLaps() - self.car.lap, 1)
+        end = h * min(laps_to_go * ACLIB.getTrackLength() / 1000 * car.km_fuel, car.max_fuel) / car.max_fuel
 
-        rect(x, y + h - fuel, w / 2, fuel, Color(1, 1, 0))
-        rect(x + w * 0.25, y + h - fuel, w * 0.25, lap, Color(1, 0, 0))
-        rect(x, y + h - fuel, w * 0.125, km, Color(0, 0, 1))
-        rect(x, y, w / 2, h, Color(1, 1, 1), False)
+        offset = x + w * 0.75
+
+        rect(offset, y, w / 4, h, Color(0, 0.1, 0.2, 0.75))
+        if end > 0:
+            rect(offset, y + h - end, w / 4, 2, Color(0, 1, 1))  # needed to end race
+        rect(offset, y + h - fuel, w / 4, fuel, Color(1, 1, 0))  # remaining fuel
+        rect(offset, y + h - fuel, w / 4, min(lap, fuel), Color(1, 0, 0))  # fuel per lap
+        rect(offset, y, w / 4, h, Color(1, 1, 1), False)
         return self
 
 

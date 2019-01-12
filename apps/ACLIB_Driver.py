@@ -1,4 +1,5 @@
 from time import strftime, localtime
+from math import isinf
 from source.gui import ACApp, ACLabel, ACGrid, ACLabelPair, ACLineGraph
 from source.widget import ACDeltaBarWidget, ACTyreWidget, ACFuelWidget, ACShiftLightBarWidget
 from source.aclib import ACLIB, SESSION, formatTime, formatTimeCar, formatGear
@@ -25,7 +26,7 @@ class Driver(ACApp):
     def __init__(self):
         super().__init__("ACLIB_Driver", 200, 200, 576, 224)
 
-        self.hideDecoration().setBackgroundColor(Color(0, 0, 0, 0))
+        self.hideDecoration().setBackgroundColor(Color(0, 0, 0, 0.25))
 
         self.car = ACLIB.CARS[ACLIB.getFocusedCar()]
         self.grid = ACGrid(self, 18, 8)
@@ -52,6 +53,7 @@ class Driver(ACApp):
         self.fuel_widget = ACFuelWidget(self)
         self.local_time = ACLabel("", self, font_size=20, bold=1)
         self.race_time = ACLabel("", self, font_size=20, bold=1)
+        self.session_time = 0
 
         self.next_time = ACLabel("", self, font_size=20, bold=1)
         self.current = ACLabel("", self, font_size=20, bold=1)
@@ -87,11 +89,13 @@ class Driver(ACApp):
         self.grid.addWidget(self.tyre_widget, 12, 1, 3, 3)
         self.grid.addWidget(self.local_time, 15, 1, 3, 1)
         self.grid.addWidget(self.race_time, 15, 2, 3, 1)
-        self.grid.addWidget(self.fuel_widget, 17, 3, 2, 5)
+        self.grid.addWidget(self.fuel_widget, 15, 3, 3, 5)
 
         self.grid.addWidget(self.prev_time, 2, 6, 4, 1)
         self.grid.addWidget(self.delta_widget, 6, 6, 6, 2)
         self.grid.addWidget(self.next_time, 12, 6, 4, 1)
+
+        self.fuel_widget.init()
 
         self.grid.updateSize()
 
@@ -109,6 +113,11 @@ class Driver(ACApp):
         if self.car.number != ACLIB.getFocusedCar():
             self.car = ACLIB.CARS[ACLIB.getFocusedCar()]
             self.car.init()
+
+        if SESSION.time_left == 0:
+            self.session_time += delta * 1000
+        else:
+            self.session_time = SESSION.time_left
 
         if self.car.rpm / self.car.max_rpm >= DRIVER_BAD_SHIFT:
             self.gear.setBackgroundColor(DRIVER_BAD_COLOR_05)
@@ -198,7 +207,7 @@ class Driver(ACApp):
         self.gear.setText(formatGear(self.car.gear))
         self.speed.setText("{:3.0f} km/h".format(self.car.speed))
         self.local_time.setText(strftime("%H:%M:%S", localtime()))
-        # self.race_time.setText(formatTime(max(SESSION.time_left, 1))) # throws division by zero ... ?
+        self.race_time.setText(formatTime(self.session_time))
 
         self.s1.setText(formatTime(self.car.sector_time[0], "{:d}:{:02d}.{:03d}"))
         self.s2.setText(formatTime(self.car.sector_time[1], "{:d}:{:02d}.{:03d}"))

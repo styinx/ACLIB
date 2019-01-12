@@ -97,7 +97,7 @@ class SESSION:
         SESSION.wind_speed = ACLIB.getWindSpeed()
 
         SESSION.time_left = ACLIB.getRaceTimeLeft()
-        SESSION.best_km_time = [float("inf")] * (int(SESSION.track_length / 1000) + 1)
+        SESSION.best_km_time = [float("inf")] * (int(SESSION.track_length / 1000) + 2)
 
     @staticmethod
     def update():
@@ -108,6 +108,7 @@ class Car:
     def __init__(self, number):
         self.priority = 10  # more means a higher effort to compute but more precise results
         self.timer = 0
+        self.loops = 0
         self.initialized = False
         self.max_delta = 0.2  # 0.02
         self.last_interval = 0
@@ -170,6 +171,7 @@ class Car:
         self.last_time = 0.0  # last lap time
         self.last_invalid = False
         self.best_time = 0.0  # best lap time
+        self.fuel_session = 0.0  # fuel needed to end session
         self.lap_fuel = 0.0  # fuel consumption in l
         self.lap_fuel_range = 0.0  # number of laps with current fuel
         self.lap_fuel_level = 0.0  # fuel level from last lap
@@ -194,9 +196,9 @@ class Car:
 
         self.km = 0
         self.km_index = 0
-        self.km_time = [0.0] * (int(ACLIB.getTrackLength() / 1000) + 1)
-        self.last_km_time = [0.0] * (int(ACLIB.getTrackLength() / 1000) + 1)
-        self.best_km_time = [float("inf")] * (int(ACLIB.getTrackLength() / 1000) + 1)
+        self.km_time = [0.0] * (int(ACLIB.getTrackLength() / 1000) + 2)
+        self.last_km_time = [0.0] * (int(ACLIB.getTrackLength() / 1000) + 2)
+        self.best_km_time = [float("inf")] * (int(ACLIB.getTrackLength() / 1000) + 2)
         self.km_fuel = 0.0
         self.km_fuel_range = 0.0
         self.km_fuel_level = 0.0
@@ -260,6 +262,7 @@ class Car:
         self.last_time = 0.0
         self.last_invalid = False
         self.best_time = 0.0
+        self.fuel_session = 0.0
         self.lap_fuel = 0.0
         self.lap_fuel_range = 0.0
         self.lap_fuel_level = 0.0
@@ -284,9 +287,9 @@ class Car:
 
         self.km = 0
         self.km_index = 0
-        self.km_time = [0.0] * (int(ACLIB.getTrackLength() / 1000) + 1)
-        self.last_km_time = [0.0] * (int(ACLIB.getTrackLength() / 1000) + 1)
-        self.best_km_time = [float("inf")] * (int(ACLIB.getTrackLength() / 1000) + 1)
+        self.km_time = [0.0] * (int(ACLIB.getTrackLength() / 1000) + 2)
+        self.last_km_time = [0.0] * (int(ACLIB.getTrackLength() / 1000) + 2)
+        self.best_km_time = [float("inf")] * (int(ACLIB.getTrackLength() / 1000) + 2)
         self.km_fuel = 0.0
         self.km_fuel_range = 0.0
         self.km_fuel_level = 0.0
@@ -364,9 +367,8 @@ class Car:
                 callback(self.number)
 
     def update(self, delta):
-        if self.timer < 8:
-            self.timer += delta
-        elif self.timer > 8 and not self.is_init:
+        self.loops += 1
+        if not self.is_init and self.loops > 100:
             self.is_init = True
             self.init()
 
@@ -384,21 +386,20 @@ class Car:
         self.lap_time = ACLIB.getCurrentLapTime(self.number)
         self.lap_diff = ACLIB.getLapDeltaTime(self.number)
 
-        self.performance_location = round(self.location * ACLIB.getTrackLength() * 10)
+        # performance
+        self.performance_location = round(self.location * ACLIB.getTrackLength() * 50)
 
         if self.performance_location not in self.last_performance:
             self.last_performance[self.performance_location] = self.speed
 
         if self.performance_location not in self.best_performance:
             self.best_performance[self.performance_location] = self.speed
-        else:
-            if self.speed < self.best_performance[self.performance_location]:
-                self.best_performance[self.performance_location] = self.speed
 
         if self.performance_location not in self.lap_performance:
             self.lap_performance[self.performance_location] = self.speed
 
-        self.performance = self.best_performance[self.performance_location] - self.lap_performance[self.performance_location]
+        self.performance = self.best_performance[self.performance_location] - \
+                           self.lap_performance[self.performance_location]
 
         # init components that require shared memory to be loaded
         # init fuel
@@ -514,7 +515,11 @@ class Car:
         # Next lap
         lap = ACLIB.getLap(self.number)
         if lap != self.lap:
+
             self.benefit = 0
+
+            if self.lap_time == self.best_time:
+                self.best_performance = self.last_performance
 
             self.last_performance = self.lap_performance
             self.lap_performance = {}
@@ -545,7 +550,6 @@ class Car:
         # Next sector
         sector = min(int(self.location * 3.33), 2)
         if sector != self.sector_index:
-
             sector_time = 0
 
             if sector == 0:
@@ -620,6 +624,7 @@ class Car:
                 self.km_fuel = self.km_fuel_level - self.fuel
                 self.km_fuel_range = self.fuel / self.km_fuel
                 self.km_fuel_level = self.fuel
+                self.fuel_session = max(ACLIB.getLaps() - self.lap, 1) * ACLIB.getTrackLength() / 1000 * self.km_fuel
 
             self.km_index = km
             self.km = km + 1
@@ -633,7 +638,15 @@ class CarIdealData:
         self.ideal_temp_min = -1
         self.ideal_temp_max = -1
 
+        self.from_sdk(car)
+
+    def from_sidekick(self):
+        pass
+
+    def from_sdk(self, car):
         name = ACLIB.getCarId(car)
+
+        ACLIB.CONSOLE(ACLIB.getTyreCompund(car), " - ", ACLIB.getTyreCompund(car, False))
 
         if os.path.exists("sdk/dev/v1.5_tyres_ac/" + name + "/data/tyres.ini"):
 
@@ -641,8 +654,6 @@ class CarIdealData:
             file = open("sdk/dev/v1.5_tyres_ac/" + name + "/data/tyres.ini")
             location = "None"
             collect = False
-
-            ACLIB.CONSOLE("read file")
 
             for line in file.readlines():
                 kvp = line.strip("\n").split("=")
@@ -677,6 +688,8 @@ class CarIdealData:
                                 break
                             last = tkvp
                         break
+        else:
+            ACLIB.CONSOLE("File for tyres not found. " + name + "(" + ACLIB.getTyreCompund(car, False) + ")")
 
 
 class ACLIB:
@@ -828,7 +841,11 @@ class ACLIB:
 
     @staticmethod
     def getRaceTimeLeft():
-        return info.graphics.sessionTimeLeft
+        time = info.graphics.sessionTimeLeft
+        if not isinf(time):
+            return time
+        else:
+            return -1
 
     @staticmethod
     def getRaceTimeLeftFormated():
@@ -1464,7 +1481,7 @@ class ACLIB:
                 return compound[compound.find("(") + 1:compound.find(")")]
             return compound
         else:
-            return -1
+            return ""
 
     @staticmethod
     def getCamberRad(car, tyre=0, form=None):
