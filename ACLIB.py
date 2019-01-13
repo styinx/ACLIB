@@ -8,7 +8,7 @@ def acMain(version):
     global init, apps, loops
 
     init = False
-    loops = 500
+    loops = 200
     apps = []
 
     ACLIB.setup()

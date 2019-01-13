@@ -387,7 +387,7 @@ class Car:
         self.lap_diff = ACLIB.getLapDeltaTime(self.number)
 
         # performance
-        self.performance_location = round(self.location * ACLIB.getTrackLength() * 50)
+        self.performance_location = round(self.location * ACLIB.getTrackLength() * 5)
 
         if self.performance_location not in self.last_performance:
             self.last_performance[self.performance_location] = self.speed
@@ -561,8 +561,8 @@ class Car:
             if 0 < sector_time < self.best_sector_time[self.sector_index] and self.lap > 1:
                 self.best_sector_time[self.sector_index] = sector_time
 
-                if sector_time < SESSION.best_sector_time[self.sector_index]:
-                    SESSION.best_sector_time[self.sector_index] = sector_time
+                # if sector_time < SESSION.best_sector_time[self.sector_index]:
+                #     SESSION.best_sector_time[self.sector_index] = sector_time
 
             if self.sector_fuel_level - self.fuel > 0:
                 self.sector_fuel = self.sector_fuel_level - self.fuel
@@ -587,8 +587,8 @@ class Car:
             if 0 < mini_sector_time < self.best_mini_sector_time[self.mini_sector_index] and self.lap > 1:
                 self.best_mini_sector_time[self.mini_sector_index] = mini_sector_time
 
-                if mini_sector_time < SESSION.best_mini_sector_time[self.mini_sector_index]:
-                    SESSION.best_mini_sector_time[self.mini_sector_index] = mini_sector_time
+                # if mini_sector_time < SESSION.best_mini_sector_time[self.mini_sector_index]:
+                #     SESSION.best_mini_sector_time[self.mini_sector_index] = mini_sector_time
 
             if self.mini_sector_fuel_level - self.fuel > 0:
                 self.mini_sector_fuel = self.mini_sector_fuel_level - self.fuel
@@ -617,8 +617,8 @@ class Car:
             if 0 < km_time < self.best_km_time[self.km_index] and self.lap > 1:
                 self.best_km_time[self.km_index] = km_time
 
-                if km_time < SESSION.best_km_time[self.km_index]:
-                    SESSION.best_km_time[self.km_index] = km_time
+                # if km_time < SESSION.best_km_time[self.km_index]:
+                #     SESSION.best_km_time[self.km_index] = km_time
 
             if self.km_fuel_level - self.fuel > 0:
                 self.km_fuel = self.km_fuel_level - self.fuel
@@ -842,7 +842,8 @@ class ACLIB:
     @staticmethod
     def getRaceTimeLeft():
         time = info.graphics.sessionTimeLeft
-        if not isinf(time):
+
+        if not isinf(time) and time > 0:
             return time
         else:
             return -1
