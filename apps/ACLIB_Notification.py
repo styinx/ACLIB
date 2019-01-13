@@ -1,4 +1,4 @@
-from source.aclib import ACLIB, formatTimeCar, SESSION
+from source.aclib import ACLIB, formatTimeCar, formatTime, SESSION
 from source.animation import Animation
 from source.color import Color
 from source.event import LIB_EVENT
@@ -30,10 +30,21 @@ class Notification(ACApp):
 
         if self.timer > self.timeout:
             self.reset()
-        if SESSION.time_left > 0:
+
+        session_id = ACLIB.getSessionStatusId()
+        if SESSION.time_left > 0 and session_id == 2:
             self.setBackgroundColor(Color(0, 0, 0, 1))
             self.text.setTextColor(Color(1, 1, 1))
             self.text.setText("Start in: {: 2d}".format(round(SESSION.time_left / 1000)))
+        elif SESSION.time_left > 0 and session_id < 2:
+            self.setBackgroundColor(Color(0, 0, 0, 1))
+            self.text.setTextColor(Color(1, 1, 1))
+            self.text.setText("Start in: " + formatTime(SESSION.time_left))
+
+        if session_id == 2 and self.car.penalty_time > 0:
+            self.setBackgroundColor(Color(1, 0.5, 0, 1))
+            self.text.setTextColor(Color(0, 0, 0))
+            self.text.setText("Penalty: " + str(round(self.car.penalty_time)) + "s")
 
     def render(self, delta):
         super().render(delta)
