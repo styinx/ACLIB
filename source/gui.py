@@ -329,6 +329,7 @@ class ACWidget(object):
         return self
 
 
+# TODO not finished
 class DockingWidget(ACWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -363,6 +364,7 @@ class ACApp(ACWidget):
         self.suspended = False
         self.attached = False
         self.attached_apps = []
+        self._is_init = False
         self._render_callback = None
         self._activated_callback = None
         self._dismissed_callback = None
@@ -512,9 +514,6 @@ class ACApp(ACWidget):
     def getPositionChanged(self):
         return self.position_changed
 
-    def init(self):
-        pass
-
     def getApp(self):
         return self.ac_obj
 
@@ -577,8 +576,15 @@ class ACApp(ACWidget):
     def dismiss(self, val):
         self.suspended = True
 
+    def init(self):
+        pass
+
     def update(self, delta):
         super().update(delta)
+
+        if not self._is_init:
+            self.init()
+            self._is_init = True
 
         self.position_changed = False
         col = self.background_color
@@ -1073,23 +1079,12 @@ class ACGraph(ACWidget):
         self.y_dist = 0
         self.y_ratio = 0
 
-        self.calc()
+        self.x_axis = True
+        self.x_axis_size = 3
+        self.border = 1
 
-    def calc(self):
-        if len(self.points) > 0:
-            self.x_dist = self.x_max - self.x_min
-            if self.x_dist > 0:
-                self.x_ratio = self.geometry.w / self.x_dist
-            else:
-                self.x_ratio = self.geometry.w / 100
-
-            # self.x_ratio = self.geometry.w / max(self.key, 1)
-
-            self.y_dist = self.y_max - self.y_min
-            if self.y_dist > 0:
-                self.y_ratio = self.geometry.h / self.y_dist
-            else:
-                self.y_ratio = self.geometry.h / 100
+        self.draw_colors = [Color(1, 1, 1)]
+        self.background_colors = [Color(0, 0, 0, 0.5)]
 
     def __iter__(self):
         return iter(self.points)
@@ -1132,21 +1127,125 @@ class ACGraph(ACWidget):
         self.calc()
         return self
 
+    def setDrawColors(self, colors):
+        if isinstance(colors, list):
+            self.draw_colors = colors
+
+    def setBackgroundColors(self, colors):
+        if isinstance(colors, list):
+            self.background_colors = colors
+
+    def setPoints(self, points):
+        for k in points:
+            self[k] = points[k]
+
+    def setColor(self, c):
+        ac.glColor4f(c.r, c.g, c.b, c.a)
+
+    def calc(self):
+        if len(self.points) > 0:
+            self.x_dist = self.x_max - self.x_min
+            if self.x_dist > 0:
+                self.x_ratio = self.geometry.w / self.x_dist
+            else:
+                self.x_ratio = self.geometry.w / 100
+
+            # self.x_ratio = self.geometry.w / max(self.key, 1)
+
+            self.y_dist = self.y_max - self.y_min
+            if self.y_dist > 0:
+                self.y_ratio = self.geometry.h / self.y_dist
+            else:
+                self.y_ratio = self.geometry.h / 100
+
+    def reset(self):
+        self.points = {}
+        self.key = 0
+
+        self.x_min = float("inf")
+        self.x_max = float("-inf")
+        self.y_min = float("inf")
+        self.y_max = float("-inf")
+
+        self.x_dist = 0
+        self.x_ratio = 0
+        self.y_dist = 0
+        self.y_ratio = 0
+
+    def update(self, delta):
+        super().update(delta)
+
+    def render(self, delta):
+        super().update(delta)
+
+    def paint(self):
+        x, y = self.getPos()
+        w, h = self.getSize()
+
+        step = w * (1 / len(self.background_colors))
+        current = x
+
+        for c in self.background_colors:
+            rect(current, y, step, h, c)
+            current += step
+
+        if len(self.points) > 0 and self.x_axis and self.y_max != float("-inf"):
+            rect(x, y + self.y_max * self.y_ratio - 1, w, self.x_axis_size)
+
 
 class ACLineGraph(ACGraph):
     def __init__(self, parent=None):
         super().__init__(parent)
 
     def render(self, delta):
+        super().render(delta)
+
+        self.paint()
+
         x, y = self.getPos()
         w, h = self.getSize()
+        current = 0
 
         ac.glBegin(1)
 
-        ac.glColor3f(1, 1, 1)
+        self.setColor(self.draw_colors[0])
 
         for p in sorted(self.points):
-            ac.glVertex2f(x + p * self.x_ratio, y + h - self.points[p] * self.y_ratio)
+            if p * self.x_ratio > w / len(self.draw_colors) * current:
+                c = self.draw_colors[current]
+                self.setColor(c)
+                current = min(current + 1, len(self.draw_colors) - 1)
+
+            ac.glVertex2f(x + p * self.x_ratio, y + self.y_max * self.y_ratio - self.points[p] * self.y_ratio)
+
+        ac.glEnd()
+
+        return self
+
+
+class ACAreaGraph(ACGraph):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def render(self, delta):
+        super().render(delta)
+
+        x, y = self.getPos()
+        w, h = self.getSize()
+        current = 0
+
+        self.paint()
+        self.setColor(self.draw_colors[current])
+
+        ac.glBegin(1)
+
+        for p in sorted(self.points):
+            if p * self.x_ratio > w / len(self.draw_colors) * current:
+                c = self.draw_colors[current]
+                self.setColor(c)
+                current = min(current + 1, len(self.draw_colors) - 1)
+
+            ac.glVertex2f(x + p * self.x_ratio, y + self.y_max * self.y_ratio - self.points[p] * self.y_ratio)
 
         ac.glEnd()
 
