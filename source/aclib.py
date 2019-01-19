@@ -376,7 +376,7 @@ class Car:
         self.max_rpm = ACLIB.getRPMMax(self.number)
         self.rpm = ACLIB.getRPM(self.number)
         self.location = round(ACLIB.getLocation(self.number), 4)
-        self.speed = round(ACLIB.getSpeed(self.number), 2)
+        self.speed = round(ACLIB.getSpeed(self.number) * -1 if self.gear == 0 else ACLIB.getSpeed(self.number), 2)
         self.traveled_distance = ACLIB.getTraveledDistance(self.number)
         self.fuel = round(ACLIB.getFuel(self.number), 2)
         self.tc = ACLIB.TC(self.number)
@@ -388,18 +388,18 @@ class Car:
 
         # performance
         self.performance_location = round(self.location * ACLIB.getTrackLength() * 5)
+        loc = self.performance_location
 
-        if self.performance_location not in self.last_performance:
-            self.last_performance[self.performance_location] = self.speed
+        if loc not in self.last_performance:
+            self.last_performance[loc] = self.speed
 
-        if self.performance_location not in self.best_performance:
-            self.best_performance[self.performance_location] = self.speed
+        if loc not in self.best_performance:
+            self.best_performance[loc] = self.speed
 
-        if self.performance_location not in self.lap_performance:
-            self.lap_performance[self.performance_location] = self.speed
+        if loc not in self.lap_performance:
+            self.lap_performance[loc] = self.speed
 
-        self.performance = self.best_performance[self.performance_location] - \
-                           self.lap_performance[self.performance_location]
+        self.performance = self.best_performance[loc] - self.lap_performance[loc]
 
         # init components that require shared memory to be loaded
         # init fuel
@@ -1136,11 +1136,14 @@ class ACLIB:
         return info.graphics.completedLaps
 
     @staticmethod
-    def getLaps():
+    def getLaps(form=None):
         if info.graphics.numberOfLaps > 0:
             return info.graphics.numberOfLaps
         else:
-            return "-"
+            if form is None:
+                return 0
+            else:
+                return form
 
     @staticmethod
     def lastSectorTime(car=0):
