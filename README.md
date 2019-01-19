@@ -63,7 +63,8 @@ class MyNewApp(ACApp):
     def __init__(self):
         super().__init__("MyCustom App Name", 0, 0, 200, 200)
         
-my_widget,         
+        self.my_widget = ACLabel("", self, self)
+             
     # update is called in 'acUpdate(delta)'
     def update(self, delta):
         super().update(delta)
@@ -168,7 +169,11 @@ A supported animation class looks like this:
 ```python
 class Color:
     def __init__(self, r, g, b, a=1.0):
-r, g, b, a, 
+        self.r = r
+        self.g = g
+        self.b = b 
+        self.a = a
+         
     def __add__(self, other):
         return Color(max(min(self.r + other.r, 1), 0),
                      max(min(self.g + other.g, 1), 0),
@@ -239,8 +244,9 @@ def update(self, delta):
         self.addAnimation(Animation(self, "geometry", start, step, stop, 0, "Alternate"))
 
     if self.loops == 1000:
-loops, 
-    self.loops += 1
+        self.loops = 0
+    else:
+        self.loops += 1
 ```
 
 ![Animation](https://github.com/styinx/ACLIB/blob/master/images/animation.gif "Animation")
