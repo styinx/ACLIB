@@ -55,6 +55,7 @@ class Notification(ACApp):
         self.setBackgroundColor(Color(0, 0, 0, 0))
         self.text.setTextColor(Color(1, 1, 1))
         self.text.setText("")
+        self.text.animation = None
 
     def flagChange(self, car_index):
         self.reset()
@@ -66,8 +67,8 @@ class Notification(ACApp):
             start = Color(0, 0, 0, 0.5)
             step = Color(0.1, 0.1, 0, 0)
             stop = Color(1, 1, 0, 0.5)
-            self.addAnimation(Animation(self, "background_color", start, step, stop, 10, "Alternate"))
             self.text.setText("Yellow Flag ahead!").setTextColor(Color(0, 0, 0))
+            self.text.addAnimation(Animation(self, "background_color", start, step, stop, -1, "Forwards"))
         elif self.car.flag == 3 or self.car.flag == 6:
             self.setBackgroundColor(Color(1, 0.75, 0, 0.5))
             self.text.setText("Penalty: " + str(int(self.car.penalty_time)) + "s").setTextColor(Color(0, 0, 0))

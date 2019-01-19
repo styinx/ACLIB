@@ -1,6 +1,5 @@
 from time import strftime, localtime
-from math import isinf
-from source.gui import ACApp, ACLabel, ACGrid, ACLabelPair, ACLineGraph
+from source.gui import ACApp, ACLabel, ACGrid, ACLabelPair
 from source.widget import ACDeltaBarWidget, ACTyreWidget, ACFuelWidget, ACShiftLightBarWidget
 from source.aclib import ACLIB, SESSION, formatTime, formatTimeCar, formatGear
 from source.gl import Texture
@@ -199,7 +198,7 @@ class Driver(ACApp):
             else:
                 self.last.setTextColor(DRIVER_BAD_COLOR)
 
-        self.lap.setText("L: {:}|{:}".format(self.car.lap, ACLIB.getLaps()))
+        self.lap.setText("L: {:}|{:}".format(self.car.lap, ACLIB.getLaps("-")))
         self.pos.setText("P: {:}|{:}".format(self.car.position, ACLIB.getCarsCount()))
         self.last.setText("LST: " + formatTime(self.car.last_time))
         self.best.setText("BST: " + formatTime(self.car.best_time))
