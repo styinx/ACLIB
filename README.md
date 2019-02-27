@@ -20,6 +20,9 @@ _Assetto Corsa App Library_
 ## Issues
 
 - tyre temperatures do not work for DLC cars
+- time table does not work anymore in Multiplayer
+- best times are not correct shown in Singleplayer
+- lap delta bar does not behave like built in delta bar (inaccurate)
 
 ## Install
 
