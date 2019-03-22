@@ -1,6 +1,6 @@
 from time import strftime, localtime
 from source.gui import ACApp, ACLabel, ACGrid, ACLabelPair
-from source.widget import ACDeltaBarWidget, ACTyreWidget, ACFuelWidget, ACShiftLightBarWidget
+from source.widget import ACDeltaBarWidget, ACTyreWidget, ACFuelWidget, ACShiftLightBarWidget, ACDamageWidget
 from source.aclib import ACLIB, SESSION, formatTime, formatTimeCar, formatGear
 from source.gl import Texture
 from source.color import Color, TRANSPARENT
@@ -23,7 +23,7 @@ DRIVER_GOOD_SHIFT = 0.90
 
 class Driver(ACApp):
     def __init__(self):
-        super().__init__("ACLIB_Driver", 200, 200, 576, 224)
+        super().__init__("ACLIB_Driver", 200, 200, 612, 224)
 
         self.hideDecoration().setBackgroundColor(Color(0, 0, 0, 0.25))
 
@@ -50,19 +50,20 @@ class Driver(ACApp):
         self.kers = ACLabel("", self, font_size=16, bold=1)
 
         self.fuel_widget = ACFuelWidget(self)
-        self.local_time = ACLabel("", self, font_size=20, bold=1)
-        self.race_time = ACLabel("", self, font_size=20, bold=1)
+        self.local_time = ACLabel("", self, font_size=16, bold=1, text_h_alignment="left")
+        self.race_time = ACLabel("", self, font_size=16, bold=1, text_h_alignment="left")
         self.session_time = 0
 
         self.next_time = ACLabel("", self, font_size=20, bold=1)
         self.current = ACLabel("", self, font_size=20, bold=1)
-        self.s1 = ACLabel("", self, font_size=14, bold=1)
-        self.s2 = ACLabel("", self, font_size=14, bold=1)
-        self.s3 = ACLabel("", self, font_size=14, bold=1)
+        self.s1 = ACLabel("", self, font_size=12, bold=1)
+        self.s2 = ACLabel("", self, font_size=12, bold=1)
+        self.s3 = ACLabel("", self, font_size=12, bold=1)
         self.delta_widget = ACLabelPair(self, label_pos="top", widget=ACDeltaBarWidget(),
                                         label=ACLabel("", self, font_size=16, bold=1))
         self.shift_widget = ACShiftLightBarWidget()
         self.tyre_widget = ACTyreWidget()
+        self.damage_widget = ACDamageWidget(self)
         self.status = ACLabel("", self, font_size=30, bold=1)
         self.prev_time = ACLabel("", self, font_size=20, bold=1)
 
@@ -85,7 +86,8 @@ class Driver(ACApp):
         self.grid.addWidget(self.gear, 6, 1, 6, 5)
         self.grid.addWidget(self.speed, 6, 5, 6, 1)
 
-        self.grid.addWidget(self.tyre_widget, 12, 1, 3, 3)
+        self.grid.addWidget(self.tyre_widget, 12, 1, 1, 2)
+        self.grid.addWidget(self.damage_widget, 14, 1, 1, 2)
         self.grid.addWidget(self.local_time, 15, 1, 3, 1)
         self.grid.addWidget(self.race_time, 15, 2, 3, 1)
         self.grid.addWidget(self.fuel_widget, 15, 3, 3, 5)
@@ -206,7 +208,7 @@ class Driver(ACApp):
         self.gear.setText(formatGear(self.car.gear))
         self.speed.setText("{:3.0f} km/h".format(self.car.speed))
         self.local_time.setText(strftime("%H:%M:%S", localtime()))
-        self.race_time.setText(formatTime(self.session_time))
+        self.race_time.setText(formatTime(self.session_time, form="{:02d}:{:02d}.{:02d}"))
 
         self.s1.setText(formatTime(self.car.sector_time[0], "{:d}:{:02d}.{:03d}"))
         self.s2.setText(formatTime(self.car.sector_time[1], "{:d}:{:02d}.{:03d}"))
@@ -218,3 +220,5 @@ class Driver(ACApp):
 
     def render(self, delta):
         super().render(delta)
+
+        return self

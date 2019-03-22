@@ -136,10 +136,25 @@ class ACDamageWidget(ACWidget):
     def __init__(self, app, parent=None):
         super().__init__(parent)
 
+        self.car = ACLIB.CARS[0]
+
     def update(self, delta):
         return self
 
     def render(self, delta):
+        x, y = self.getPos()
+        w, h = self.getSize()
+
+        bh_w, bh_h = 0.5, w * 0.25
+        bv_w, bv_h = 0.5, w * 0.25
+
+        d = self.car.damage
+
+        rect(x + w * (1 - bh_w) / 2, y, w * bh_w, bh_h, damageColor(d[0]))
+        rect(x + w * (1 - bh_w) / 2, y + h - bh_h, w * bh_w, bh_h, damageColor(d[1]))
+        rect(x, y + h * (1 - bv_w) / 2, bv_h, h * bv_w, damageColor(d[2]))
+        rect(x + w - bv_h, y + h * (1 - bv_w) / 2, bv_h, h * bv_w, damageColor(d[3]))
+
         return self
 
 
@@ -214,8 +229,8 @@ class ACTyreWidget(ACWidget):
         return self
 
     def render(self, delta):
-        t_w, t_h = 24, 34
-        h_space, v_space = 10, 10
+        t_w, t_h = self.geometry.w * 0.45, self.geometry.h * 0.45
+        h_space, v_space = self.geometry.w - t_w * 2, self.geometry.h - t_h * 2
         x, y = self.getPos()
 
         # tyre 1
@@ -355,3 +370,9 @@ def tyreDirtColor(dirt):
     r = 1 - (dirt / 5) * 0.7
     g = 0.75 - (dirt / 5) * 0.6
     return Color(r, g, 0, dirt * 2)
+
+
+def damageColor(damage):
+    r = -0.0001 * ((damage - 100) ** 2) + 1
+    g = -0.04 * (damage - 40) + 1
+    return Color(r, g, 0)

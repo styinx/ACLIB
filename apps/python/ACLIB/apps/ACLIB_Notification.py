@@ -61,29 +61,40 @@ class Notification(ACApp):
         self.reset()
 
         if self.car.flag == 1:
+            start = Color(0, 0, 0, 0.5)
+            step = Color(0, 0.05, 0.1, 0)
+            stop = Color(0, 0.5, 1, 0.5)
+            self.addAnimation(Animation(self, "background_color", start, step, stop, -1, "Alternate"))
             self.text.setText("Faster car behind!")
-            self.setBackgroundColor(Color(0, 0.5, 1, 0.5))
+
         elif self.car.flag == 2:
             start = Color(0, 0, 0, 0.5)
             step = Color(0.1, 0.1, 0, 0)
             stop = Color(1, 1, 0, 0.5)
+            self.addAnimation(Animation(self, "background_color", start, step, stop, -1, "Forwards"))
             self.text.setText("Yellow Flag ahead!").setTextColor(Color(0, 0, 0))
-            self.text.addAnimation(Animation(self, "background_color", start, step, stop, -1, "Forwards"))
+
         elif self.car.flag == 3 or self.car.flag == 6:
-            self.setBackgroundColor(Color(1, 0.75, 0, 0.5))
+            start = Color(0, 0, 0, 0.5)
+            step = Color(0.1, 0.075, 0, 0)
+            stop = Color(1, 0.75, 0, 0.5)
+            self.addAnimation(Animation(self, "background_color", start, step, stop, -1, "Alternate"))
             self.text.setText("Penalty: " + str(int(self.car.penalty_time)) + "s").setTextColor(Color(0, 0, 0))
+
         elif self.car.flag == 4:
-            self.setBackgroundColor(Color(1, 1, 1, 1))
+            self.text.setText("Last lap")
+            self.setBackgroundColor(Color(0.8, 0.8, 0.8, 0.5))
             self.text.setTextColor(Color(0, 0, 0))
+
         elif self.car.flag == 5:
             self.text.setText("Race over")
-            self.setBackgroundColor(Color(0.5, 0.5, 0.5, 1))
+            self.setBackgroundColor(Color(0.5, 0.5, 0.5, 0.5))
 
     def posLost(self, car_index):
         self.reset()
 
         self.setBackgroundColor(Color(0.75, 0, 0, 0.5))
-        next_car = formatTimeCar(self.car.prev_time, self.car.prev_dist, ACLIB.getTrackLength())
+        next_car = formatTimeCar(self.car.next_time, self.car.next_dist, ACLIB.getTrackLength())
 
         if self.car.position == ACLIB.getCarsCount():
             self.text.setText("You lost a position!\nNo car is behind, you are last!")
@@ -94,9 +105,9 @@ class Notification(ACApp):
         self.reset()
 
         self.setBackgroundColor(Color(0, 0.75, 0, 0.5))
-        prev_car = formatTimeCar(self.car.next_time, self.car.next_dist, ACLIB.getTrackLength())
+        next_car = formatTimeCar(self.car.next_time, self.car.next_dist, ACLIB.getTrackLength())
 
         if self.car.position == 1:
             self.text.setText("You gained a position!\nNo car ahead, you are first!")
         else:
-            self.text.setText("You gained a position!\nNext car is " + prev_car + " ahead")
+            self.text.setText("You gained a position!\nNext car is " + next_car + " ahead")

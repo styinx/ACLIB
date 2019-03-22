@@ -5,8 +5,9 @@ from source.color import Color
 from source.config import loadAppConfig, Config
 from source.gl import Texture, rect, texture_rect
 from source.event import GUI_EVENT
-from source.math import Rect
+from source.math import Rect, Point
 from source.animation import Animation
+from source.windows import *
 
 
 class Font:
@@ -35,6 +36,9 @@ class ACWidget(object):
         self.child = None
         self.parent = None
         self.ac_size = (0, 0)
+        self.ac_pos = (0, 0)
+        self.pos_changed = False
+        self.global_geometry = Rect()
         self.geometry = Rect()
         self.visible = True
         self.background_texture = None
@@ -67,6 +71,12 @@ class ACWidget(object):
             self.setPos((0, 0))
 
         self.on_click = None
+
+    def getGlobalGeometry(self):
+        return self.global_geometry
+
+    def getGlobalPos(self):
+        return self.global_geometry.x, self.global_geometry.y
 
     @staticmethod
     def getPosition(obj):
@@ -154,6 +164,11 @@ class ACWidget(object):
 
         if self.ac_obj is not None:
             ac.setPosition(self.ac_obj, self.geometry.x, self.geometry.y)
+
+        if self.parent is not None:
+            self.global_geometry = self.parent.global_geometry + Rect(self.geometry.x, self.geometry.y, 0, 0)
+        else:
+            self.global_geometry = self.geometry
 
         self.dispatchEvent(GUI_EVENT.ON_POSITION_CHANGED)
         return self
@@ -326,27 +341,6 @@ class ACWidget(object):
 
         if self.child is not None:
             self.child.render(delta)
-        return self
-
-
-# TODO not finished
-class DockingWidget(ACWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        self.attachable = True
-        self.attached = False
-        self.docking_area = Rect()
-
-    def setAttachable(self, attachable):
-        self.attachable = attachable
-        return self
-
-    def isAttached(self):
-        return self.attached
-
-    def setDockingArea(self, area):
-        self.docking_area = area
         return self
 
 
@@ -763,51 +757,74 @@ class ACGrid(ACLayout):
         return self
 
 
-class ACLabelPair(ACGrid):
-    def __init__(self, app, parent=None, label=None, widget=None, label_pos="left"):
-        if label_pos == "left" or label_pos == "right":
-            super().__init__(parent, 2, 1)
-        elif label_pos == "top" or label_pos == "bottom":
-            super().__init__(parent, 1, 2)
+class ACDragableWidget(ACWidget):
+    def __init__(self, parent):
+        super().__init__(parent=parent)
 
-        self.label_widget = label
-        self.pair_widget = widget
-        self.label_position = label_pos
+        self.mouse_hover = False
+        self.mouse_focus = False
+        self.last_pos = (0, 0)
 
-        self.loadStyle()
+    def update(self, delta):
+        super().update(delta)
 
-        self.addLabelWidget(label)
-        self.addPairWidget(widget)
+        m_x, m_y = System.getMousePosition()
 
-    def addLabelWidget(self, label):
-        if isinstance(label, ACLabel):
-            self.label_widget = label
+        if self.mouse_focus:
+            p_x, p_y = self.getPos()
+            x, y = p_x + self.last_pos[0] - m_x, p_y + self.last_pos[1] - m_y
+            self.setPos((x, y))
 
-            if self.label_position == "left" or self.label_position == "top":
-                self.addWidget(self.label_widget, 0, 0)
-            elif self.label_position == "right":
-                self.addWidget(self.label_widget, 1, 0)
-            elif self.label_position == "bottom":
-                self.addWidget(self.label_widget, 0, 1)
+        self.mouse_hover = Rect.pointInRect(Point(m_x, m_y), self.global_geometry)
+
+        if self.mouse_hover and System.keyPressed(KEY.LEFT_MOUSE):
+            self.last_pos = System.getMousePosition()
+            self.mouse_focus = True
+        else:
+            self.mouse_focus = False
+
         return self
 
-    def addPairWidget(self, widget):
-        if isinstance(widget, ACWidget):
-            self.pair_widget = widget
 
-            if self.label_position == "left":
-                self.addWidget(self.pair_widget, 1, 0)
-            elif self.label_position == "right" or self.label_position == "bottom":
-                self.addWidget(self.pair_widget, 0, 0)
-            elif self.label_position == "top":
-                self.addWidget(self.pair_widget, 0, 1)
+class ACDockingWidget(ACDragableWidget):
+    DockingWidgets = []
+
+    def __init__(self, parent, space=5):
+        super().__init__(parent=parent)
+
+        self.space = space
+        self.ratio = 0.5
+        self.attachable = True
+        self.attached = False
+        self.docking_area = Rect()
+
+        self.setDockingSpace(self.space)
+
+        ACDockingWidget.DockingWidgets.append(self)
+
+    def setAttachable(self, attachable):
+        self.attachable = attachable
         return self
 
-    def render(self, delta):
-        if self.label_widget:
-            self.label_widget.render(delta)
-        if self.pair_widget:
-            self.pair_widget.render(delta)
+    def isAttached(self):
+        return self.attached
+
+    def setDockingSpace(self, space):
+        self.space = space
+        self.docking_area = self.geometry + Rect(-self.space, -self.space, self.space, self.space)
+        return self
+
+    def update(self, delta):
+        super().update(delta)
+
+        if self.attachable:
+            if len(ACDockingWidget.DockingWidgets) > 1 and self.pos_changed:
+                self.setDockingSpace(self.space)
+                for w in ACDockingWidget.DockingWidgets:
+                    if w != self:
+                        if Rect.rectOverlapping(self.docking_area, w.geometry):
+                            pass
+
         return self
 
 
@@ -974,6 +991,54 @@ class ACLabel(ACTextWidget):
         self.setFontFamily(self.font_family)
         self.setFontItalic(self.font_italic)
         self.setFontBold(self.font_bold)
+
+
+class ACLabelPair(ACGrid):
+    def __init__(self, app, parent=None, label=None, widget=None, label_pos="left"):
+        if label_pos == "left" or label_pos == "right":
+            super().__init__(parent, 2, 1)
+        elif label_pos == "top" or label_pos == "bottom":
+            super().__init__(parent, 1, 2)
+
+        self.label_widget = label
+        self.pair_widget = widget
+        self.label_position = label_pos
+
+        self.loadStyle()
+
+        self.addLabelWidget(label)
+        self.addPairWidget(widget)
+
+    def addLabelWidget(self, label):
+        if isinstance(label, ACLabel):
+            self.label_widget = label
+
+            if self.label_position == "left" or self.label_position == "top":
+                self.addWidget(self.label_widget, 0, 0)
+            elif self.label_position == "right":
+                self.addWidget(self.label_widget, 1, 0)
+            elif self.label_position == "bottom":
+                self.addWidget(self.label_widget, 0, 1)
+        return self
+
+    def addPairWidget(self, widget):
+        if isinstance(widget, ACWidget):
+            self.pair_widget = widget
+
+            if self.label_position == "left":
+                self.addWidget(self.pair_widget, 1, 0)
+            elif self.label_position == "right" or self.label_position == "bottom":
+                self.addWidget(self.pair_widget, 0, 0)
+            elif self.label_position == "top":
+                self.addWidget(self.pair_widget, 0, 1)
+        return self
+
+    def render(self, delta):
+        if self.label_widget:
+            self.label_widget.render(delta)
+        if self.pair_widget:
+            self.pair_widget.render(delta)
+        return self
 
 
 class ACButton(ACTextWidget):

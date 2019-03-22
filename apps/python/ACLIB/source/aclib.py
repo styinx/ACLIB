@@ -1,12 +1,15 @@
 import json
 import sys
 import os
-import re
 import platform
+import pickle
+import re
 from math import isinf
 import ac
 from source.event import LIB_EVENT
 from source.gl import Texture
+from source.acd import decryptACD
+from source.config import Config
 
 if platform.architecture()[0] == "64bit":
     sysdir = os.path.dirname(__file__) + '/../stdlib64'
@@ -102,6 +105,34 @@ class SESSION:
     @staticmethod
     def update():
         SESSION.time_left = ACLIB.getRaceTimeLeft()
+
+    @staticmethod
+    def bestLap(t):
+        if t < SESSION.best_lap_time:
+            SESSION.best_lap_time = t
+            return True
+        return False
+
+    @staticmethod
+    def bestSector(t):
+        if t < SESSION.best_sector_time:
+            SESSION.best_sector_time = t
+            return True
+        return False
+
+    @staticmethod
+    def bestMiniSector(t):
+        if t < SESSION.best_mini_sector_time:
+            SESSION.best_mini_sector_time = t
+            return True
+        return False
+
+    @staticmethod
+    def bestKm(t):
+        if t < SESSION.best_km_time:
+            SESSION.best_km_time = t
+            return True
+        return False
 
 
 class Car:
@@ -203,7 +234,8 @@ class Car:
         self.km_fuel_range = 0.0
         self.km_fuel_level = 0.0
 
-        self.damage = [0.0] * 4  # 0: front, 1: rear, 2: left, 3: right
+        self.damage_body = [0.0] * 4  # 0: front, 1: rear, 2: left, 3: right
+        self.damage_suspension = [0.0] * 4  # 0: FL, 1: FR, 2: RL, 3: RR
         self.tyre_temp = [0.0] * 4  # 0: FL, 1: FR, 2: RL, 3: RR
         self.tyre_dirt = [0.0] * 4
         self.tyre_wear = [0.0] * 4
@@ -213,8 +245,10 @@ class Car:
 
         self.tyre_ideal_pressure_front = 0
         self.tyre_ideal_pressure_rear = 0
-        self.tyre_ideal_temp_min = 0
-        self.tyre_ideal_temp_max = 0
+        self.tyre_ideal_temp_front_min = 0
+        self.tyre_ideal_temp_front_max = 0
+        self.tyre_ideal_temp_rear_min = 0
+        self.tyre_ideal_temp_rear_max = 0
 
         self.is_init = False
         self.init()
@@ -294,7 +328,8 @@ class Car:
         self.km_fuel_range = 0.0
         self.km_fuel_level = 0.0
 
-        self.damage = [0.0] * 4
+        self.damage_body = [0.0] * 4
+        self.damage_suspension = [0.0] * 4
         self.tyre_temp = [0.0] * 4
         self.tyre_dirt = [0.0] * 4
         self.tyre_wear = [0.0] * 4
@@ -304,8 +339,10 @@ class Car:
 
         self.tyre_ideal_pressure_front = 0
         self.tyre_ideal_pressure_rear = 0
-        self.tyre_ideal_temp_min = 0
-        self.tyre_ideal_temp_max = 0
+        self.tyre_ideal_temp_front_min = 0
+        self.tyre_ideal_temp_front_max = 0
+        self.tyre_ideal_temp_rear_min = 0
+        self.tyre_ideal_temp_rear_max = 0
 
     def init(self):
         self.player_nick = ACLIB.getPlayerNickname(self.number)
@@ -347,12 +384,14 @@ class Car:
         self.tyre_compound = ACLIB.getTyreCompund(symbol=False)
         self.tyre_compound_symbol = ACLIB.getTyreCompund()
 
-        ideal = CarIdealData(self.number)
-
-        self.tyre_ideal_pressure_front = ideal.ideal_pressure_front
-        self.tyre_ideal_pressure_rear = ideal.ideal_pressure_rear
-        self.tyre_ideal_temp_min = ideal.ideal_temp_min
-        self.tyre_ideal_temp_max = ideal.ideal_temp_max
+        if ACLIB.getFocusedCar() == self.number:
+            ideal = CarData(self.number)
+            self.tyre_ideal_pressure_front = ideal["ideal_pressure_front"]
+            self.tyre_ideal_pressure_rear = ideal["ideal_pressure_rear"]
+            self.tyre_ideal_temp_front_min = ideal["ideal_temp_front_min"]
+            self.tyre_ideal_temp_front_max = ideal["ideal_temp_front_max"]
+            self.tyre_ideal_temp_rear_min = ideal["ideal_temp_rear_min"]
+            self.tyre_ideal_temp_rear_max = ideal["ideal_temp_rear_max"]
 
     def setEvent(self, event, callback):
         if event in self.events:
@@ -428,15 +467,19 @@ class Car:
 
         # pit
         is_in_pit = ACLIB.isInPit(self.number)
-        if is_in_pit:
+        # TODO
+        was_in_pit = True
+        if is_in_pit and not was_in_pit:
             if self.tyre_compound != ACLIB.getTyreCompund(symbol=False):
                 self.tyre_compound = ACLIB.getTyreCompund(symbol=False)
                 self.tyre_compound_symbol = ACLIB.getTyreCompund()
-                ideal = CarIdealData(self.number)
-                self.tyre_ideal_pressure_front = ideal.ideal_pressure_front
-                self.tyre_ideal_pressure_rear = ideal.ideal_pressure_rear
-                self.tyre_ideal_temp_min = ideal.ideal_temp_min
-                self.tyre_ideal_temp_max = ideal.ideal_temp_max
+                # ideal = CarData(self.number)
+                # self.tyre_ideal_pressure_front = ideal["ideal_pressure_front"]
+                # self.tyre_ideal_pressure_rear = ideal["ideal_pressure_rear"]
+                # self.tyre_ideal_temp_front_min = ideal["ideal_temp_front_min"]
+                # self.tyre_ideal_temp_front_max = ideal["ideal_temp_front_max"]
+                # self.tyre_ideal_temp_rear_min = ideal["ideal_temp_rear_min"]
+                # self.tyre_ideal_temp_rear_max = ideal["ideal_temp_rear_max"]
 
                 self.dispatchEvent(LIB_EVENT.ON_COMPOUND_CHANGED)
 
@@ -466,7 +509,8 @@ class Car:
 
         # Damage and tyres
         for i in range(0, 4):
-            self.damage[i] = ACLIB.getCarDamage(self.number, i)
+            self.damage_body[i] = ACLIB.getCarBodyDamage(self.number, i)
+            self.damage_suspension[i] = ACLIB.getCarSuspensionDamage(self.number, i)
             self.tyre_wear[i] = ACLIB.getTyreWear(self.number, i)
             self.tyre_temp[i] = ACLIB.getTyreTemp(self.number, i, "all")
             self.tyre_pressure[i] = ACLIB.getTyrePressure(self.number, i)
@@ -631,65 +675,83 @@ class Car:
             self.dispatchEvent(LIB_EVENT.ON_KM_CHANGED)
 
 
-class CarIdealData:
+class CarData:
     def __init__(self, car=0):
-        self.ideal_pressure_front = -1
-        self.ideal_pressure_rear = -1
-        self.ideal_temp_min = -1
-        self.ideal_temp_max = -1
+        self.car = car
+        self.id = ACLIB.getCarId(car)
+        self.data = ACLIB.getCarData(car)
+        self.compound = ACLIB.getTyreCompund()
+        self.tyres = {}
 
-        self.from_sdk(car)
+        if not os.path.isdir("apps/python/ACLIB/data/"):
+            os.mkdir("apps/python/ACLIB/data/")
 
-    def from_sidekick(self):
-        pass
-
-    def from_sdk(self, car):
-        name = ACLIB.getCarId(car)
-
-        ACLIB.CONSOLE(ACLIB.getTyreCompund(car), " - ", ACLIB.getTyreCompund(car, False))
-
-        if os.path.exists("sdk/dev/v1.5_tyres_ac/" + name + "/data/tyres.ini"):
-
-            compound_symbol = ACLIB.getTyreCompund(car)
-            file = open("sdk/dev/v1.5_tyres_ac/" + name + "/data/tyres.ini")
-            location = "None"
-            collect = False
-
-            for line in file.readlines():
-                kvp = line.strip("\n").split("=")
-                if re.match("\[FRONT(_\d+)?\]", kvp[0]):
-                    location = "Front"
-                elif re.match("\[REAR(_\d+)?\]", kvp[0]):
-                    location = "Rear"
-                elif kvp[0] == "SHORT_NAME":
-                    if kvp[1] == compound_symbol:
-                        collect = True
-                    else:
-                        collect = False
-                elif kvp[0] == "PRESSURE_IDEAL" and collect:
-                    if location == "Front":
-                        self.ideal_pressure_front = int(kvp[1].split(";")[0].strip(" "))
-                    if location == "Rear":
-                        self.ideal_pressure_rear = int(kvp[1].split(";")[0].strip(" "))
-                elif kvp[0] == "PERFORMANCE_CURVE" and collect:
-                    if os.path.exists("apps/python/ACLIB/lib/temperature/" + kvp[1]):
-
-                        tfile = open("apps/python/ACLIB/lib/temperature/" + kvp[1])
-                        first = False
-                        last = []
-
-                        for tline in tfile:
-                            tkvp = tline.strip("\n").split("|")
-                            if tkvp[1] == "1.0" and not first:
-                                self.ideal_temp_min = int(tkvp[0])
-                                first = True
-                            if tkvp[1] != "1.0" and first:
-                                self.ideal_temp_max = int(last[0])
-                                break
-                            last = tkvp
-                        break
+        if os.path.isfile("apps/python/ACLIB/data/" + self.id + ".txt"):
+            self.readCache()
         else:
-            ACLIB.CONSOLE("File for tyres not found. " + name + "(" + ACLIB.getTyreCompund(car, False) + ")")
+            self.init()
+            self.writeCache()
+
+    def __getitem__(self, item):
+        for compound in self.tyres:
+            if self.compound == compound:
+                return self.tyres[compound]
+        return -1
+
+    def writeCache(self):
+        f = open("apps/python/ACLIB/data/" + self.id + ".txt", "w")
+        for compound in self.tyres:
+            f.write("[" + compound + "]\n")
+            for key in self.tyres[compound]:
+                f.write(key + "=" + str(self.tyres[compound][key]) + "\n")
+            f.write("\n")
+
+    def readCache(self):
+        c = Config("apps/python/ACLIB/data/" + self.id + ".txt")
+        for compound in c:
+            self.tyres[compound] = {}
+            for key in c[compound]:
+                self.tyres[compound] = int(c[compound][key])
+
+    def init(self):
+        tyres = self.data["tyres.ini"]
+        compound = ""
+        for sec in tyres:
+            if sec.find("FRONT") or sec.find("REAR"):
+                if "SHORT_NAME" in tyres[sec]:
+                    compound = tyres[sec]["SHORT_NAME"]
+                    if compound not in self.tyres:
+                        self.tyres[compound] = {}
+                if compound != "":
+                    if "PRESSURE_IDEAL" in tyres[sec]:
+                        if re.match(r"FRONT_?", sec):
+                            self.tyres[compound]["pressure_ideal_front"] = tyres[sec]["PRESSURE_IDEAL"]
+                        elif re.match(r"REAR_?", sec):
+                            self.tyres[compound]["pressure_ideal_rear"] = tyres[sec]["PRESSURE_IDEAL"]
+                    if "PERFORMANCE_CURVE" in tyres[sec]:
+                        _min, _max = self.readOptimum(tyres[sec]["PERFORMANCE_CURVE"])
+                        if sec.find("THERMAL_FRONT"):
+                            self.tyres[compound]["temp_ideal_front_min"] = _min
+                            self.tyres[compound]["temp_ideal_front_max"] = _max
+                        elif sec.find("THERMAL_REAR"):
+                            self.tyres[compound]["temp_ideal_rear_min"] = _min
+                            self.tyres[compound]["temp_ideal_rear_max"] = _max
+
+    def readOptimum(self, lut_file, optimum="1.0"):
+        _min, _max = -1, -1
+
+        for line in self.data[lut_file].split("\n"):
+            vals = line.split("|")
+            if vals[1] == optimum and _min == -1:
+                _min = int(vals[0])
+            elif vals[1] == optimum and _min != -1:
+                _max = int(vals[0])
+                break
+
+        if _max == -1:
+            _max = _min
+
+        return _min, _max
 
 
 class ACLIB:
@@ -968,18 +1030,21 @@ class ACLIB:
         return json.loads(file.read())
 
     @staticmethod
-    def getCarIdealSetup(car=0):
+    def getCarData(car=0, cache=False):
         name = ACLIB.getCarId(car)
-        file = open("sdk/dev/v1.5_tyres_ac/" + name + "/data/tyres.ini")
 
-        for line in file.readlines():
-            class_line = line.split(":")
-            if class_line[0].strip() == "\"tags\"":
-                try:
-                    class_index = class_line[1].index("#")
-                    return class_line[1][class_index + 1:class_line[1].index("\"", class_index)].lower()
-                except ValueError:
-                    return ""
+        if cache:
+            if not os.path.isdir("apps/python/ACLIB/data/"):
+                os.mkdir("apps/python/ACLIB/data/")
+
+            if os.path.isfile("apps/python/ACLIB/data/" + name + ".acd.chached"):
+                data = pickle.load(open("apps/python/ACLIB/data/" + name + ".acd.chached", "rb"))
+            else:
+                data = decryptACD("content/cars/" + name + "/data.acd")
+                pickle.dump(data, open("apps/python/ACLIB/data/" + name + ".acd.chached", "wb"))
+                return data
+        else:
+            return decryptACD("content/cars/" + name + "/data.acd")
 
     @staticmethod
     def getCarClass(car=0):
@@ -1169,11 +1234,22 @@ class ACLIB:
             return -1
 
     @staticmethod
-    def getCarDamage(car=0, loc=0, form=None):
+    def getCarBodyDamage(car=0, loc=0, form=None):
         if car == ACLIB.getFocusedCar():
             if form:
                 return form.format(info.physics.carDamage[loc])
             return info.physics.carDamage[loc]  # 0: Front, 1: Rear, 2: Left, 3: Right, 4:?
+        else:
+            return -1
+
+    @staticmethod
+    def getCarSuspensionDamage(car=0, tyre=0, form=None):
+        if car == ACLIB.getFocusedCar():
+            travel = ACLIB.getSuspensionTravel(car, tyre=tyre)
+            travel_max = ACLIB.getMaxSuspensionTravel(car, tyre=tyre)
+            if form:
+                return form.format(travel / max(1, travel_max))
+            return travel / max(1, travel_max)
         else:
             return -1
 

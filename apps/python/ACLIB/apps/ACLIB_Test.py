@@ -1,7 +1,6 @@
 from source.aclib import ACLIB
-from source.animation import Animation
 from source.color import Color
-from source.gui import ACApp, ACGrid, ACLabel
+from source.gui import ACApp, ACAreaGraph, ACGrid, ACDragableWidget, ACLabel, ACDockingWidget
 
 
 class Test(ACApp):
@@ -9,17 +8,28 @@ class Test(ACApp):
         super().__init__("ACLIB_Test", 200, 200, 200, 200)
 
         self.hideDecoration()
+        self.car = ACLIB.CARS[0]
+        # self.graph = ACAreaGraph(self)
 
-        start = Color(1, 0, 0, 1)
-        step = Color(0, 0.025, 0, 0)
-        stop = Color(1, 1, 0, 1)
-        self.anim1 = Animation(self, "background_color", start, step, stop, -1, "Alternate")
+        # self.grid = ACGrid(self, 2, 2)
+        #
+        # self.d1 = ACDockingWidget(None)
+        # self.d1.setBackgroundColor(Color(1, 0, 0))
+        # self.d2 = ACDragableWidget(None)
+        # self.d2.setBackgroundColor(Color(0, 0, 1))
+        #
+        # self.grid.addWidget(self.d1, 0, 0, 1, 1)
+        # self.grid.addWidget(self.d2, 1, 1, 1, 1)
+
+        self.grid = ACGrid(self, 2, 2)
+
+        self.d2 = ACDockingWidget(self, 5).setBackgroundColor(Color(1, 0, 0))
+        self.grid.addWidget(self.d2, 0, 0, 1, 1)
 
     def update(self, delta):
         super().update(delta)
 
-        if ACLIB.CARS[0].speed > 10 and self.animation is None:
-            self.addAnimation(self.anim1)
+        # self.graph[round(self.car.location * 30)] = round(self.car.speed, 2)
 
     def render(self, delta):
         super().render(delta)

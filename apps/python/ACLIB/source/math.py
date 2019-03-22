@@ -70,3 +70,37 @@ class Rect:
 
     def __ne__(self, other):
         return not (self == other)
+
+    def mid(self):
+        return Point(self.x + int(self.w / 2), self.y + int(self.h / 2))
+
+    def topLeft(self):
+        return Point(self.x, self.y)
+
+    def bottomRight(self):
+        return Point(self.x + self.w, self.y + self.h)
+
+    @staticmethod
+    def rectOverlapping(l, r):
+        tl1, br1 = l.topLeft(), l.bottomRight()
+        tl2, br2 = r.topLeft(), r.bottomRight()
+
+        if tl1.x > br2.x or br1.x < tl2.x:
+            return False
+
+        if tl1.y > br2.y or br1.y < tl2.y:
+            return False
+
+        return True
+
+    @staticmethod
+    def pointInRect(p, r):
+        tl, br = r.topLeft(), r.bottomRight()
+
+        if p.x < tl.x or p.x > br.x:
+            return False
+
+        if p.y < tl.y or p.y > br.y:
+            return False
+
+        return True

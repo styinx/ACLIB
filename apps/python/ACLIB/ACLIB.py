@@ -2,14 +2,15 @@ import os
 import sys
 import importlib
 from source.aclib import ACLIB, SESSION
+from source.config import Config
 
 
 def acMain(version):
-    global init, apps, loops
+    global init, apps
 
     init = False
-    loops = 200
     apps = []
+    aclib_config = Config("apps/python/ACLIB/config/ACLIB.ini")
 
     ACLIB.setup()
 
@@ -27,15 +28,11 @@ def acMain(version):
 def acUpdate(delta):
     global init, apps, loops
 
-    if ACLIB.getSessionStatusId() != 2 and not init and loops == 0:
+    if ACLIB.getSessionStatusId() != 2:
         SESSION.init()
         ACLIB.init()
         for app in apps:
             app.init()
-        init = True
-        loops -= 1
-    elif loops >= 0:
-        loops -= 1
 
     SESSION.update()
     ACLIB.update(delta)
