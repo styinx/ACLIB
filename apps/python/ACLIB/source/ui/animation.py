@@ -2,14 +2,14 @@ from source.aclib import ACLIB
 
 
 class Animation:
-    def __init__(self, target, var, start, step, stop, loops=0, direction="Forwards"):
+    def __init__(self, target, var, start, step, stop, loops=0, direction='Forwards'):
         self.var = var
         self.target = target
         self.start = start
         self.step = step
         self.stop = stop
 
-        self.direction = "Forwards"
+        self.direction = 'Forwards'
         self.loops = loops
         self.loop = 0
         self.progress = 0
@@ -19,15 +19,15 @@ class Animation:
         self.setDirection(direction)
 
         animation_var = getattr(self.target, self.var)
-        if hasattr(type(animation_var), "__add__") and hasattr(type(animation_var), "__imul__") and \
-                hasattr(type(animation_var), "__ne__") and hasattr(type(animation_var), "__eq__"):
+        if hasattr(type(animation_var), '__add__') and hasattr(type(animation_var), '__imul__') and \
+                hasattr(type(animation_var), '__ne__') and hasattr(type(animation_var), '__eq__'):
             self.valid = True
             self.init()
         else:
-            ACLIB.CONSOLE("Class " + str(animation_var) + " does not fulfill animation requirements.")
+            ACLIB.CONSOLE('Class ' + str(animation_var) + ' does not fulfill animation requirements.')
 
     def setDirection(self, direction):
-        directions = ["Forwards", "Backwards", "Alternate"]
+        directions = ['Forwards', 'Backwards', 'Alternate']
         if isinstance(direction, str):
             if direction in directions:
                 self.direction = direction
@@ -55,7 +55,7 @@ class Animation:
         if self.valid:
             val = getattr(self.target, self.var)
 
-            if self.direction == "Forwards":
+            if self.direction == 'Forwards':
                 if val != self.stop:
                     setattr(self.target, self.var, (val + self.step))
                 else:
@@ -64,7 +64,7 @@ class Animation:
                     self.loop += 1
                     self.init()
 
-            elif self.direction == "Alternate":
+            elif self.direction == 'Alternate':
                 if val != self.start or self.progress == 0:
                     if val == self.stop:
                         self.step *= -1

@@ -6,7 +6,7 @@ from source.gui import ACApp, ACGrid, ACLineGraph
 
 class Analytics(ACApp):
     def __init__(self):
-        super().__init__("ACLIB_Analytics", 200, 200, 400, 200)
+        super().__init__('ACLIB_Analytics', 200, 200, 400, 200)
 
         self.hideDecoration()
 

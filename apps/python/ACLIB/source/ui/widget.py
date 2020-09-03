@@ -163,25 +163,25 @@ class ACFuelWidget(ACWidget):
         super().__init__(parent)
 
         self.car = ACLIB.CARS[0]
-        self.fuel = ACLabel("", app, self)
-        self.fuel_session = ACLabel("", app, self, text_color=Color(0, 1, 1))
-        self.lap_range = ACLabel("", app, self)
-        self.km_range = ACLabel("", app, self)
+        self.fuel = ACLabel('', app, self)
+        self.fuel_session = ACLabel('', app, self, text_color=Color(0, 1, 1))
+        self.lap_range = ACLabel('', app, self)
+        self.km_range = ACLabel('', app, self)
 
     def init(self):
         x, y = self.getPos()
         w, h = self.getSize()
 
-        self.fuel.setPos((x, y)).setSize((w * 0.7, 16)).setTextHAlignment("right")
-        self.fuel_session.setPos((x, y + 16)).setSize((w * 0.7, 16)).setTextHAlignment("right")
-        self.lap_range.setPos((x, y + 32)).setSize((w * 0.7, 16)).setTextHAlignment("right")
-        self.km_range.setPos((x, y + 48)).setSize((w * 0.7, 16)).setTextHAlignment("right")
+        self.fuel.setPos((x, y)).setSize((w * 0.7, 16)).setTextHAlignment('right')
+        self.fuel_session.setPos((x, y + 16)).setSize((w * 0.7, 16)).setTextHAlignment('right')
+        self.lap_range.setPos((x, y + 32)).setSize((w * 0.7, 16)).setTextHAlignment('right')
+        self.km_range.setPos((x, y + 48)).setSize((w * 0.7, 16)).setTextHAlignment('right')
 
     def update(self, delta):
-        self.fuel.setText(str(self.car.fuel) + " l")
-        self.fuel_session.setText(str(round(self.car.fuel_session, 2)) + " l")
-        self.lap_range.setText("+" + str(round(self.car.lap_fuel_range, 2)) + " laps")
-        self.km_range.setText("+" + str(round(self.car.km_fuel_range, 2)) + " km")
+        self.fuel.setText(str(self.car.fuel) + ' l')
+        self.fuel_session.setText(str(round(self.car.fuel_session, 2)) + ' l')
+        self.lap_range.setText('+' + str(round(self.car.lap_fuel_range, 2)) + ' laps')
+        self.km_range.setText('+' + str(round(self.car.km_fuel_range, 2)) + ' km')
 
         if self.car.fuel_session > self.car.fuel:
             self.lap_range.setTextColor(Color(1, 0, 0))

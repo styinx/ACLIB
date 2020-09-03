@@ -5,7 +5,7 @@ from source.gui import ACApp, ACAreaGraph, ACGrid, ACDragableWidget, ACLabel, AC
 
 class Test(ACApp):
     def __init__(self):
-        super().__init__("ACLIB_Test", 200, 200, 200, 200)
+        super().__init__('ACLIB_Test', 200, 200, 200, 200)
 
         self.hideDecoration()
         self.car = ACLIB.CARS[0]

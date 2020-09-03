@@ -10,19 +10,19 @@ def acMain(version):
 
     init = False
     apps = []
-    aclib_config = Config("apps/python/ACLIB/config/ACLIB.ini")
+    aclib_config = Config('apps/python/ACLIB/config/ACLIB.ini')
 
     ACLIB.setup()
 
-    for module in os.listdir("apps/python/ACLIB/apps/"):
+    for module in os.listdir('apps/python/ACLIB/apps/'):
         try:
-            module = "apps." + module[:module.rfind(".")]
+            module = 'apps.' + module[:module.rfind('.')]
             if module not in sys.modules.keys():
                 importlib.import_module(module)
-            class_init = getattr(sys.modules[module], module[module.find("_") + 1:])
+            class_init = getattr(sys.modules[module], module[module.find('_') + 1:])
             apps.append(class_init())
         except Exception as e:
-            ACLIB.CONSOLE("Module '" + module + "' made some problems: " + str(e))
+            ACLIB.CONSOLE('Module \'{}\' made some problems: {}'.format(module, e))
 
 
 def acUpdate(delta):

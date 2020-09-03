@@ -13,7 +13,7 @@ from source.windows import *
 class Font:
     def __init__(self, font_name, italic, bold):
         if ac.initFont(0, font_name, italic, bold) == -1:
-            raise Exception("Could not load font " + font_name)
+            raise Exception('Could not load font ' + font_name)
 
         self.font_name = font_name
         self.italic = italic
@@ -366,10 +366,10 @@ class ACApp(ACWidget):
         self.update_time = 0.005
         self.render_timer = 0
         self.render_time = 0
-        self.config_file = ""
+        self.config_file = ''
         self.config_time = 0
         self.style = None
-        self.style_file = ""
+        self.style_file = ''
         self.style_time = 0
 
         self._activated = self.activate
@@ -390,8 +390,8 @@ class ACApp(ACWidget):
         self.drawBorder(0)
         self.setRenderCallback(self._render_callback)
 
-        self.readConfig("apps/python/ACLIB/config/" + self.app_name + ".ini")
-        self.readStyle("apps/python/ACLIB/style/" + self.app_name + ".ini")
+        self.readConfig('apps/python/ACLIB/config/' + self.app_name + '.ini')
+        self.readStyle('apps/python/ACLIB/style/' + self.app_name + '.ini')
 
     def readConfig(self, filename):
         if path.exists(filename):
@@ -409,7 +409,7 @@ class ACApp(ACWidget):
         return self
 
     def configChanged(self):
-        if self.config_file != "":
+        if self.config_file != '':
             last_changed = stat(self.config_file).st_mtime
 
             if last_changed != self.config_time:
@@ -419,7 +419,7 @@ class ACApp(ACWidget):
         return False
 
     def styleChanged(self):
-        if self.style_file != "":
+        if self.style_file != '':
             last_changed = stat(self.style_file).st_mtime
 
             if last_changed != self.style_time:
@@ -832,12 +832,12 @@ class ACTextWidget(ACWidget):
     def __init__(self, parent=None, app=None):
         super().__init__(parent, app)
 
-        self.text = ""
-        self.text_h_alignment = "center"
-        self.text_v_alignment = "middle"
+        self.text = ''
+        self.text_h_alignment = 'center'
+        self.text_v_alignment = 'middle'
         self.text_color = Color(1, 1, 1, 1)
         self.font_size = 10
-        self.font_family = "Roboto Mono"
+        self.font_family = 'Roboto Mono'
         self.font_italic = 0
         self.font_bold = 0
 
@@ -858,7 +858,7 @@ class ACTextWidget(ACWidget):
     def getTextHAlignment(self):
         return self.text_h_alignment
 
-    def setTextHAlignment(self, text_h_alignment="left"):
+    def setTextHAlignment(self, text_h_alignment='left'):
         self.text_h_alignment = text_h_alignment
 
         self.setTextAlignment()
@@ -867,7 +867,7 @@ class ACTextWidget(ACWidget):
     def getTextVAlignment(self):
         return self.text_v_alignment
 
-    def setTextVAlignment(self, text_v_alignment="top"):
+    def setTextVAlignment(self, text_v_alignment='top'):
         self.text_v_alignment = text_v_alignment
 
         self.setTextAlignment()
@@ -876,18 +876,18 @@ class ACTextWidget(ACWidget):
     def setTextAlignment(self):
         x, y = self.getPos()
 
-        # if self.text_h_alignment == "left":  # or self.text_h_alignment == "l":
+        # if self.text_h_alignment == 'left':  # or self.text_h_alignment == 'l':
         #     x = self.pos[0]
-        # elif self.text_h_alignment == "center":  # or self.text_h_alignment == "c":
+        # elif self.text_h_alignment == 'center':  # or self.text_h_alignment == 'c':
         #     x = int(self.pos[0] + self.size[0] / 2)
-        # elif self.text_h_alignment == "right":  # or self.text_h_alignment == "r":
+        # elif self.text_h_alignment == 'right':  # or self.text_h_alignment == 'r':
         #     x = self.pos[0] + self.size[0]
 
-        # if self.text_v_alignment == "top":  # or self.text_v_alignment == "t":
+        # if self.text_v_alignment == 'top':  # or self.text_v_alignment == 't':
         #     y = self.pos[1]
-        # elif self.text_v_alignment == "middle":  # or self.text_v_alignment == "m":
+        # elif self.text_v_alignment == 'middle':  # or self.text_v_alignment == 'm':
         #     y = int(self.pos[1] + self.size[1] / 2 - self.font_size / 2)
-        # elif self.text_v_alignment == "bottom":  # or self.text_v_alignment == "b":
+        # elif self.text_v_alignment == 'bottom':  # or self.text_v_alignment == 'b':
         #     y = self.pos[1] + self.size[1]
 
         if self.ac_obj is not None:
@@ -968,7 +968,7 @@ class ACTextWidget(ACWidget):
 
 class ACLabel(ACTextWidget):
     def __init__(self, text, app, parent=None, font_size=12, bold=0, italic=0,
-                 text_h_alignment="left", text_v_alignment="top",
+                 text_h_alignment='left', text_v_alignment='top',
                  text_color=Color(1, 1, 1, 1), background_color=Color(0, 0, 0, 0)):
         super().__init__(parent, app)
 
@@ -994,10 +994,10 @@ class ACLabel(ACTextWidget):
 
 
 class ACLabelPair(ACGrid):
-    def __init__(self, app, parent=None, label=None, widget=None, label_pos="left"):
-        if label_pos == "left" or label_pos == "right":
+    def __init__(self, app, parent=None, label=None, widget=None, label_pos='left'):
+        if label_pos == 'left' or label_pos == 'right':
             super().__init__(parent, 2, 1)
-        elif label_pos == "top" or label_pos == "bottom":
+        elif label_pos == 'top' or label_pos == 'bottom':
             super().__init__(parent, 1, 2)
 
         self.label_widget = label
@@ -1013,11 +1013,11 @@ class ACLabelPair(ACGrid):
         if isinstance(label, ACLabel):
             self.label_widget = label
 
-            if self.label_position == "left" or self.label_position == "top":
+            if self.label_position == 'left' or self.label_position == 'top':
                 self.addWidget(self.label_widget, 0, 0)
-            elif self.label_position == "right":
+            elif self.label_position == 'right':
                 self.addWidget(self.label_widget, 1, 0)
-            elif self.label_position == "bottom":
+            elif self.label_position == 'bottom':
                 self.addWidget(self.label_widget, 0, 1)
         return self
 
@@ -1025,11 +1025,11 @@ class ACLabelPair(ACGrid):
         if isinstance(widget, ACWidget):
             self.pair_widget = widget
 
-            if self.label_position == "left":
+            if self.label_position == 'left':
                 self.addWidget(self.pair_widget, 1, 0)
-            elif self.label_position == "right" or self.label_position == "bottom":
+            elif self.label_position == 'right' or self.label_position == 'bottom':
                 self.addWidget(self.pair_widget, 0, 0)
-            elif self.label_position == "top":
+            elif self.label_position == 'top':
                 self.addWidget(self.pair_widget, 0, 1)
         return self
 
@@ -1043,7 +1043,7 @@ class ACLabelPair(ACGrid):
 
 class ACButton(ACTextWidget):
     def __init__(self, text, app, parent=None, font_size=12, bold=0, italic=0,
-                 text_h_alignment="left", text_v_alignment="top",
+                 text_h_alignment='left', text_v_alignment='top',
                  text_color=Color(1, 1, 1, 1), background_color=Color(0, 0, 0, 0)):
         super().__init__(parent)
 
@@ -1070,7 +1070,7 @@ class ACButton(ACTextWidget):
 
 class ACIcon(ACLabel):
     def __init__(self, path, app, parent=None):
-        super().__init__("", app, parent)
+        super().__init__('', app, parent)
 
         self.background_texture = path
 
@@ -1079,7 +1079,7 @@ class ACIcon(ACLabel):
 
 class ACProgressBar(ACLabel):
     def __init__(self, app, orientation=0, value=0, min_val=0, max_val=100, parent=None):
-        super().__init__("", app, parent)
+        super().__init__('', app, parent)
 
         self.orientation = orientation
         self.border = 1
@@ -1134,10 +1134,10 @@ class ACGraph(ACWidget):
         self.points = {}
         self.key = 0
 
-        self.x_min = float("inf")
-        self.x_max = float("-inf")
-        self.y_min = float("inf")
-        self.y_max = float("-inf")
+        self.x_min = float('inf')
+        self.x_max = float('-inf')
+        self.y_min = float('inf')
+        self.y_max = float('-inf')
 
         self.x_dist = 0
         self.x_ratio = 0
@@ -1227,10 +1227,10 @@ class ACGraph(ACWidget):
         self.points = {}
         self.key = 0
 
-        self.x_min = float("inf")
-        self.x_max = float("-inf")
-        self.y_min = float("inf")
-        self.y_max = float("-inf")
+        self.x_min = float('inf')
+        self.x_max = float('-inf')
+        self.y_min = float('inf')
+        self.y_max = float('-inf')
 
         self.x_dist = 0
         self.x_ratio = 0
@@ -1254,7 +1254,7 @@ class ACGraph(ACWidget):
             rect(current, y, step, h, c)
             current += step
 
-        if len(self.points) > 0 and self.x_axis and self.y_max != float("-inf"):
+        if len(self.points) > 0 and self.x_axis and self.y_max != float('-inf'):
             rect(x, y + self.y_max * self.y_ratio - 1, w, self.x_axis_size)
 
 

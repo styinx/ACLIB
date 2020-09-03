@@ -1,8 +1,8 @@
 import os
 from struct import unpack
-from source.config import Config
 
 
+# Computes the hash keys of a folder/filename.
 def getKey(name):
     key1 = key2 = key3 = 0
     key4 = 0x1683
@@ -54,57 +54,48 @@ def getKey(name):
         key8 += ord(name[i])
         i -= 1
 
-    return "-".join([str(x & 0xff) for x in [key1, key2, key3, key4, key5, key6, key7, key8]])
+    return '-'.join([str(x & 0xff) for x in [key1, key2, key3, key4, key5, key6, key7, key8]])
 
 
-def decryptACD(filepath, keys=True):
+# Reads a *.acd file and stores the filenames and their contents in a dictionary.
+# Returns the decrypted folder name and the dictionary.
+def decryptACD(filepath):
     result = {}
-    f = open(filepath, "rb")
+    f = open(filepath, 'rb')
     buffer_size = os.path.getsize(filepath)
     buffer = bytearray(f.read(buffer_size))
     buffer_len = len(buffer)
 
-    folder = filepath[:filepath.rfind("/")]
-    key = getKey(folder[folder.rfind("/") + 1:])
+    folder = filepath[:filepath.rfind('/')]
+    key = getKey(folder[folder.rfind('/') + 1:])
 
     index = 0
 
-    if unpack("l", buffer[index:index + 4])[0] < 0:
+    if unpack('l', buffer[index:index + 4])[0] < 0:
         index += 8
     else:
         index = 0
 
     while index < buffer_len:
-        file_name_len = unpack("L", buffer[index:index + 4])[0]
+        file_name_len = unpack('L', buffer[index:index + 4])[0]
         index += 4
 
-        file_name = buffer[index:index + file_name_len].decode("utf8")
+        file_name = buffer[index:index + file_name_len].decode('utf8')
         index += file_name_len
 
-        file_size = unpack("L", buffer[index:index + 4])[0]
+        file_size = unpack('L', buffer[index:index + 4])[0]
         index += 4
 
         file_content = buffer[index:index + file_size * 4][::4]
         index += file_size * 4
 
-        content = ""
+        content = ''
         key_len = len(key)
         for i in range(0, file_size):
             val = file_content[i] - ord(key[i % key_len])
             if 0 < val < 256:
                 content += chr(val)
 
-        if not keys:
-            result[file_name] = content
-        else:
-            if file_name[-3:] == "ini" and content != "":
-                conf = Config(content, False)
-                result[file_name] = {}
-                for s in conf:
-                    result[file_name][s] = {}
-                    for k in conf.get(s):
-                        result[file_name][s][k] = conf.get(s, k)
-            else:
-                result[file_name] = content
+        result[file_name] = content
 
-    return result
+    return folder, result

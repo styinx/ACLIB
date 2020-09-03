@@ -64,14 +64,14 @@ from source.gl import rect
 
 class MyNewApp(ACApp):
     def __init__(self):
-        super().__init__("MyCustom App Name", 0, 0, 200, 200)
+        super().__init__('MyCustom App Name', 0, 0, 200, 200)
         
-        self.my_widget = ACLabel("", self, self)
+        self.my_widget = ACLabel('', self, self)
              
     # update is called in 'acUpdate(delta)'
     def update(self, delta):
         super().update(delta)
-        self.my_widget.setText("widget text: " + str(delta))
+        self.my_widget.setText('widget text: ' + str(delta))
         
     # render is called automatically from the app
     # use opengl functions only in this method
@@ -103,11 +103,11 @@ from source.gui import ACApp, ACGrid, ACLabel, ACLabelPair
 def acMain(version):
     global myapp, lap_title, laps, pos_widget
 
-    myapp = ACApp("my app name", 0, 0, 200, 200).hideDecoration()
+    myapp = ACApp('my app name', 0, 0, 200, 200).hideDecoration()
     grid = ACGrid(myapp, 2, 2)
-    lap_title = ACLabel("", myapp, text_h_alignment="center")
-    laps = ACLabel("", myapp)
-    pos_widget = ACLabelPair(myapp, label=ACLabel("", myapp, text_h_alignment="center"), widget=ACLabel("", myapp))
+    lap_title = ACLabel('', myapp, text_h_alignment='center')
+    laps = ACLabel('', myapp)
+    pos_widget = ACLabelPair(myapp, label=ACLabel('', myapp, text_h_alignment='center'), widget=ACLabel('', myapp))
 
     grid.addWidget(lap_title, 0, 0, 1, 1)
     grid.addWidget(laps, 1, 0, 1, 1)
@@ -118,10 +118,10 @@ def acUpdate(delta):
 
     current_car = ACLIB.getFocusedCar()
 
-    lap_title.setText("Laps: ")
-    laps.setText("{:d}/{:2}".format(ACLIB.CARS[current_car].lap, ACLIB.getLaps()))
-    pos_widget.label_widget.setText("Pos: ")
-    pos_widget.pair_widget.setText("{:d}/{:d}".format(ACLIB.CARS[current_car].position, ACLIB.getCarsCount()))
+    lap_title.setText('Laps: ')
+    laps.setText('{:d}/{:2}'.format(ACLIB.CARS[current_car].lap, ACLIB.getLaps()))
+    pos_widget.label_widget.setText('Pos: ')
+    pos_widget.pair_widget.setText('{:d}/{:d}'.format(ACLIB.CARS[current_car].position, ACLIB.getCarsCount()))
 
 ```
 
@@ -206,15 +206,15 @@ from source.widget import ACWidget
 
 # only classes that inherit from ACWidget can take animations
 my_widget = ACWidget().setSize((100, 100))
-# the default animation is from type "forward"
+# the default animation is from type 'forward'
 # the property will have the stop value after the animation is finished
 # in this example the background color of the widget goes from transparent to red 
-my_forward_color_animation = Animation(my_widget, "background_color", 
+my_forward_color_animation = Animation(my_widget, 'background_color', 
                                        Color(0, 0, 0, 0), Color(0.1, 0, 0, 0.1), Color(1, 0, 0, 1))
-# the "alternate" animation sets the property value back to the start value after the animation is finished
+# the 'alternate' animation sets the property value back to the start value after the animation is finished
 # in this example the background color goes from transparent to red and back to transparent
-my_alternate_color_animation = Animation(my_widget, "background_color", 
-                                         Color(0, 0, 0, 0), Color(0.1, 0, 0, 0.1), Color(1, 0, 0, 1), direction="alternate")
+my_alternate_color_animation = Animation(my_widget, 'background_color', 
+                                         Color(0, 0, 0, 0), Color(0.1, 0, 0, 0.1), Color(1, 0, 0, 1), direction='alternate')
 
 # currently only single animations are allowed
 # when the first animation is finished, the second animation is pulled from the queue and added to the widget animation
@@ -235,7 +235,7 @@ def update(self, delta):
         start = Color(0, 0, 0, 1)
         step = Color(0.05, 0.05, 0, 0)
         stop = Color(1, 1, 0, 1)
-        self.addAnimation(Animation(self, "background_color", start, step, stop, 0, "Alternate"))
+        self.addAnimation(Animation(self, 'background_color', start, step, stop, 0, 'Alternate'))
         self.setBackgroundColor(Color(1, 1, 0))
 
     if self.loops % 500 == 0:
@@ -244,7 +244,7 @@ def update(self, delta):
         start = Rect().set(x, y, w, h)
         step = Rect().set(0, 0, 1, 1)
         stop = Rect().set(x, y, w + 25, h + 25)
-        self.addAnimation(Animation(self, "geometry", start, step, stop, 0, "Alternate"))
+        self.addAnimation(Animation(self, 'geometry', start, step, stop, 0, 'Alternate'))
 
     if self.loops == 1000:
         self.loops = 0
@@ -252,7 +252,7 @@ def update(self, delta):
         self.loops += 1
 ```
 
-![Animation](https://github.com/styinx/ACLIB/blob/master/images/animation.gif "Animation")
+![Animation](https://github.com/styinx/ACLIB/blob/master/images/animation.gif 'Animation')
 
 ---
 
@@ -287,7 +287,7 @@ def update(self, delta):
 - enables app customization without altering code
 - stylesheets are not yet working
 
-![Realtime Config](https://github.com/styinx/ACLIB/blob/master/images/config.gif "Realtime Config")
+![Realtime Config](https://github.com/styinx/ACLIB/blob/master/images/config.gif 'Realtime Config')
 
 ---
 
@@ -296,12 +296,12 @@ def update(self, delta):
 Driver App:
 - Shows the basic car and driver information.
 
-![Driver](https://github.com/styinx/ACLIB/blob/master/images/driver.png "Driver App")
+![Driver](https://github.com/styinx/ACLIB/blob/master/images/driver.png 'Driver App')
 
 Tower App:
 - Shows current standings.
 
-![Tower](https://github.com/styinx/ACLIB/blob/master/images/tower.png "Tower App")
+![Tower](https://github.com/styinx/ACLIB/blob/master/images/tower.png 'Tower App')
 
 Notification App:
 - Notifies driver when events occur.

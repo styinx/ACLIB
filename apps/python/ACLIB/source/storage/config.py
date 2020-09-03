@@ -6,17 +6,17 @@ import importlib
 
 class Config:
     def __init__(self, target, special_string=True):
-        self.path = ""
-        self.section = "DEFAULT"
-        self.dictionary = {"DEFAULT": {}}
+        self.path = ''
+        self.section = 'DEFAULT'
+        self.dictionary = {'DEFAULT': {}}
         self.special_string = special_string
 
         if os.path.exists(target):
             self.path = target
-            f = open(target, mode="r", encoding="utf-8")
+            f = open(target, mode='r', encoding='utf-8')
             self.read(f.readlines())
         else:
-            self.read(target.split("\n"))
+            self.read(target.split('\n'))
 
     def __iter__(self):
         return iter(self.dictionary)
@@ -41,16 +41,16 @@ class Config:
 
     def read(self, lines):
         for line in lines:
-            if re.match(r"((;|#|//).*|^\s*$)", line):
+            if re.match(r'((;|#|//).*|^\s*$)', line):
                 continue
 
-            line = re.sub("[;#].*", "", line).strip()
+            line = re.sub('[;#].*', '', line).strip()
 
-            if re.match("\[.*\]", line):
-                self.section = line.replace("[", "").replace("]", "").strip()
+            if re.match('\[.*\]', line):
+                self.section = line.replace('[', '').replace(']', '').strip()
                 self.dictionary[self.section] = {}
             else:
-                pair = line.split("=")
+                pair = line.split('=')
                 if len(pair) == 2:
                     self.readEntry(pair[0].strip(), pair[1].strip())
                 elif len(pair) == 1:
@@ -59,22 +59,22 @@ class Config:
     def readEntry(self, key, value):
         if value.find(',') >= 0:
             return
-        elif re.match(r"^\d*\.\d+$", value):
+        elif re.match(r'^\d*\.\d+$', value):
             value = float(value)
-        elif re.match(r"^\d+$", value):
+        elif re.match(r'^\d+$', value):
             value = int(value)
-        elif re.match("^\".*\"$", value):
-            value = value.split('"')[1]
-        elif value.lower() in ["t", "true", "y", "yes"]:
+        elif re.match('^\'.*\'$', value):
+            value = value.split('\'')[1]
+        elif value.lower() in ['t', 'true', 'y', 'yes']:
             value = True
-        elif value.lower() in ["f", "false", "n", "no"]:
+        elif value.lower() in ['f', 'false', 'n', 'no']:
             value = False
         else:
             if self.special_string:
-                class_path = value[0:value.find("(")].split(".")
+                class_path = value[0:value.find('(')].split('.')
                 class_name = class_path[-1]
                 module_name = '.'.join(class_path[:-1])
-                arguments = value[value.find("(") + 1:value.find(")")].split(',')
+                arguments = value[value.find('(') + 1:value.find(')')].split(',')
 
                 # import module from string if not yet imported
                 if module_name not in sys.modules.keys():
@@ -90,12 +90,12 @@ class Config:
         new_args = []
         for i, arg in enumerate(args):
             val = 0
-            if re.match("\d*\.\d+", arg):
+            if re.match('\d*\.\d+', arg):
                 val = float(arg)
-            elif re.match("\d+", arg):
+            elif re.match('\d+', arg):
                 val = int(arg)
-            elif re.match("\".*\"", arg):
-                val = arg.split('"')[1]
+            elif re.match('\'.*\'', arg):
+                val = arg.split('\'')[1]
             new_args.append(val)
         return new_args
 

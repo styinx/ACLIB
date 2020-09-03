@@ -23,49 +23,49 @@ DRIVER_GOOD_SHIFT = 0.90
 
 class Driver(ACApp):
     def __init__(self):
-        super().__init__("ACLIB_Driver", 200, 200, 612, 224)
+        super().__init__('ACLIB_Driver', 200, 200, 612, 224)
 
         self.hideDecoration().setBackgroundColor(Color(0, 0, 0, 0.25))
 
         self.car = ACLIB.CARS[ACLIB.getFocusedCar()]
         self.grid = ACGrid(self, 18, 8)
 
-        self.next1_tex = Texture("apps/python/ACLIB/resources/next_1.png")
-        self.next2_tex = Texture("apps/python/ACLIB/resources/next_2.png")
-        self.m_panel_tex = Texture("apps/python/ACLIB/resources/info_panel_mid.png")
-        self.prev1_tex = Texture("apps/python/ACLIB/resources/prev_1.png")
-        self.prev2_tex = Texture("apps/python/ACLIB/resources/prev_2.png")
-        self.status_tex = Texture("apps/python/ACLIB/resources/status.png")
-        self.shift_tex = Texture("apps/python/ACLIB/resources/shift.png")
+        self.next1_tex = Texture('apps/python/ACLIB/resources/next_1.png')
+        self.next2_tex = Texture('apps/python/ACLIB/resources/next_2.png')
+        self.m_panel_tex = Texture('apps/python/ACLIB/resources/info_panel_mid.png')
+        self.prev1_tex = Texture('apps/python/ACLIB/resources/prev_1.png')
+        self.prev2_tex = Texture('apps/python/ACLIB/resources/prev_2.png')
+        self.status_tex = Texture('apps/python/ACLIB/resources/status.png')
+        self.shift_tex = Texture('apps/python/ACLIB/resources/shift.png')
 
-        self.lap = ACLabel("", self, font_size=20, italic=1, bold=1)
-        self.pos = ACLabel("", self, font_size=20, italic=1, bold=1)
-        self.last = ACLabel("", self, font_size=16, bold=1)
-        self.best = ACLabel("", self, font_size=16, bold=1)
+        self.lap = ACLabel('', self, font_size=20, italic=1, bold=1)
+        self.pos = ACLabel('', self, font_size=20, italic=1, bold=1)
+        self.last = ACLabel('', self, font_size=16, bold=1)
+        self.best = ACLabel('', self, font_size=16, bold=1)
 
-        self.gear = ACLabel("", self, font_size=100, bold=1)
-        self.speed = ACLabel("", self, font_size=20, bold=1).setBackgroundColor(TRANSPARENT)
-        self.drs = ACLabel("", self, font_size=16, bold=1)
-        self.ers = ACLabel("", self, font_size=16, bold=1)
-        self.kers = ACLabel("", self, font_size=16, bold=1)
+        self.gear = ACLabel('', self, font_size=100, bold=1)
+        self.speed = ACLabel('', self, font_size=20, bold=1).setBackgroundColor(TRANSPARENT)
+        self.drs = ACLabel('', self, font_size=16, bold=1)
+        self.ers = ACLabel('', self, font_size=16, bold=1)
+        self.kers = ACLabel('', self, font_size=16, bold=1)
 
         self.fuel_widget = ACFuelWidget(self)
-        self.local_time = ACLabel("", self, font_size=16, bold=1, text_h_alignment="left")
-        self.race_time = ACLabel("", self, font_size=16, bold=1, text_h_alignment="left")
+        self.local_time = ACLabel('', self, font_size=16, bold=1, text_h_alignment='left')
+        self.race_time = ACLabel('', self, font_size=16, bold=1, text_h_alignment='left')
         self.session_time = 0
 
-        self.next_time = ACLabel("", self, font_size=20, bold=1)
-        self.current = ACLabel("", self, font_size=20, bold=1)
-        self.s1 = ACLabel("", self, font_size=12, bold=1)
-        self.s2 = ACLabel("", self, font_size=12, bold=1)
-        self.s3 = ACLabel("", self, font_size=12, bold=1)
-        self.delta_widget = ACLabelPair(self, label_pos="top", widget=ACDeltaBarWidget(),
-                                        label=ACLabel("", self, font_size=16, bold=1))
+        self.next_time = ACLabel('', self, font_size=20, bold=1)
+        self.current = ACLabel('', self, font_size=20, bold=1)
+        self.s1 = ACLabel('', self, font_size=12, bold=1)
+        self.s2 = ACLabel('', self, font_size=12, bold=1)
+        self.s3 = ACLabel('', self, font_size=12, bold=1)
+        self.delta_widget = ACLabelPair(self, label_pos='top', widget=ACDeltaBarWidget(),
+                                        label=ACLabel('', self, font_size=16, bold=1))
         self.shift_widget = ACShiftLightBarWidget()
         self.tyre_widget = ACTyreWidget()
         self.damage_widget = ACDamageWidget(self)
-        self.status = ACLabel("", self, font_size=30, bold=1)
-        self.prev_time = ACLabel("", self, font_size=20, bold=1)
+        self.status = ACLabel('', self, font_size=30, bold=1)
+        self.prev_time = ACLabel('', self, font_size=20, bold=1)
 
         self.next_time.setBackgroundTexture(self.next1_tex)
         self.current.setBackgroundTexture(self.m_panel_tex)
@@ -128,7 +128,7 @@ class Driver(ACApp):
             self.gear.setBackgroundColor(DRIVER_BG_COLOR)
 
         if ACLIB.hasDRS(self.car.number):
-            self.drs.setText("DRS")
+            self.drs.setText('DRS')
             if ACLIB.DRSAvailable(self.car.number):
                 if ACLIB.DRSEnabled(self.car.number):
                     self.drs.setTextColor(DRIVER_GOOD_COLOR)
@@ -137,27 +137,27 @@ class Driver(ACApp):
             else:
                 self.drs.setTextColor(Color(1, 1, 1, 1))
         if ACLIB.hasERS(self.car.number):
-            self.ers.setText("ERS")
+            self.ers.setText('ERS')
         if ACLIB.hasKERS(self.car.number):
-            self.kers.setText("KERS")
+            self.kers.setText('KERS')
 
         if self.car.lap_diff < 0:
             self.delta_widget.label_widget.setTextColor(DRIVER_GOOD_COLOR)
-            self.delta_widget.label_widget.setText("-" + formatTime(self.car.lap_diff * 1000))
+            self.delta_widget.label_widget.setText('-' + formatTime(self.car.lap_diff * 1000))
         elif self.car.lap_diff > 0:
             self.delta_widget.label_widget.setTextColor(DRIVER_BAD_COLOR)
-            self.delta_widget.label_widget.setText("+" + formatTime(self.car.lap_diff * 1000))
+            self.delta_widget.label_widget.setText('+' + formatTime(self.car.lap_diff * 1000))
         else:
             self.delta_widget.label_widget.setTextColor(Color(1, 1, 1, 1))
-            self.delta_widget.label_widget.setText(" " + formatTime(0))
+            self.delta_widget.label_widget.setText(' ' + formatTime(0))
 
-        status = ""
+        status = ''
         if self.car.penalty_time > 0:
-            status = "Penalty: " + str(int(self.car.penalty_time)) + " s"
+            status = 'Penalty: ' + str(int(self.car.penalty_time)) + ' s'
             self.status.setTextColor(Color(1, 0.25, 0, 1))
         else:
             self.status.setTextColor(Color(1, 1, 1, 1))
-            status = ""
+            status = ''
 
         if self.car.lap > 1:
             if self.car.sector_time[0] == SESSION.best_sector_time[0]:
@@ -200,23 +200,23 @@ class Driver(ACApp):
             else:
                 self.last.setTextColor(DRIVER_BAD_COLOR)
 
-        self.lap.setText("L: {:}|{:}".format(self.car.lap, ACLIB.getLaps("-")))
-        self.pos.setText("P: {:}|{:}".format(self.car.position, ACLIB.getCarsCount()))
-        self.last.setText("LST: " + formatTime(self.car.last_time))
-        self.best.setText("BST: " + formatTime(self.car.best_time))
+        self.lap.setText('L: {:}|{:}'.format(self.car.lap, ACLIB.getLaps('-')))
+        self.pos.setText('P: {:}|{:}'.format(self.car.position, ACLIB.getCarsCount()))
+        self.last.setText('LST: ' + formatTime(self.car.last_time))
+        self.best.setText('BST: ' + formatTime(self.car.best_time))
 
         self.gear.setText(formatGear(self.car.gear))
-        self.speed.setText("{:3.0f} km/h".format(self.car.speed))
-        self.local_time.setText(strftime("%H:%M:%S", localtime()))
-        self.race_time.setText(formatTime(self.session_time, form="{:02d}:{:02d}.{:02d}"))
+        self.speed.setText('{:3.0f} km/h'.format(self.car.speed))
+        self.local_time.setText(strftime('%H:%M:%S', localtime()))
+        self.race_time.setText(formatTime(self.session_time, form='{:02d}:{:02d}.{:02d}'))
 
-        self.s1.setText(formatTime(self.car.sector_time[0], "{:d}:{:02d}.{:03d}"))
-        self.s2.setText(formatTime(self.car.sector_time[1], "{:d}:{:02d}.{:03d}"))
-        self.s3.setText(formatTime(self.car.sector_time[2], "{:d}:{:02d}.{:03d}"))
+        self.s1.setText(formatTime(self.car.sector_time[0], '{:d}:{:02d}.{:03d}'))
+        self.s2.setText(formatTime(self.car.sector_time[1], '{:d}:{:02d}.{:03d}'))
+        self.s3.setText(formatTime(self.car.sector_time[2], '{:d}:{:02d}.{:03d}'))
 
-        self.prev_time.setText("-" + formatTimeCar(self.car.prev_time, self.car.prev_dist, ACLIB.getTrackLength()))
+        self.prev_time.setText('-' + formatTimeCar(self.car.prev_time, self.car.prev_dist, ACLIB.getTrackLength()))
         self.current.setText(formatTime(self.car.lap_time))
-        self.next_time.setText("+" + formatTimeCar(self.car.next_time, self.car.next_dist, ACLIB.getTrackLength()))
+        self.next_time.setText('+' + formatTimeCar(self.car.next_time, self.car.next_dist, ACLIB.getTrackLength()))
 
     def render(self, delta):
         super().render(delta)

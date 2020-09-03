@@ -31,7 +31,7 @@ class AC_PROP:
     SpeedMPH = 1
     SpeedKMH = 2
     Gas = 3
-    Brake =4
+    Brake = 4
     Clutch = 5
     Gear = 6
     Aero = 7
@@ -257,9 +257,9 @@ class SPageFileStatic(ctypes.Structure):
 
 class SimInfo:
     def __init__(self):
-        self._acpmf_physics = mmap.mmap(0, ctypes.sizeof(SPageFilePhysics), "acpmf_physics")
-        self._acpmf_graphics = mmap.mmap(0, ctypes.sizeof(SPageFileGraphic), "acpmf_graphics")
-        self._acpmf_static = mmap.mmap(0, ctypes.sizeof(SPageFileStatic), "acpmf_static")
+        self._acpmf_physics = mmap.mmap(0, ctypes.sizeof(SPageFilePhysics), 'acpmf_physics')
+        self._acpmf_graphics = mmap.mmap(0, ctypes.sizeof(SPageFileGraphic), 'acpmf_graphics')
+        self._acpmf_static = mmap.mmap(0, ctypes.sizeof(SPageFileStatic), 'acpmf_static')
         self.physics = SPageFilePhysics.from_buffer(self._acpmf_physics)
         self.graphics = SPageFileGraphic.from_buffer(self._acpmf_graphics)
         self.static = SPageFileStatic.from_buffer(self._acpmf_static)
@@ -272,5 +272,3 @@ class SimInfo:
     def __del__(self):
         self.close()
 
-
-info = SimInfo()

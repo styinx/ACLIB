@@ -41,7 +41,7 @@ class Vec2i:
 
 def line(x1, y1, x2, y2, color=Color(1, 1, 1, 1)):
     if not isinstance(color, Color):
-        raise Exception("Argument is not a Color")
+        raise Exception('Argument is not a Color')
 
     ac.glColor4f(color.r, color.g, color.b, color.a)
     ac.glBegin(1)
@@ -52,7 +52,7 @@ def line(x1, y1, x2, y2, color=Color(1, 1, 1, 1)):
 
 def rect(x=0, y=0, w=0, h=0, color=Color(1, 1, 1, 1), filled=True, r=None):
     if not isinstance(color, Color):
-        raise Exception("Argument is not a Color")
+        raise Exception('Argument is not a Color')
 
     ac.glColor4f(color.r, color.g, color.b, color.a)
     if filled:
@@ -109,7 +109,7 @@ def quad(x=0, y=0, w=0, h=0, colors=None, r=None):
 
 def circle(x, y, radius, color=Color(1, 1, 1, 1), filled=True):
     if not isinstance(color, Color):
-        raise Exception("Argument is not a Color")
+        raise Exception('Argument is not a Color')
 
     ac.glColor4f(color.r, color.g, color.b, color.a)
     if filled:
@@ -135,7 +135,7 @@ def circle(x, y, radius, color=Color(1, 1, 1, 1), filled=True):
 
 def arc(x, y, radius, start=0, stop=360, color=Color(1, 1, 1, 1), filled=True):
     if not isinstance(color, Color):
-        raise Exception("Argument is not a Color")
+        raise Exception('Argument is not a Color')
 
     ac.glColor4f(color.r, color.g, color.b, color.a)
     if filled:
@@ -159,7 +159,7 @@ def arc(x, y, radius, start=0, stop=360, color=Color(1, 1, 1, 1), filled=True):
 
 def donut(x, y, radius, width, start=0, stop=360, color=Color(1, 1, 1, 1), filled=True):
     if not isinstance(color, Color):
-        raise Exception("Argument is not a Color")
+        raise Exception('Argument is not a Color')
 
     ac.glColor4f(color.r, color.g, color.b, color.a)
     if filled:
@@ -186,7 +186,7 @@ def donut(x, y, radius, width, start=0, stop=360, color=Color(1, 1, 1, 1), fille
 
 def polygon(points, color=Color(1, 1, 1, 1), filled=True):
     if not isinstance(color, Color):
-        raise Exception("Argument is not a Color")
+        raise Exception('Argument is not a Color')
 
     ac.glColor4f(color.r, color.g, color.b, color.a)
     if filled:
@@ -203,10 +203,10 @@ def polygon(points, color=Color(1, 1, 1, 1), filled=True):
 
 def texture_rect(x, y, w, h, tex, color):
     if not isinstance(tex, Texture):
-        raise Exception("Argument is not a Texture")
+        raise Exception('Argument is not a Texture')
 
     if not isinstance(color, Color):
-        raise Exception("Argument is not a Color")
+        raise Exception('Argument is not a Color')
 
     ac.glColor4f(color.r, color.g, color.b, color.a)
     ac.glQuadTextured(x, y, w, h, tex.texture)

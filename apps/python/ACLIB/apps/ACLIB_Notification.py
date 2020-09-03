@@ -7,13 +7,13 @@ from source.gui import ACApp, ACGrid, ACLabel
 
 class Notification(ACApp):
     def __init__(self):
-        super().__init__("ACLIB_Notification", 200, 200, 288, 64)
+        super().__init__('ACLIB_Notification', 200, 200, 288, 64)
 
         self.hideDecoration().setBackgroundColor(Color(0, 0, 0, 0))
 
         self.car = ACLIB.CARS[0]
         self.grid = ACGrid(self, 5, 3)
-        self.text = ACLabel("", self, font_size=20, bold=1, text_h_alignment="center", text_color=Color(1, 1, 1))
+        self.text = ACLabel('', self, font_size=20, bold=1, text_h_alignment='center', text_color=Color(1, 1, 1))
         self.timeout = 3
         self.timer = 0
 
@@ -35,16 +35,16 @@ class Notification(ACApp):
         if SESSION.time_left > 0 and session_id == 2:
             self.setBackgroundColor(Color(0, 0, 0, 1))
             self.text.setTextColor(Color(1, 1, 1))
-            self.text.setText("Start in: {: 2d}".format(round(SESSION.time_left / 1000)))
+            self.text.setText('Start in: {: 2d}'.format(round(SESSION.time_left / 1000)))
         elif SESSION.time_left > 0 and session_id < 2:
             self.setBackgroundColor(Color(0, 0, 0, 1))
             self.text.setTextColor(Color(1, 1, 1))
-            self.text.setText("Start in: " + formatTime(SESSION.time_left))
+            self.text.setText('Start in: ' + formatTime(SESSION.time_left))
 
         if session_id == 2 and self.car.penalty_time > 0:
             self.setBackgroundColor(Color(1, 0.5, 0, 1))
             self.text.setTextColor(Color(0, 0, 0))
-            self.text.setText("Penalty: " + str(round(self.car.penalty_time)) + "s")
+            self.text.setText('Penalty: ' + str(round(self.car.penalty_time)) + 's')
 
     def render(self, delta):
         super().render(delta)
@@ -54,7 +54,7 @@ class Notification(ACApp):
         self.animation = None
         self.setBackgroundColor(Color(0, 0, 0, 0))
         self.text.setTextColor(Color(1, 1, 1))
-        self.text.setText("")
+        self.text.setText('')
         self.text.animation = None
 
     def flagChange(self, car_index):
@@ -64,30 +64,30 @@ class Notification(ACApp):
             start = Color(0, 0, 0, 0.5)
             step = Color(0, 0.05, 0.1, 0)
             stop = Color(0, 0.5, 1, 0.5)
-            self.addAnimation(Animation(self, "background_color", start, step, stop, -1, "Alternate"))
-            self.text.setText("Faster car behind!")
+            self.addAnimation(Animation(self, 'background_color', start, step, stop, -1, 'Alternate'))
+            self.text.setText('Faster car behind!')
 
         elif self.car.flag == 2:
             start = Color(0, 0, 0, 0.5)
             step = Color(0.1, 0.1, 0, 0)
             stop = Color(1, 1, 0, 0.5)
-            self.addAnimation(Animation(self, "background_color", start, step, stop, -1, "Forwards"))
-            self.text.setText("Yellow Flag ahead!").setTextColor(Color(0, 0, 0))
+            self.addAnimation(Animation(self, 'background_color', start, step, stop, -1, 'Forwards'))
+            self.text.setText('Yellow Flag ahead!').setTextColor(Color(0, 0, 0))
 
         elif self.car.flag == 3 or self.car.flag == 6:
             start = Color(0, 0, 0, 0.5)
             step = Color(0.1, 0.075, 0, 0)
             stop = Color(1, 0.75, 0, 0.5)
-            self.addAnimation(Animation(self, "background_color", start, step, stop, -1, "Alternate"))
-            self.text.setText("Penalty: " + str(int(self.car.penalty_time)) + "s").setTextColor(Color(0, 0, 0))
+            self.addAnimation(Animation(self, 'background_color', start, step, stop, -1, 'Alternate'))
+            self.text.setText('Penalty: ' + str(int(self.car.penalty_time)) + 's').setTextColor(Color(0, 0, 0))
 
         elif self.car.flag == 4:
-            self.text.setText("Last lap")
+            self.text.setText('Last lap')
             self.setBackgroundColor(Color(0.8, 0.8, 0.8, 0.5))
             self.text.setTextColor(Color(0, 0, 0))
 
         elif self.car.flag == 5:
-            self.text.setText("Race over")
+            self.text.setText('Race over')
             self.setBackgroundColor(Color(0.5, 0.5, 0.5, 0.5))
 
     def posLost(self, car_index):
@@ -97,9 +97,9 @@ class Notification(ACApp):
         next_car = formatTimeCar(self.car.next_time, self.car.next_dist, ACLIB.getTrackLength())
 
         if self.car.position == ACLIB.getCarsCount():
-            self.text.setText("You lost a position!\nNo car is behind, you are last!")
+            self.text.setText('You lost a position!\nNo car is behind, you are last!')
         else:
-            self.text.setText("You lost a position!\nNext car is " + next_car + " behind")
+            self.text.setText('You lost a position!\nNext car is ' + next_car + ' behind')
 
     def posGained(self, car_index):
         self.reset()
@@ -108,6 +108,6 @@ class Notification(ACApp):
         next_car = formatTimeCar(self.car.next_time, self.car.next_dist, ACLIB.getTrackLength())
 
         if self.car.position == 1:
-            self.text.setText("You gained a position!\nNo car ahead, you are first!")
+            self.text.setText('You gained a position!\nNo car ahead, you are first!')
         else:
-            self.text.setText("You gained a position!\nNext car is " + next_car + " ahead")
+            self.text.setText('You gained a position!\nNext car is ' + next_car + ' ahead')
