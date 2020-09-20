@@ -1,28 +1,63 @@
-import ac
+import os
+import sys
+import traceback
+from time import strftime, localtime
 
-from source.util.text import *
+import ac
+from settings import ACLIB_DOC_DIR
+
+from util.text import *
 
 
 class Log:
+    LOG_2_AC = False
+    HANDLE = None
+    FILE = os.path.join(ACLIB_DOC_DIR, 'log.txt')
+    LOGS = 0
+    CONSOLE = 0
+    MAX_LOGS = 1000
+    MAX_CONSOLE = 1000
+
+    @staticmethod
+    def init():
+        Log.HANDLE = open(Log.FILE, 'w+')
+
+    @staticmethod
+    def shutdown():
+        Log.HANDLE.close()
+
     @staticmethod
     def stringify(*what, end: str = '\n'):
-        return '{0}{1}'.format(what, end)
+        return '{0}{1}'.format(' '.join(map(str, what)), end)
 
 
-def log(what):
-    return ac.log(Log.stringify(what))
+def log(*what):
+    if Log.LOGS <= Log.MAX_LOGS:
+        Log.LOGS += 1
+        if Log.LOG_2_AC:
+            return ac.log(Log.stringify(Format.time(), *what))
+        else:
+            Log.HANDLE.write(Log.stringify(Format.time(), *what))
 
 
-def warning(what):
-    Log.stringify(what)
+def tb(e: Exception):
+    exc_type, exc_obj, exc_tb = sys.exc_info()
+    log('Exception: "{}" of type "{}" for object "{} ({})"\n{}'.format(
+        e, exc_type, exc_tb, type(exc_tb), traceback.format_exc()))
 
 
-def error(what):
-    Log.stringify(what)
+def warning(*what):
+    return Log.stringify(*what)
 
 
-def console(what):
-    ac.console(Log.stringify(what))
+def error(*what):
+    return Log.stringify(*what)
+
+
+def console(*what):
+    if Log.CONSOLE <= Log.MAX_CONSOLE:
+        Log.CONSOLE += 1
+        ac.console(Log.stringify(*what))
 
 
 class Format:
@@ -46,7 +81,11 @@ class Format:
         pass
 
     @staticmethod
-    def time(ms: [float, int] = 0, form="{:02d}:{:02d}.{:03d}"):
+    def time():
+        return strftime("%H:%M:%S", localtime())
+
+    @staticmethod
+    def duration(ms: [float, int] = 0, form="{:02d}:{:02d}.{:03d}"):
         millis = abs(int(ms))
         m = int(millis / 60000)
         s = int((millis % 60000) / 1000)
@@ -71,6 +110,10 @@ class Format:
         return str(gear - 1)
 
     @staticmethod
+    def rpm(rpm: int):
+        return '{:d}'.format(rpm)
+
+    @staticmethod
     def car_distance(dist_ms: [float, int], dist_meters: [float, int], track_len: [float, int]):
         track_len = max(track_len, 1000)
 
@@ -88,7 +131,7 @@ class Format:
             elif minute < 1.05:
                 return '{:3.0f}   {}'.format(minute, MINUTE_ACR)
 
-        return Format.time(int(dist_ms * 1000))
+        return Format.duration(int(dist_ms * 1000))
 
 
 # Iterator that starts again from the beginning after the last item has been reached.
@@ -122,6 +165,8 @@ class EndlessIterator:
             self.index -= self.step
         else:
             self.index = (self.index - self.step) % self.len + 1
+
+        return el
 
     def __iadd__(self, other):
         for i in range(0, other):

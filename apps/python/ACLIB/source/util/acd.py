@@ -3,7 +3,7 @@ from struct import unpack
 
 
 # Computes the hash keys of a folder/filename.
-def getKey(name):
+def get_ACD_key(name):
     key1 = key2 = key3 = 0
     key4 = 0x1683
     key5 = 0x42
@@ -59,15 +59,17 @@ def getKey(name):
 
 # Reads a *.acd file and stores the filenames and their contents in a dictionary.
 # Returns the decrypted folder name and the dictionary.
-def decryptACD(filepath):
+def decrypt_ACD(filepath):
     result = {}
     f = open(filepath, 'rb')
     buffer_size = os.path.getsize(filepath)
     buffer = bytearray(f.read(buffer_size))
     buffer_len = len(buffer)
 
+    filepath = filepath.replace('\\', '/')
+
     folder = filepath[:filepath.rfind('/')]
-    key = getKey(folder[folder.rfind('/') + 1:])
+    key = get_ACD_key(folder[folder.rfind('/') + 1:])
 
     index = 0
 
@@ -99,3 +101,18 @@ def decryptACD(filepath):
         result[file_name] = content
 
     return folder, result
+
+
+def write_ACD(folder: str, out_path: str, acd_contents = None):
+    if not os.path.exists(out_path):
+        os.makedirs(out_path)
+
+        if acd_contents:
+            folder_name, files = acd_contents
+        else:
+            folder_name, files = decrypt_ACD(folder)
+
+        for file, content in files.items():
+            f = open(os.path.join(out_path, file), 'w+', encoding='utf-8')
+            f.write(content)
+            f.close()

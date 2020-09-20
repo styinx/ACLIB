@@ -30,10 +30,10 @@ TEXTS = {
     KM_ACR:      'KM',
     KPH_ACR:     'KM/H',
     # logs, errors, exceptions
-    LOG_DB_CREATE: 'Create/Open DB at \'{0}\'',
-    LOG_DB_EXECUTE: 'Execute \'{0}\'',
-    EXCEPTION_DB_CREATE: 'Could not establish DB connection to \'{0}\'. \n{1}',
-    EXCEPTION_DB_COMMIT: 'Exception while executing \'{0}\'. \n{1}'
+    LOG_DB_CREATE: 'Create/Open DB at \'{}\'',
+    LOG_DB_EXECUTE: 'Execute \'{}\'',
+    EXCEPTION_DB_CREATE: 'Could not establish DB connection to \'{}\'. \n{}',
+    EXCEPTION_DB_COMMIT: 'Exception while executing \'{}\'. \n{}'
 }
 
 
