@@ -1,13 +1,25 @@
 from os import stat, path
 import functools
 import ac
-from source.color import Color
-from source.config import loadAppConfig, Config
-from source.gl import Texture, rect, texture_rect
-from source.event import GUI_EVENT
-from source.math import Rect, Point
-from source.animation import Animation
-from source.windows import *
+
+from ui.color import Color
+from ui.gl import Texture, rect, texture_rect
+from ui.animation import Animation
+from storage.config import loadAppConfig, Config
+from util.math import Rect, Point
+from util.windows import *
+
+
+class GUI_EVENT:
+    ON_POSITION_CHANGED = 0
+    ON_SIZE_CHANGED = 1
+    ON_CHILD_CHANGED = 2
+    ON_PARENT_CHANGED = 3
+    ON_VISIBILITY_CHANGED = 4
+    ON_CLICK = 5
+    ON_TEXT_CHANGED = 6
+    ON_CONFIG_CHANGED = 7
+    ON_STYLE_CHANGED = 8
 
 
 class Font:

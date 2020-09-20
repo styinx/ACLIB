@@ -1,10 +1,9 @@
-from source.aclib import ACLIB
-from source.gui import ACWidget, ACGrid, ACProgressBar, ACLabel
-from source.gl import rect, quad, line
-from source.color import Color
+from ui.gui.widget import ACWidget, ACLabel
+from ui.gl import rect, quad, line
+from ui.color import Color
 from math import log10
 
-from source.math import Rect
+from util.math import Rect
 
 
 # Mirrored single bar elements

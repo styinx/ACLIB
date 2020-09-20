@@ -1,4 +1,4 @@
-from source.aclib import ACLIB
+from util.util import console
 
 
 class Animation:
@@ -24,7 +24,7 @@ class Animation:
             self.valid = True
             self.init()
         else:
-            ACLIB.CONSOLE('Class ' + str(animation_var) + ' does not fulfill animation requirements.')
+            console('Class {} does not fulfill animation requirements.'.format(animation_var))
 
     def setDirection(self, direction):
         directions = ['Forwards', 'Backwards', 'Alternate']

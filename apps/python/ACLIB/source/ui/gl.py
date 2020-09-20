@@ -1,18 +1,31 @@
 import ac
 from math import sin, cos
-from source.color import Color
+from ui.color import Color
 
 
 class Texture:
-    def __init__(self, path):
-        self.path = path
-        self.texture = ac.newTexture(path)
+    def __init__(self, file: str):
+        self._path = ''
+        self.texture = None
+
+        self.path = file
+
+    @property
+    def path(self):
+        return self._path
+
+    @path.setter
+    def path(self, path: str):
+        if self._path != path:
+            self._path = path
+
+            self.texture = ac.newTexture(self._path)
 
 
 class Vec2i:
-    def __init__(self, x=0, y=0):
-        self.x = int(x)
-        self.y = int(y)
+    def __init__(self, x: int = 0, y: int = 0):
+        self.x = x
+        self.y = y
 
     def __add__(self, other):
         return Vec2i(self.x + other.x, self.y + other.y)
@@ -39,10 +52,7 @@ class Vec2i:
         return self
 
 
-def line(x1, y1, x2, y2, color=Color(1, 1, 1, 1)):
-    if not isinstance(color, Color):
-        raise Exception('Argument is not a Color')
-
+def line(x1: int , y1: int, x2: int, y2: int, color: Color = Color(1, 1, 1, 1)):
     ac.glColor4f(color.r, color.g, color.b, color.a)
     ac.glBegin(1)
     ac.glVertex2f(x1, y1)
@@ -50,9 +60,7 @@ def line(x1, y1, x2, y2, color=Color(1, 1, 1, 1)):
     ac.glEnd()
 
 
-def rect(x=0, y=0, w=0, h=0, color=Color(1, 1, 1, 1), filled=True, r=None):
-    if not isinstance(color, Color):
-        raise Exception('Argument is not a Color')
+def rect(x: int, y: int, w: int, h: int, color: Color = Color(1, 1, 1, 1), filled: bool = True):
 
     ac.glColor4f(color.r, color.g, color.b, color.a)
     if filled:
@@ -70,7 +78,7 @@ def rect(x=0, y=0, w=0, h=0, color=Color(1, 1, 1, 1), filled=True, r=None):
         ac.glEnd()
         
 
-def quad(x=0, y=0, w=0, h=0, colors=None, r=None):
+def quad(x: int, y: int, w: int, h: int, colors=None, r=None):
     if type(colors) == list:
         ac.glBegin(3)
         if len(colors) >= 1:
@@ -107,10 +115,7 @@ def quad(x=0, y=0, w=0, h=0, colors=None, r=None):
         ac.glEnd()
 
 
-def circle(x, y, radius, color=Color(1, 1, 1, 1), filled=True):
-    if not isinstance(color, Color):
-        raise Exception('Argument is not a Color')
-
+def circle(x: int, y: int, radius: int, color: Color = Color(1, 1, 1, 1), filled: bool = True):
     ac.glColor4f(color.r, color.g, color.b, color.a)
     if filled:
         ac.glBegin(2)
@@ -133,22 +138,19 @@ def circle(x, y, radius, color=Color(1, 1, 1, 1), filled=True):
     ac.glEnd()
 
 
-def arc(x, y, radius, start=0, stop=360, color=Color(1, 1, 1, 1), filled=True):
-    if not isinstance(color, Color):
-        raise Exception('Argument is not a Color')
-
+def arc(x: int, y: int, r: int, start: int = 0, stop: int = 360, color: Color = Color(1, 1, 1, 1), filled: bool = True):
     ac.glColor4f(color.r, color.g, color.b, color.a)
     if filled:
         ac.glBegin(2)
     else:
         ac.glBegin(1)
 
-    sample = (stop - start) / (36 * radius)
+    sample = (stop - start) / (36 * r)
     while start <= stop:
         rad1 = start
         rad2 = min(start + 1, stop)
-        ac.glVertex2f(x + cos(rad1) * radius, y - sin(rad1) * radius)
-        ac.glVertex2f(x + cos(rad2) * radius, y - sin(rad2) * radius)
+        ac.glVertex2f(x + cos(rad1) * r, y - sin(rad1) * r)
+        ac.glVertex2f(x + cos(rad2) * r, y - sin(rad2) * r)
         if filled:
             ac.glVertex2f(x, y)
 
@@ -157,37 +159,31 @@ def arc(x, y, radius, start=0, stop=360, color=Color(1, 1, 1, 1), filled=True):
     ac.glEnd()
 
 
-def donut(x, y, radius, width, start=0, stop=360, color=Color(1, 1, 1, 1), filled=True):
-    if not isinstance(color, Color):
-        raise Exception('Argument is not a Color')
-
+def donut(x: int, y: int, r: int, w: int, start: int = 0, stop: int = 360, color: Color = Color(1, 1, 1, 1), filled: bool = True):
     ac.glColor4f(color.r, color.g, color.b, color.a)
     if filled:
         ac.glBegin(2)
     else:
         ac.glBegin(1)
 
-    sample = (stop - start) / (36 * radius)
+    sample = (stop - start) / (36 * r)
     while start <= stop:
         rad1 = start
         rad2 = min(start + 1, stop)
-        ac.glVertex2f(x + cos(rad1) * radius, y - sin(rad1) * radius)
-        ac.glVertex2f(x + cos(rad2) * radius, y - sin(rad2) * radius)
-        ac.glVertex2f(x + cos(rad1) * (radius - width), y - sin(rad1) * (radius - width))
-        ac.glVertex2f(x + cos(rad2) * (radius - width), y - sin(rad2) * (radius - width))
+        ac.glVertex2f(x + cos(rad1) * r, y - sin(rad1) * r)
+        ac.glVertex2f(x + cos(rad2) * r, y - sin(rad2) * r)
+        ac.glVertex2f(x + cos(rad1) * (r - w), y - sin(rad1) * (r - w))
+        ac.glVertex2f(x + cos(rad2) * (r - w), y - sin(rad2) * (r - w))
         if filled:
-            ac.glVertex2f(x + cos(rad2) * radius, y - sin(rad2) * radius)
-            ac.glVertex2f(x + cos(rad1) * (radius - width), y - sin(rad1) * (radius - width))
+            ac.glVertex2f(x + cos(rad2) * r, y - sin(rad2) * r)
+            ac.glVertex2f(x + cos(rad1) * (r - w), y - sin(rad1) * (r - w))
 
         start += sample
 
     ac.glEnd()
 
 
-def polygon(points, color=Color(1, 1, 1, 1), filled=True):
-    if not isinstance(color, Color):
-        raise Exception('Argument is not a Color')
-
+def polygon(points, color: Color = Color(1, 1, 1, 1), filled: bool = True):
     ac.glColor4f(color.r, color.g, color.b, color.a)
     if filled:
         ac.glBegin(2)
@@ -201,12 +197,6 @@ def polygon(points, color=Color(1, 1, 1, 1), filled=True):
     ac.glEnd()
 
 
-def texture_rect(x, y, w, h, tex, color):
-    if not isinstance(tex, Texture):
-        raise Exception('Argument is not a Texture')
-
-    if not isinstance(color, Color):
-        raise Exception('Argument is not a Color')
-
+def texture_rect(x: int, y: int, w: int, h: int, tex: Texture, color: Color):
     ac.glColor4f(color.r, color.g, color.b, color.a)
     ac.glQuadTextured(x, y, w, h, tex.texture)
