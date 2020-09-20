@@ -2,6 +2,7 @@ class Session:
     STATUS = {0: 'None', 1: 'Replay', 2: 'Live', 3: 'Pause'}
     TYPE = {-1: 'Unknown', 0: 'Practice', 1: 'Qualifying', 2: 'Race', 3: 'Hotlap', 4: 'Time Attack', 5: 'Drift',
             6:  'Drag'}
+    FLAG = {0: 'None', 1: 'Blue', 2: 'Yellow', 3: 'Black', 4: 'White', 5: 'Checkered', 6: 'Penalty'}
 
     def __init__(self, info):
         self._info = info
@@ -19,7 +20,7 @@ class Session:
         return self._info.graphics.session
 
     @property
-    def session_name(self):
+    def name(self):
         return Session.TYPE[self.session]
 
     @property
@@ -29,6 +30,18 @@ class Session:
     @property
     def time_left(self):
         return self._info.static.sessionTimeLeft
+
+    @property
+    def laps(self):
+        return self._info.graphics.numberOfLaps
+
+    @property
+    def flag(self):
+        return self._info.graphics.flag
+
+    @property
+    def flag_name(self):
+        return Session.FLAG[self.flag]
 
     @property
     def pit_window_start(self):

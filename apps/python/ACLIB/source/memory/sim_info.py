@@ -1,6 +1,11 @@
-import mmap
-import ctypes
-from ctypes import c_int32, c_float, c_wchar
+try:
+    import mmap
+    import ctypes
+    from ctypes import c_int32, c_float, c_wchar
+except Exception as e:
+    import ac
+    ac.log(str(e))
+
 
 AC_STATUS = c_int32
 AC_OFF = 0

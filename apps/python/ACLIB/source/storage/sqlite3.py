@@ -2,9 +2,9 @@ import os
 import sqlite3
 from sqlite3 import Error
 
-from source.storage.storage import Storage
-from source.util.util import log
-from source.util.text import *
+from storage.storage import Storage
+from util.util import log
+from util.text import *
 
 
 class History:
@@ -19,22 +19,22 @@ class History:
         return self
 
 class SQLite3DB(Storage):
-    def __init__(self, path: str):
-        super().__init__(os.path.join(os.path.abspath(os.getcwd()), path))
+    def __init__(self, file: str):
+        super().__init__(os.path.join(os.path.abspath(os.getcwd()), file))
         self._connection = None
         self._cursor = None
         self._statement = None
         self._history = History()
 
         try:
-            log(text(LOG_DB_CREATE).format(self._path))
-            self._connection = sqlite3.connect(self._path)
+            log(text(LOG_DB_CREATE).format(self._file))
+            self._connection = sqlite3.connect(self._file)
             self._cursor = self._connection.cursor()
         except Error as e:
             self._connection.close()
             self._connection = None
             self._cursor = None
-            raise Exception(text(EXCEPTION_DB_CREATE).format(self._path, e))
+            raise BaseException(text(EXCEPTION_DB_CREATE).format(self._file, e))
 
     def _commit(self, fetch: bool = False):
         try:
@@ -46,7 +46,7 @@ class SQLite3DB(Storage):
                 self._cursor.execute(self._statement)
                 self._connection.commit()
         except Exception as e:
-            raise Exception(text(EXCEPTION_DB_COMMIT).format(self._statement, e))
+            raise BaseException(text(EXCEPTION_DB_COMMIT).format(self._statement, e))
 
     def query(self, statement: str):
         pass

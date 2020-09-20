@@ -1,4 +1,12 @@
-class Car:
+import json
+import os
+
+from settings import METADATA_DIR, AC_CAR_DIR, AC_TRACK_DIR
+from storage.config import Config
+from util.util import log
+
+
+class CarData:
     FRONT = 0
     REAR = 1
     LEFT = 2
@@ -11,6 +19,14 @@ class Car:
     @property
     def position(self):
         return self._info.graphics.position
+
+    @property
+    def skin(self):
+        return self._info.static.carSkin
+
+    @property
+    def model(self):
+        return self._info.static.carModel
 
     @property
     def class_position(self):
@@ -160,7 +176,43 @@ class Car:
     def has_ideal_line(self):
         return self._info.graphics.idealLineOn
 
-class Tyres:
+
+class CarMeta:
+    def __init__(self, car_model: str):
+        file = open('content/cars/' + car_model + '/ui/ui_car.json', 'r', encoding='utf-8')
+        self._car_config = json.loads(file.read(), strict=False)
+        file.close()
+        self._car_meta = Config(os.path.join(METADATA_DIR, car_model, 'ACLIB_car.ini'))
+
+        self._car_meta.set('name', self._car_config['name'])
+        self._car_meta.set('class', self._car_config['tags'][0][1:])
+        self._car_meta.set('type', self._car_config['class'])
+        self._car_meta.set('brand', self._car_config['brand'])
+        self._car_meta.set('brand_badge', 'content/cars/' + car_model + '/ui/badge.png')
+        pass
+
+    @property
+    def name(self):
+        return self._car_meta['name']
+
+    @property
+    def class_name(self):
+        return self._car_meta['class']
+
+    @property
+    def type(self):
+        return self._car_meta['type']
+
+    @property
+    def brand(self):
+        return self._car_meta['brand']
+
+    @property
+    def badge(self):
+        return self._car_meta['badge']
+
+
+class TyresData:
     FRONT_LEFT = 0
     FRONT_RIGHT = 1
     REAR_LEFT = 2
@@ -168,14 +220,6 @@ class Tyres:
 
     def __init__(self, info):
         self._info = info
-
-    @property
-    def skin(self):
-        return self._info.static.carSkin
-
-    @property
-    def model(self):
-        return self._info.static.carModel
 
     @property
     def dirt_level(self):
@@ -247,4 +291,56 @@ class Tyres:
 
     @property
     def compound(self):
-        return self._info.physics.tyreCompound
+        return self._info.graphics.tyreCompound
+
+    @property
+    def compound_name(self):
+        compound = self.compound
+        return compound[:compound.find('(')].strip()
+
+    @property
+    def compound_symbol(self):
+        compound = self.compound
+        return compound[compound.find('(') + 1:compound.find(')')].strip()
+
+
+class TyresMeta:
+    def __init__(self, car_model: str, acd: dict):
+        self._acd = acd
+        self._tyre_config = Config(self._acd['tyres.ini'], only_strings=True)
+        self._tyre_meta = Config(os.path.join(METADATA_DIR, car_model, 'ACLIB_tyres.ini'))
+
+        compound = ''
+        for sec_name, section in self._tyre_config.dict.items():
+            if 'NAME' in section:
+                compound = section['NAME']
+
+            if compound and section:
+                self._tyre_meta.select(compound)
+
+                if sec_name.find('THERMAL_FRONT') > -1 or sec_name.find('THERMAL_REAR') > -1:
+                    position = 'front' if sec_name.find('THERMAL_FRONT') > -1 else 'rear'
+                    self._tyre_meta.set(position + '_tcurve', self._lut_dict(section['PERFORMANCE_CURVE']))
+
+                elif sec_name.find('FRONT') > -1 or sec_name.find('REAR') > -1:
+                    position = 'front' if sec_name.find('FRONT') > -1 else 'rear'
+                    self._tyre_meta.set(position + '_ideal_pressure', section['PRESSURE_IDEAL'])
+                    self._tyre_meta.set(position + '_wear', self._lut_dict(section['WEAR_CURVE']))
+
+    def _lut_dict(self, file: str):
+        content = self._acd[file]
+        d = {}
+        for line in content.split('\n'):
+            if line.find('|') > -1:
+                k, v = line.split('|')
+                d[k] = v
+        return d
+
+    def ideal_pressure(self, compound: str, front: bool):
+        key = 'front' if front else 'rear'
+        return self._tyre_meta.dict[compound][key + '_ideal_pressure']
+
+    def ideal_temperature(self, compound: str, front: bool):
+        key = 'front' if front else 'rear'
+        min_max = [float(k) for k, v in self._tyre_meta.dict[compound][key + '_tcurve'].items() if v == '1.0']
+        return min(min_max), max(min_max)
