@@ -11,7 +11,7 @@ _Assetto Corsa App Library_
 - Car Data in one place
 - Animations
 - ~~Overhead detection~~
-- ~~SQLite3 Database Connection~~
+- SQLite3 Database Connection
 - GUI Events / ACLIB Events
 - Realtime App Configuration and Stylesheets
 
@@ -19,10 +19,6 @@ _Assetto Corsa App Library_
 
 ## Issues
 
-- tyre temperatures do not work for DLC cars
-- time table does not work anymore in Multiplayer
-- best times are not correct shown in Singleplayer
-- lap delta bar does not behave like built in delta bar (inaccurate)
 
 ## Install
 
@@ -48,7 +44,7 @@ If you have installed the library into AC then you can start to code.
 If you want to create a new app you have to create a file into the folder ```assettocorsa/apps/ACLIB/apps/```.
 The filename of the app needs to have the following pattern: **ACLIB_**_name of your app_**.py**
 Within this file you need to create a App class that has the name _name of your app_.
-This class must inherit from the class ACApp from the module ```source.gui```.
+This class must inherit from the class ACApp from the module ```gui```.
 Here is an example:
 
 - ACLIB/:
@@ -59,26 +55,7 @@ Here is an example:
 
 **ACLIB_MyNewApp.py**     
 ```python
-from source.gui import ACApp, ACLabel
-from source.gl import rect
-
-class MyNewApp(ACApp):
-    def __init__(self):
-        super().__init__('MyCustom App Name', 0, 0, 200, 200)
-        
-        self.my_widget = ACLabel('', self, self)
-             
-    # update is called in 'acUpdate(delta)'
-    def update(self, delta):
-        super().update(delta)
-        self.my_widget.setText('widget text: ' + str(delta))
-        
-    # render is called automatically from the app
-    # use opengl functions only in this method
-    def render(self, delta):
-        super().render(delta)
-        r = self.geometry
-        rect(r=r.add(y=-5, h=5))
+# TODO
 ```
 
 Afterward, you can extend the app with widgets and custom elements.
@@ -97,32 +74,7 @@ Example:
 ```python
 # Note that such an app is only possible if the contents are placed in the file ACLIB.py
 # Please prefer the example shown in 'Getting Started'.
-from source.aclib import ACLIB
-from source.gui import ACApp, ACGrid, ACLabel, ACLabelPair
-
-def acMain(version):
-    global myapp, lap_title, laps, pos_widget
-
-    myapp = ACApp('my app name', 0, 0, 200, 200).hideDecoration()
-    grid = ACGrid(myapp, 2, 2)
-    lap_title = ACLabel('', myapp, text_h_alignment='center')
-    laps = ACLabel('', myapp)
-    pos_widget = ACLabelPair(myapp, label=ACLabel('', myapp, text_h_alignment='center'), widget=ACLabel('', myapp))
-
-    grid.addWidget(lap_title, 0, 0, 1, 1)
-    grid.addWidget(laps, 1, 0, 1, 1)
-    grid.addWidget(pos_widget, 0, 1, 2, 1)
-    
-def acUpdate(delta):
-    global myapp, lap_title, laps, pos_widget
-
-    current_car = ACLIB.getFocusedCar()
-
-    lap_title.setText('Laps: ')
-    laps.setText('{:d}/{:2}'.format(ACLIB.CARS[current_car].lap, ACLIB.getLaps()))
-    pos_widget.label_widget.setText('Pos: ')
-    pos_widget.pair_widget.setText('{:d}/{:d}'.format(ACLIB.CARS[current_car].position, ACLIB.getCarsCount()))
-
+# TODO
 ```
 
 ---
@@ -200,12 +152,13 @@ class Color:
 
 An applied animation looks like this:
 ```python
-from source.color import Color
-from source.animation import Animation
-from source.widget import ACWidget
+from ui.color import Color
+from ui.animation import Animation
+from ui.gui.widget import ACWidget
 
 # only classes that inherit from ACWidget can take animations
-my_widget = ACWidget().setSize((100, 100))
+my_widget = ACWidget()
+my_widget.size = (100, 100)
 # the default animation is from type 'forward'
 # the property will have the stop value after the animation is finished
 # in this example the background color of the widget goes from transparent to red 
@@ -224,9 +177,9 @@ my_widget.addAnimation(my_alternate_color_animation)
 
 The following animation produces the animation shown in the image below:
 ```python
-from source.color import Color
-from source.math import Rect
-from source.animation import Animation
+from ui.color import Color
+from util.math import Rect
+from ui.animation import Animation
 
 def update(self, delta):
     super().update(delta)
@@ -265,9 +218,9 @@ def update(self, delta):
 
 <br>
 
-### ~~SQLite3 Database~~:
+### SQLite3 Database:
 
-- ~~useful to store cross sessions or other more complex data~~
+- useful to store cross sessions or other more complex data
 
 ---
 
@@ -280,30 +233,12 @@ def update(self, delta):
 
 ---
 
-### Realtime App Configuration (and Stylesheets):
+### ~~Realtime App Configuration (and Stylesheets):~~
 
-- apps can be styled with configuration
-- changes are applied in real time without reloading
-- enables app customization without altering code
-- stylesheets are not yet working
 
-![Realtime Config](https://github.com/styinx/ACLIB/blob/master/images/config.gif 'Realtime Config')
 
 ---
 
 ## Default Apps in ACLIB
 
-Driver App:
-- Shows the basic car and driver information.
-
-![Driver](https://github.com/styinx/ACLIB/blob/master/images/driver.png 'Driver App')
-
-Tower App:
-- Shows current standings.
-
-![Tower](https://github.com/styinx/ACLIB/blob/master/images/tower.png 'Tower App')
-
-Notification App:
-- Notifies driver when events occur.
-- yellow flag, faster car behind, position gained/lost, penalty
 
