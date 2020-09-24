@@ -1,49 +1,104 @@
 import os
 import sys
+import platform
 import importlib
-from source.aclib import ACLIB, SESSION
-from source.config import Config
+
+arch = platform.architecture()[0][0:2]
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lib', arch))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'source'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps'))
+os.environ['PATH'] = os.environ['PATH'] + ";."
+
+from settings import *
+from util.log import log, tb, Log
+from memory.ac_data import ACData
+from memory.ac_meta import ACMeta
 
 
-def acMain(version):
-    global init, apps
+class ACLIB:
+    APPS = {}
+    DATA = None
+    META = None
 
-    init = False
-    apps = []
-    aclib_config = Config("apps/python/ACLIB/config/ACLIB.ini")
+    @staticmethod
+    def init():
+        for aclib_path in [ACLIB_DOC_DIR, CONFIG_DIR, METADATA_DIR, STYLE_DIR]:
+            if not os.path.exists(aclib_path):
+                os.makedirs(aclib_path)
 
-    ACLIB.setup()
+        Log.init()
 
-    for module in os.listdir("apps/python/ACLIB/apps/"):
-        try:
-            module = "apps." + module[:module.rfind(".")]
-            if module not in sys.modules.keys():
-                importlib.import_module(module)
-            class_init = getattr(sys.modules[module], module[module.find("_") + 1:])
-            apps.append(class_init())
-        except Exception as e:
-            ACLIB.CONSOLE("Module '" + module + "' made some problems: " + str(e))
+        Log.LOG_2_AC = get('log_to_AC')
+
+        ACLIB.DATA = ACData()
+        ACLIB.META = ACMeta(ACLIB.DATA)
+
+    @staticmethod
+    def shutdown():
+        Log.shutdown()
 
 
-def acUpdate(delta):
-    global init, apps, loops
-
-    if ACLIB.getSessionStatusId() != 2:
-        SESSION.init()
+def acMain(version: int = 0):
+    try:
         ACLIB.init()
-        for app in apps:
-            app.init()
 
-    SESSION.update()
-    ACLIB.update(delta)
+        # Search for all 'ACLIB_<appname>.py' files in the apps directory.
+        files_list = [str(m) for m in os.listdir(APP_DIR) if os.path.isfile(path(APP_DIR, m))]
+        for file_name in files_list:
+            try:
+                # Filename without .py extension
+                module = file_name[:file_name.rfind(".")]
 
-    for app in apps:
-        if app.update_timer >= app.update_time:
-            app.update(delta)
-            app.update_timer = 0
-        else:
-            app.update_timer += delta
+                if module.find('ACLIB_') > -1:
+                    # Import the app to the current program if not yet done.
+                    if module not in sys.modules.keys():
+                        importlib.import_module(module)
+
+                    # Initialize the class with the constructor and store it in the app list.
+                    class_ctor = getattr(sys.modules[module], module[module.find('ACLIB_') + 6:])
+                    class_obj = class_ctor(ACLIB.DATA, ACLIB.META)
+                    ACLIB.APPS[class_ctor] = class_obj
+                    log('Init {0:s}'.format(module))
+
+            except Exception as e:
+                log('Problems while initializing {0:s}'.format(file_name))
+                tb(e)
+
+    except Exception as e:
+        tb(e)
+
+    return 'ACLIB'
+
+
+def acUpdate(delta: int = 0):
+    try:
+        ACLIB.DATA.update(delta)
+
+        # Call the update function for every app stored in the app list.
+        for _, app in ACLIB.APPS.items():
+            try:
+                app.update(delta)
+            except Exception as e:
+                log('Problems while updating app "{0:s}"'.format(app.title))
+                tb(e)
+    except Exception as e:
+        tb(e)
 
 
 def acShutdown():
-    i = 0
+    try:
+        ACLIB.DATA.shutdown()
+
+        # Call the update function for every app stored in the app list.
+        for _, app in ACLIB.APPS.items():
+            try:
+                log('Shutdown {0:s}'.format(app.title))
+                app.shutdown()
+            except Exception as e:
+                log('Problems while shutting down app "{0:s}"'.format(app.title))
+                tb(e)
+
+        CONFIG.write()
+        ACLIB.shutdown()
+    except Exception as e:
+        tb(e)
