@@ -112,7 +112,7 @@ class Color:
 #     return hue * 60
 
 
-def interpolateRGB(start, stop, steps):
+def interpolateRGB(start: Color, stop: Color, steps: int):
     colors = []
 
     for i in range(0, steps):
@@ -127,7 +127,7 @@ def interpolateRGB(start, stop, steps):
     return colors
 
 
-def interpolateHSV(start, stop, steps):
+def interpolateHSV(start: Color, stop: Color, steps: int):
     colors = []
 
     for i in range(0, steps):
@@ -140,6 +140,27 @@ def interpolateHSV(start, stop, steps):
         colors.append(Color(round(r, 2), round(g, 2), round(b, 2), round(a, 2)))
 
     return colors
+
+
+# todo check range for negative value
+#
+# Example:
+# - Start color = Color(0, 0, 1, 1)
+# - Stop color = Color(1, 0, 0, 1)
+# - Start value = 0
+# - Stop value = 100
+# - Value = 50
+# -> Resulting color = Color(0.5, 0, 0.5, 1)
+def interpolate(value: float, min_val: float, max_val: int, min_color: Color, max_color: Color):
+    value_range = max_val - min_val
+    min_weight = (max_val - value) / value_range
+    max_weight = 1 - min_weight
+    r = min_color.r * min_weight + max_color.r * max_weight
+    g = min_color.g * min_weight + max_color.g * max_weight
+    b = min_color.b * min_weight + max_color.b * max_weight
+    a = min_color.a * min_weight + max_color.a * max_weight
+
+    return Color(round(r, 2), round(g, 2), round(b, 2), round(a, 2))
 
 
 TRANSPARENT = Color(0.0, 0.0, 0.0, 0.0)

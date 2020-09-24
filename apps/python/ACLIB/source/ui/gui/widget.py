@@ -470,3 +470,30 @@ class ACIcon(ACButton):
         self.background_texture = file
         self.background_color = TRANSPARENT
         self.border = False
+
+
+class ACGraph(ACWidget):
+    def __init__(self, parent: ACWidget = None):
+        super().__init__(parent)
+
+        self.id = ac.addGraph(self.app, '')
+
+        self._range = (0, 0)
+
+    @property
+    def range(self):
+        return self._range
+
+    @range.setter
+    def range(self, value_range: tuple):
+        self._range = value_range
+        if self.id:
+            ac.setRange(self.id, self._range[0], self._range[1])
+
+    def add_series(self, color: Color):
+        if self.id:
+            ac.addSerieToGraph(self.id, color.r, color.g, color.b)
+
+    def add_value(self, value: float, series: int):
+        if self.id:
+            ac.addValueToGraph(self.id, series, value)

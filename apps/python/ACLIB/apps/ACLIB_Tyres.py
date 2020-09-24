@@ -148,7 +148,13 @@ class TyreTile(ACWidget):
         # self.background_texture = self._texture.path
 
         self._t_t_min, self._t_t_max = 80, 100
+        self._t_t_low, self._t_t_high = 60, 120
+        self._t_t_mid = 90
+        self._t_t_range = 20
         self._b_t_min, self._b_t_max = 400, 500
+        self._b_t_low, self._b_t_high = 300, 600
+        self._b_t_mid = 450
+        self._b_t_range = 100
         self._compound_loaded = False
 
     def update(self, delta: int):
@@ -180,12 +186,10 @@ class TyreTile(ACWidget):
             if val in TyreTile.TYRE_COLORS:
                 return TyreTile.TYRE_COLORS[val]
 
-            if val < self._t_t_min:
-                color = BLUE
-            elif val > self._t_t_max:
-                color = RED
+            if val < self._t_t_mid:
+                color = interpolate(val, self._t_t_low, self._t_t_mid, BLUE, GREEN)
             else:
-                color = GREEN
+                color = interpolate(val, self._t_t_mid, self._t_t_high, GREEN, RED)
 
             TyreTile.TYRE_COLORS[val] = color
 
@@ -193,19 +197,28 @@ class TyreTile(ACWidget):
             if val in TyreTile.BRAKE_COLORS:
                 return TyreTile.BRAKE_COLORS[val]
 
-            if val < self._b_t_min:
-                color = BLUE
-            elif val > self._b_t_max:
-                color = RED
+            if val < self._b_t_mid:
+                color = interpolate(val, self._b_t_low, self._b_t_mid, BLUE, GREEN)
             else:
-                color = GREEN
+                color = interpolate(val, self._b_t_mid, self._b_t_high, GREEN, RED)
 
-            TyreTile.TYRE_COLORS[val] = color
+            TyreTile.BRAKE_COLORS[val] = color
 
         return color
 
     def init(self):
         front = self._tyre < 2
+
         self._t_t_min, self._t_t_max = self._meta.tyres.ideal_temperature(self._data.tyres.compound_name, front)
+        self._t_t_mid = self._t_t_min + (self._t_t_max - self._t_t_min) / 2
+        self._t_t_range = self._t_t_max - self._t_t_min
+        self._t_t_low = self._t_t_min - self._t_t_range
+        self._t_t_high = self._t_t_max + self._t_t_range
+
+        self._b_t_min, self._b_t_max = self._meta.tyres.ideal_brake_temperature(front)
+        self._b_t_mid = self._b_t_min + (self._b_t_max - self._b_t_min) / 2
+        self._b_t_range = self._b_t_max - self._b_t_min
+        self._b_t_low = self._b_t_min - self._b_t_range
+        self._b_t_high = self._b_t_max + self._b_t_range
 
         TyreTile.TYRE_COLORS = {}

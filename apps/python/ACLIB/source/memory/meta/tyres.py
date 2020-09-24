@@ -30,18 +30,22 @@ class Tyres:
         if 'TEMPS_FRONT' in self._brake_config.dict:
             if 'PERF_CURVE' in self._brake_config['TEMPS_FRONT']:
                 self._tyre_meta.set('front_brake_temp_curve',
-                                    self._inline_lut_dict(self._brake_config['TEMPS_FRONT']['PERF_CURVE']))
+                                    self._lut_dict(self._brake_config['TEMPS_FRONT']['PERF_CURVE']))
 
                 self._tyre_meta.set('rear_brake_temp_curve',
-                                    self._inline_lut_dict(self._brake_config['TEMPS_REAR']['PERF_CURVE']))
+                                    self._lut_dict(self._brake_config['TEMPS_REAR']['PERF_CURVE']))
             else:
                 # If there is no data on the brake temperature we use a default
-                self._tyre_meta.set('front_brake_temp_curve', '(|0=0.70|300=0.8|500=1.0|600=1.0|800=0.7|1200=0.2|)')
-                self._tyre_meta.set('rear_brake_temp_curve', '(|0=0.70|300=0.8|500=1.0|600=1.0|800=0.7|1200=0.2|)')
+                self._tyre_meta.set('front_brake_temp_curve',
+                                    self._inline_lut_dict('(|0=0.70|300=0.8|500=1.0|600=1.0|800=0.7|1200=0.2|)'))
+                self._tyre_meta.set('rear_brake_temp_curve',
+                                    self._inline_lut_dict('(|0=0.70|300=0.8|500=1.0|600=1.0|800=0.7|1200=0.2|)'))
         else:
             # If there is no data on the brake temperature we use a default
-            self._tyre_meta.set('front_brake_temp_curve', '(|0=0.70|300=0.8|500=1.0|600=1.0|800=0.7|1200=0.2|)')
-            self._tyre_meta.set('rear_brake_temp_curve', '(|0=0.70|300=0.8|500=1.0|600=1.0|800=0.7|1200=0.2|)')
+            self._tyre_meta.set('front_brake_temp_curve',
+                                self._inline_lut_dict('(|0=0.70|300=0.8|500=1.0|600=1.0|800=0.7|1200=0.2|)'))
+            self._tyre_meta.set('rear_brake_temp_curve',
+                                self._inline_lut_dict('(|0=0.70|300=0.8|500=1.0|600=1.0|800=0.7|1200=0.2|)'))
 
     def _lut_dict(self, file: str):
         content = self._acd[file]
@@ -56,7 +60,7 @@ class Tyres:
         d = {}
         for line in content.split('|'):
             if line.find('=') > -1:
-                k, v = line.split('|')
+                k, v = line.split('=')
                 d[k] = v
         return d
 
