@@ -8,7 +8,7 @@ class Environment:
     @staticmethod
     def parse_track_length(length: str):
         if length.endswith('m'):
-            return int(length[-1])
+            return int(length[:-1])
         return int(length)
 
     def __init__(self, data):
@@ -26,5 +26,6 @@ class Environment:
 
         self._track_meta.set('length', Environment.parse_track_length(self._track_config['length']))
 
-    def get_track_length(self):
+    @property
+    def track_length(self):
         return self._track_meta['length']
