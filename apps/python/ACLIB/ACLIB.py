@@ -7,26 +7,28 @@ arch = platform.architecture()[0][0:2]
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lib', arch))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'source'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps'))
-os.environ['PATH'] = os.environ['PATH'] + ';.'
+os.environ['PATH'] = os.environ['PATH'] + ";."
 
 from settings import *
-from util.util import log, tb, Log
+from util.log import log, tb, Log
 from memory.ac_data import ACData
 from memory.ac_meta import ACMeta
 
 
 class ACLIB:
-    DATA = None
     APPS = {}
+    DATA = None
     META = None
 
     @staticmethod
     def init():
-        for path in [ACLIB_DOC_DIR, CONFIG_DIR, METADATA_DIR, STYLE_DIR]:
-            if not os.path.exists(path):
-                os.makedirs(path)
+        for aclib_path in [ACLIB_DOC_DIR, CONFIG_DIR, METADATA_DIR, STYLE_DIR]:
+            if not os.path.exists(aclib_path):
+                os.makedirs(aclib_path)
 
         Log.init()
+
+        Log.LOG_2_AC = get('log_to_AC')
 
         ACLIB.DATA = ACData()
         ACLIB.META = ACMeta(ACLIB.DATA)
@@ -41,7 +43,7 @@ def acMain(version: int = 0):
         ACLIB.init()
 
         # Search for all 'ACLIB_<appname>.py' files in the apps directory.
-        files_list = [str(m) for m in os.listdir(APP_DIR) if os.path.isfile(os.path.join(APP_DIR, m))]
+        files_list = [str(m) for m in os.listdir(APP_DIR) if os.path.isfile(path(APP_DIR, m))]
         for file_name in files_list:
             try:
                 # Filename without .py extension
@@ -96,6 +98,7 @@ def acShutdown():
                 log('Problems while shutting down app "{0:s}"'.format(app.title))
                 tb(e)
 
+        CONFIG.write()
         ACLIB.shutdown()
     except Exception as e:
         tb(e)

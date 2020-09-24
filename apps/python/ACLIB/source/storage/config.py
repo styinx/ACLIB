@@ -91,6 +91,10 @@ class Config(Storage):
     def write(self, file: str = None):
         if file is not None:
             self._file = file
+
+        if not os.path.exists(self.file):
+            os.makedirs(self.file)
+
         h = open(self.file, 'w+')
 
         for section, values in self._dict.items():

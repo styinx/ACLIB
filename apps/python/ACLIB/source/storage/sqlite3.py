@@ -3,7 +3,7 @@ import sqlite3
 from sqlite3 import Error
 
 from storage.storage import Storage
-from util.util import log
+from util.log import log
 from util.text import *
 
 
