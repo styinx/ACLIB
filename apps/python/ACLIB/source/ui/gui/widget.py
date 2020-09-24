@@ -2,15 +2,10 @@ import ac
 from ui import gl
 
 from ui.color import Color, TRANSPARENT
+from ui.gui.Font import Font, pt2px
 from ui.gui.defaults import WidgetStyle, WidgetConfig
-from util.util import log, console, tb
-
-
-def pt2px(pt: int) -> float:
-    return pt * 4/3
-
-def px2pt(pt: int) -> float:
-    return pt * 0.75
+from util.log import log, console, tb
+from util.observer import Observer
 
 
 class GUI_EVENT:
@@ -25,92 +20,10 @@ class GUI_EVENT:
     ON_STYLE_CHANGED = 8
 
 
-class Observer:
-    def update_observer(self, subject):
-        raise NotImplementedError('Override this function!')
-
-class Subject:
-    def __init__(self):
-        self._observers = []
-
-    def remove_observer(self, observer: Observer):
-        self._observers.remove(observer)
-
-    def add_observer(self, observer: Observer):
-        self._observers.append(observer)
-
-    def notify_observers(self):
-        for o in self._observers:
-            o.update_observer(self)
-
-
-
-class Font(Subject):
-    def __init__(self, font_name: str):
-        super().__init__()
-
-        self._name = font_name
-        self._size = 0
-        self._is_italic = False
-        self._is_bold = False
-
-        self._color = Color(0, 0, 0, 0)
-
-        if ac.initFont(0, font_name, 0, 0) == -1:
-            raise Exception('Could not load font {}'.format(font_name))
-
-        self.color = Color(1, 1, 1)
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, name: str):
-        self._name = name
-        self.notify_observers()
-
-    @property
-    def size(self):
-        return self._size
-
-    @size.setter
-    def size(self, size: int):
-        self._size = size
-        self.notify_observers()
-
-    @property
-    def italic(self):
-        return 1 if self._is_italic else 0
-
-    @italic.setter
-    def italic(self, italic: bool):
-        self._is_italic = italic
-        self.notify_observers()
-
-    @property
-    def bold(self):
-        return 1 if self._is_bold else 0
-
-    @bold.setter
-    def bold(self, bold: bool):
-        self._is_bold = bold
-        self.notify_observers()
-
-    @property
-    def color(self):
-        return self._color
-
-    @color.setter
-    def color(self, text_color: Color):
-        self._color = text_color
-        self.notify_observers()
-
-
 class ACWidget:
     def __init__(self, parent=None):
         self._id = 0
-        self._parent = None
+        self._parent = parent
         self._child = None
 
         self._position = (0, 0)
@@ -128,16 +41,20 @@ class ACWidget:
         self.background_color = Color(0, 0, 0, 0)
         self.border_color = Color(0, 1, 0, 1)
 
-        if parent:
-            self.parent = parent
-            # todo child assignment
-
         try:
             app_name = None if not self.app else self.app.__class__.__name__
             WidgetStyle.load_style_from_config(self, self.__class__.__name__, app_name)
         except Exception as e:
             log('Problems while loading style for class "{}"'.format(self.__class__.__name__))
             tb(e)
+
+    def _on_init(self):
+        if self.parent:
+            self.parent = self._parent
+            self.parent._child = self # todo child assignment
+
+        self.background = self.background
+        self.border = self.border
 
     @property
     def app(self):
@@ -156,6 +73,8 @@ class ACWidget:
     @id.setter
     def id(self, _id: int):
         self._id = _id
+
+        self._on_init()
 
     @property
     def parent(self):
@@ -176,7 +95,7 @@ class ACWidget:
     def child(self, child):
         if isinstance(child, ACWidget):
             self._child = child
-            self._child.position = (0, 0) if isinstance(self, ACApp) else self._parent.position
+            self._child.position = (0, 0) if isinstance(self, ACApp) else self.position
             self._child.size = self.size
 
     @property
@@ -409,7 +328,7 @@ class ACApp(ACWidget):
         self.background_color = self.background_color
 
     def render(self, delta: int):
-        super().update(delta)
+        super().render(delta)
 
     def shutdown(self):
         self._write_config()
@@ -499,16 +418,17 @@ class ACTextWidget(ACWidget, Observer):
         self._set_text_alignment()
 
     def _set_text_alignment(self):
-        x, y = self.position
+        x, y = self._position
 
         if self._h_alignment == 'left':
-            x = self.position[0]
+            pass
         elif self._h_alignment == 'center':
-            x = int(self.position[0] + self.size[0] / 2)
+            x += round(self.size[0] / 2)
         elif self._h_alignment == 'right':
-            x = self.position[0] + self.size[0]
+            x += self.size[0]
 
         self.position = (x, y)
+        pass
 
 
 class ACLabel(ACTextWidget):

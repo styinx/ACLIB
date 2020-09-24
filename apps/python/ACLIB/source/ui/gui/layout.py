@@ -26,6 +26,14 @@ class ACLayout(ACWidget):
     def child(self, child: ACWidget):
         raise Exception('Layout can not have a single explicit child.')
 
+    def update(self, delta: int):
+        for child in self.children:
+            child.update(delta)
+
+    def render(self, delta: int):
+        for child in self.children:
+            child.render(delta)
+
 
 class ACBox(ACLayout):
     HORIZONTAL = 0
@@ -127,11 +135,3 @@ class ACGrid(ACLayout):
         widget.parent = self
         widget.position = (self.position[0] + self._cell_width * x, self.position[1] + self._cell_height * y)
         widget.size = (self._cell_width * w, self._cell_height * h)
-
-    def update(self, delta):
-        for child in self.children:
-            child.update(delta)
-
-    def render(self, delta):
-        for child in self.children:
-            child.render(delta)

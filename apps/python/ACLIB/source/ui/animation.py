@@ -1,4 +1,4 @@
-from util.util import console
+from util.log import console
 
 
 class Animation:
