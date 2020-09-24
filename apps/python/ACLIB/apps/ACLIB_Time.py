@@ -1,15 +1,15 @@
-from time import strftime, localtime
-
 from memory.ac_data import ACData
-from ui.gui.widget import Font, ACApp, ACLabel
+from memory.ac_meta import ACMeta
+from ui.gui.widget import ACApp, ACLabel
+from ui.gui.Font import Font
 from ui.gui.layout import ACGrid
 
 from ui.color import Color
-from util.util import Format
+from util.format import Format
 
 
 class Time(ACApp):
-    def __init__(self, data: ACData = None, meta = None):
+    def __init__(self, data: ACData = None, meta: ACMeta = None):
         super().__init__('ACLIB_Time', 200, 200, 160, 80)
 
         self._data = data
