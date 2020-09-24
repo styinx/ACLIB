@@ -1,5 +1,3 @@
-from memory.ac_info import active_car_only
-
 class Timing:
     def __init__(self, info):
         self._info = info

@@ -1,24 +1,30 @@
-import os
-
 from memory.ac_data import ACData
-from memory.car import CarMeta, TyresMeta
-from memory.environment import EnvironmentMeta
-from settings import config, AC_CAR_DIR, METADATA_DIR
+from memory.meta.car import Car
+from memory.meta.environment import Environment
+from memory.meta.tyres import Tyres
+from settings import get, AC_CAR_DIR, METADATA_DIR, path
 from util.acd import write_ACD, decrypt_ACD
+
+
+# def active_car_only(func):
+#     if ac.getFocusedCar() == 0:
+#         return func()
+#     else:
+#         return - 1
 
 class ACMeta:
     def __init__(self, data: ACData):
         car_model = data.car.model
-        self._acd = decrypt_ACD(os.path.join(AC_CAR_DIR, car_model, 'data.acd'))
+        self._acd = decrypt_ACD(path(AC_CAR_DIR, car_model, 'data.acd'))
 
-        if config('write_acd'):
-            source_dir = os.path.join(AC_CAR_DIR, car_model, 'data.acd')
-            target_dir = os.path.join(METADATA_DIR, car_model)
+        if get('write_acd'):
+            source_dir = path(AC_CAR_DIR, car_model, 'data.acd')
+            target_dir = path(METADATA_DIR, car_model)
             write_ACD(source_dir, target_dir, self._acd)
 
-        self._car = CarMeta(car_model)
-        self._tyres = TyresMeta(car_model, self._acd[1])
-        self._environment = EnvironmentMeta(data.environment.track_name, data.environment.track_configuration)
+        self._car = Car(data, self._acd[1])
+        self._tyres = Tyres(data, self._acd[1])
+        self._environment = Environment(data)
 
     @property
     def car(self):

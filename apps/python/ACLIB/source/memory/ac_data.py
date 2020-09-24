@@ -1,9 +1,10 @@
 from memory.sim_info import SimInfo
-from memory.driver import Driver
-from memory.car import CarData, TyresData
-from memory.session import Session
-from memory.environment import EnvironmentData
-from memory.timing import Timing
+from memory.data.driver import Driver
+from memory.data.car import Car
+from memory.data.tyres import Tyres
+from memory.data.session import Session
+from memory.data.environment import Environment
+from memory.data.timing import Timing
 
 
 class Property:
@@ -64,10 +65,10 @@ class ACData:
     def __init__(self):
         self._info = SimInfo()
         self._driver = Driver(self._info)
-        self._car = CarData(self._info)
-        self._tyres = TyresData(self._info)
+        self._car = Car(self._info)
+        self._tyres = Tyres(self._info)
         self._session = Session(self._info)
-        self._environment = EnvironmentData(self._info)
+        self._environment = Environment(self._info)
         self._timing = Timing(self._info)
 
         self._events = {}
