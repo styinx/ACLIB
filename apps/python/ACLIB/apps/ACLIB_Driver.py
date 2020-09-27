@@ -1,6 +1,6 @@
 from memory.ac_data import ACData
 from ui.gui.widget import ACApp, ACLabel
-from ui.gui.Font import Font
+from ui.gui.font import Font
 from ui.gui.layout import ACGrid, ACVBox
 
 from ui.color import *

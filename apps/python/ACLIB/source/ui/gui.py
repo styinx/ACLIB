@@ -297,7 +297,7 @@ class ACWidget(object):
             ac.setVisible(self.ac_obj, False)
 
     def addAnimation(self, animation):
-        if isinstance(animation, Animation) and animation.isValid():
+        if isinstance(animation, Animation) and animation.is_valid():
             self.animation_queue.append(animation)
         return self
 
@@ -334,7 +334,7 @@ class ACWidget(object):
                 self.animation = self.animation_queue.pop(0)
                 self.animation.init()
         else:
-            if not self.animation.isFinished():
+            if not self.animation.is_finished():
                 self.animation.update(delta)
             else:
                 self.animation = None
