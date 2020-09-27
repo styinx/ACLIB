@@ -33,6 +33,41 @@ class Color:
         return self
 
 
+class AnimationColor:
+    def __init__(self, r: float, g: float, b: float, a: float = 1.0):
+        self.r = max(min(r, 1.0), -1.0)
+        self.g = max(min(g, 1.0), -1.0)
+        self.b = max(min(b, 1.0), -1.0)
+        self.a = max(min(a, 1.0), -1.0)
+
+    def __iadd__(self, other):
+        self.r = max(min(self.r + other.r, 1.0), -1.0)
+        self.g = max(min(self.g + other.g, 1.0), -1.0)
+        self.b = max(min(self.b + other.b, 1.0), -1.0)
+        self.a = max(min(self.a + other.a, 1.0), -1.0)
+        return self
+
+    def __add__(self, other):
+        return Color(max(min(self.r + other.r, 1.0), -1.0),
+                     max(min(self.g + other.g, 1.0), -1.0),
+                     max(min(self.b + other.b, 1.0), -1.0),
+                     max(min(self.a + other.a, 1.0), -1.0))
+
+    def __eq__(self, other):
+        return self.r == other.r and self.g == other.g and self.b == other.b and self.a == other.a
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __imul__(self, other: float):
+        if -1 <= other <= 1:
+            self.r *= other
+            self.g *= other
+            self.b *= other
+            self.a *= other
+        return self
+
+
 def interpolate(value: float, min_val: float, max_val: float, min_color: Color, max_color: Color):
     max_val, min_val = max(max_val, min_val), min(max_val, min_val)
     value_range = max_val - min_val
