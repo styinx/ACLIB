@@ -2,7 +2,7 @@ from memory.ac_data import ACData
 from memory.ac_meta import ACMeta
 from settings import RESOURCE_DIR, path
 from ui.gui.widget import ACApp, ACLabel, ACIcon, ACWidget
-from ui.gui.Font import Font
+from ui.gui.font import Font
 from ui.gui.layout import ACGrid, ACHBox
 
 from ui.color import Color, TRANSPARENT

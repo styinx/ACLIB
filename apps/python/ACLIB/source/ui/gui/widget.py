@@ -1,8 +1,9 @@
 import ac
 from ui import gl
+from ui.animation import Animation
 
 from ui.color import Color, TRANSPARENT
-from ui.gui.Font import Font, pt2px
+from ui.gui.font import Font, pt2px
 from ui.gui.defaults import WidgetStyle, WidgetConfig
 from util.log import log, console, tb
 from util.observer import Observer
@@ -20,8 +21,30 @@ class GUI_EVENT:
     ON_STYLE_CHANGED = 8
 
 
-class ACWidget:
+class ACAnimation:
+    def __init__(self):
+        self._active = None
+        self._queue = []
+
+    def add_animation(self, animation: Animation):
+        self._queue.append(animation)
+
+    def update(self, delta: int):
+        if self._active is None:
+            if len(self._queue) > 0:
+                self._active = self._queue.pop(0)
+                self._active.init()
+        else:
+            if not self._active.isFinished():
+                self._active.update()
+            else:
+                self._active = None
+
+
+class ACWidget(ACAnimation):
     def __init__(self, parent=None):
+        super().__init__()
+
         self._id = 0
         self._parent = parent
         self._child = None
@@ -205,6 +228,8 @@ class ACWidget:
         self.visible = False
 
     def update(self, delta: int):
+        super().update(delta)
+
         if self.child:
             self.child.update(delta)
 
