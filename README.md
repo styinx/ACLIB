@@ -1,8 +1,6 @@
 # ACLIB
 
-_Assetto Corsa App Library_
-
-<br>
+This app/library makes it easier to install Assetto Corsa apps and extends existing functionalities.
 
 ## Features
 
@@ -21,6 +19,10 @@ _Assetto Corsa App Library_
 <br> 
 
 ## Issues
+
+Please note that the wiki may not hold the most recent updates.
+
+This library is a work in progress.
 
 If you detect any issues please create an [Issue](https://github.com/styinx/ACLIB/issues) or mention it on [RaceDepartment](https://www.racedepartment.com/).
 

@@ -1,11 +1,10 @@
 from settings import TEXTURE_DIR, path
 from memory.ac_data import ACData
 from memory.ac_meta import ACMeta
-from ui.gl import Texture, texture_rect, rect
-from ui.gui.widget import ACApp, ACWidget, ACIcon, ACLabel
+from ui.gl import Texture, texture_rect
+from ui.gui.widget import ACApp, ACWidget
 from ui.gui.layout import ACGrid
 from ui.color import *
-from util.log import log
 
 
 class Tyres(ACApp):
@@ -17,12 +16,23 @@ class Tyres(ACApp):
         self.background = False
         self.border = False
 
+        data.on(ACData.EVENT.READY, self.init)
+
+        self._data = data
+        self._meta = meta
+
         self._grid = ACGrid(5, 5, self)
 
-        self.fl = Tyre(Tyre.FL, data, meta)
-        self.fr = Tyre(Tyre.FR, data, meta)
-        self.rl = Tyre(Tyre.RL, data, meta)
-        self.rr = Tyre(Tyre.RR, data, meta)
+        self.fl = None
+        self.fr = None
+        self.rl = None
+        self.rr = None
+
+    def init(self):
+        self.fl = Tyre(Tyre.FL, self._data, self._meta)
+        self.fr = Tyre(Tyre.FR, self._data, self._meta)
+        self.rl = Tyre(Tyre.RL, self._data, self._meta)
+        self.rr = Tyre(Tyre.RR, self._data, self._meta)
 
         self._grid.add(self.fl, 0, 0, 2, 2)
         self._grid.add(self.fr, 3, 0, 2, 2)
@@ -35,8 +45,6 @@ class Tyres(ACApp):
         self.rr.init()
 
     def update(self, delta: int):
-        super().update(delta)
-
         self._grid.update(delta)
 
     def render(self, delta: int):
@@ -106,19 +114,12 @@ class Tyre(ACWidget):
         return color
 
     def update(self, delta: int):
-        self._grid.update(delta)
+        if self._grid:
+            self._grid.update(delta)
 
     def render(self, delta: int):
-        self._grid.render(delta)
-
-        # x, y = self.position
-        # w, h = self.size
-        #
-        # if self._index < 2:
-        #     rect(x, y, w, 10, self.wear_color(self.wear()))
-        #
-        # else:
-        #     rect(x, y + h - 10, w, 10, self.wear_color(self.wear()))
+        if self._grid:
+            self._grid.render(delta)
 
 
 class TyreTile(ACWidget):

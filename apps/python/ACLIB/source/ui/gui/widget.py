@@ -35,7 +35,7 @@ class ACAnimation:
                 self._active = self._queue.pop(0)
                 self._active.init()
         else:
-            if not self._active.isFinished():
+            if not self._active.is_finished():
                 self._active.update()
             else:
                 self._active = None

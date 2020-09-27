@@ -8,16 +8,17 @@
     
 A supported animation class looks like this:
 ```python
-class Color:
+class AnimationColor:
     def __init__(self, r: float, g: float, b: float, a: float):
         """
         A color is represented by 4 components. Red, green, blue and alpha value.
-        The value of any component ranges from 0.0 to 1.0. 
+        The value of any component ranges from -1.0 to 1.0.
+        The minimum must be -1.0 since we have to subtract a value in an animation (the value of the step color). 
         """
-        self.r = max(min(r, 1.0), 0.0)
-        self.g = max(min(g, 1.0), 0.0)
-        self.b = max(min(b, 1.0), 0.0)
-        self.a = max(min(a, 1.0), 0.0)
+        self.r = max(min(r, 1.0), -1.0)
+        self.g = max(min(g, 1.0), -1.0)
+        self.b = max(min(b, 1.0), -1.0)
+        self.a = max(min(a, 1.0), -1.0)
          
     def __add__(self, other):
         """
@@ -27,10 +28,10 @@ class Color:
             c2 = Color(1, 0, 0, 1)  # Red
             c3 = c1 + c2            # Yellow Color(1, 1, 0, 1)   
         """
-        return Color(max(min(self.r + other.r, 1.0), 0.0),
-                     max(min(self.g + other.g, 1.0), 0.0),
-                     max(min(self.b + other.b, 1.0), 0.0),
-                     max(min(self.a + other.a, 1.0), 0.0))
+        return Color(max(min(self.r + other.r, 1.0), -1.0),
+                     max(min(self.g + other.g, 1.0), -1.0),
+                     max(min(self.b + other.b, 1.0), -1.0),
+                     max(min(self.a + other.a, 1.0), -1.0))
      
     def __imul__(self, other):
         self.r *= other
@@ -88,31 +89,27 @@ my_widget.add_animation(my_alternate_color_animation)
 
 The following animation produces the animation shown in the image below:
 ```python
-from ui.color import Color
-from util.math import Rect
+from memory.ac_data import ACData
+from memory.ac_meta import ACMeta
 from ui.animation import Animation
+from ui.gui.widget import ACApp
+from ui.color import RED, GREEN, AnimationColor
 
-def update(self, delta):
-    super().update(delta)
-    
-    if self.loops % 100 == 0:
-        start = Color(0, 0, 0, 1)
-        step = Color(0.05, 0.05, 0, 0)
-        stop = Color(1, 1, 0, 1)
-        self.add_animation(Animation(self, 'background_color', start, step, stop, 0, 'Alternate'))
+class Test(ACApp):
+    def __init__(self, data: ACData = None, meta: ACMeta = None):
+        super().__init__('ACLIB_Test', 200, 200, 300, 300)
 
-    if self.loops % 500 == 0:
-        x, y = self.getPos()
-        w, h = self.getSize()
-        start = Rect().set(x, y, w, h)
-        step = Rect().set(0, 0, 1, 1)
-        stop = Rect().set(x, y, w + 25, h + 25)
-        self.add_animation(Animation(self, 'geometry', start, step, stop, 0, 'Alternate'))
+        start = RED
+        stop = GREEN
+        step = AnimationColor(-0.001, 0.001, 0, 0)
+        self.add_animation(Animation(self, 'background_color', start, step, stop, -1, 'Forward'))
 
-    if self.loops == 1000:
-        self.loops = 0
-    else:
-        self.loops += 1
+    def update(self, delta: int):
+        super().update(delta)
 ```
 
-![Animation](https://github.com/styinx/ACLIB/blob/master/images/animation.gif 'Animation')
+![Animation](https://github.com/styinx/ACLIB/blob/master/stuff/images/animation_forward.gif 'Animation')
+
+The `Alternate` animation looks like this.
+
+![Animation](https://github.com/styinx/ACLIB/blob/master/stuff/images/animation_alternate.gif 'Animation')

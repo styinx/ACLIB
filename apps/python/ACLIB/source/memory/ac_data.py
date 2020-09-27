@@ -1,3 +1,6 @@
+import time
+from threading import Thread
+
 from memory.sim_info import SimInfo
 from memory.data.driver import Driver
 from memory.data.car import Car
@@ -5,13 +8,22 @@ from memory.data.tyres import Tyres
 from memory.data.session import Session
 from memory.data.environment import Environment
 from memory.data.timing import Timing
+from util.event import EventListener
+
+
+def get_property(obj, property_str: str):
+    for sub_property in property_str.split('.'):
+        if hasattr(obj, sub_property):
+            obj = getattr(obj, sub_property)
+    return obj
 
 
 class Property:
-    def __init__(self, parent, value: int, event: int):
+    def __init__(self, parent, value: int, event: str, callback_param: str = ''):
         self._parent = parent
         self._value = value
         self._event = event
+        self._callback_param = callback_param
 
     @property
     def value(self):
@@ -21,11 +33,15 @@ class Property:
     def value(self, new_value: int):
         if self._value != new_value:
             self._value = new_value
-            self._parent.fire(self._event)
+
+            if self._callback_param == '':
+                self._parent.fire(self._event)
+            else:
+                self._parent.fire(self._event, get_property(self._parent, self._callback_param))
 
 
 class BoolProperty:
-    def __init__(self, parent, value: bool, event1: int, event2: int):
+    def __init__(self, parent, value: bool, event1: str, event2: str):
         self._parent = parent
         self._value = value
         self._event1 = event1
@@ -45,24 +61,29 @@ class BoolProperty:
                 self._parent.fire(self._event2)
 
 
-class ACData:
+class ACData(EventListener):
     class EVENT:
-        LAP_CHANGED = 0
-        SECTOR_CHANGED = 1
-        MINISECTOR_CHANGED = 2
-        KM_CHANGED = 3
-        POSITION_CHANGED = 4
-        POSITION_GAINED = 5
-        POSITION_LOST = 6
-        FLAG_CHANGED = 7
-        PIT_ENTERED = 8
-        PIT_LEFT = 9
-        COMPOUND_CHANGED = 10
-        LAP_INVALIDATED = 11
-        PENALTY_RECEIVED = 12
-        PENALTY_SERVED = 13
+        READY = 'READY'
+        LAP_CHANGED = 'Lap Changed'
+        SECTOR_CHANGED = 'Sector Changed'
+        MINISECTOR_CHANGED = 'Minisector Changed'
+        KM_CHANGED = 'KM Changed'
+        POSITION_CHANGED = 'Position Changed'
+        POSITION_GAINED = 'Position Gained'
+        POSITION_LOST = 'Position Lost'
+        FLAG_CHANGED = 'Flag Changed'
+        PIT_ENTERED = 'Pit Entered'
+        PIT_LEFT = 'Pit Left'
+        COMPOUND_CHANGED = 'Compound Changed'
+        LAP_INVALIDATED = 'Lap Invalidated'
+        PENALTY_RECEIVED = 'Penalty Received'
+        PENALTY_SERVED = 'Penalty Served'
 
     def __init__(self):
+        super().__init__()
+
+        self._ready = False
+
         self._info = SimInfo()
         self._driver = Driver(self._info)
         self._car = Car(self._info)
@@ -71,62 +92,48 @@ class ACData:
         self._environment = Environment(self._info)
         self._timing = Timing(self._info)
 
-        self._events = {}
-        self._event_id = 0
-
         self._is_in_pit = BoolProperty(self, False, ACData.EVENT.PIT_ENTERED, ACData.EVENT.PIT_LEFT)
         self._has_penalty = BoolProperty(self, False, ACData.EVENT.PENALTY_RECEIVED, ACData.EVENT.PENALTY_SERVED)
         self._position = Property(self, 0, ACData.EVENT.POSITION_CHANGED)
-        self._compound = Property(self, 0, ACData.EVENT.COMPOUND_CHANGED)
+        self._compound = Property(self, 0, ACData.EVENT.COMPOUND_CHANGED, 'tyres.compound')
         self._flag = Property(self, 0, ACData.EVENT.FLAG_CHANGED)
         self._lap = Property(self, 0, ACData.EVENT.LAP_CHANGED)
         self._sector = Property(self, 0, ACData.EVENT.SECTOR_CHANGED)
         self._mini_sector = Property(self, 0, ACData.EVENT.MINISECTOR_CHANGED)
         self._km_sector = Property(self, 0, ACData.EVENT.KM_CHANGED)
 
-    # Calls all callbacks that are associated with the event.
-    def _fire_event(self, event: int, *args):
-        if event in self._events:
-            for cb in self._events[event]:
-                cb(args)
+        self._check_ready()
 
-    def fire(self, event: int, *args):
-        self._fire_event(event, args)
+    def _check_ready(self):
+        thread = Thread(target=self._check_ready_loop, daemon=True)
+        thread.start()
 
-    # Adds a callback for a certain event.
-    # Returns the event number and the event id to identify the callback and possibly remove it.
-    def on(self, event: int, callback: callable):
-        if event not in self._events:
-            self._events = {}
+    def _check_ready_loop(self):
+        while len(self._tyres.compound) < 5:
+            time.sleep(0.1)
+        self._fire(ACData.EVENT.READY)
+        self._ready = True
 
-        self._event_id += 1
-        self._events[event][self._event_id] = callback
-
-        return event, self._event_id
-
-    # Removes a callback
-    def remove_callback(self, event_tuple: tuple):
-        if len(event_tuple) == 2:
-            del self._events[event_tuple[0]][event_tuple[1]]
-            return True
-        return False
+    def fire(self, event: str, *args):
+        self._fire(event, *args)
 
     # Checks if any values have changed and call the callback functions.
     def update(self, delta: int):
-        self._is_in_pit.value = self._car.is_in_pit
-        self._has_penalty.value = self._car.has_penalty
-        self._position.value = self._car.position
-        self._flag.value = self._session.flag
-        self._lap.value = self._timing.lap
-        self._sector.value = self._timing.current_sector_index
-        # self._mini_sector.value = self._car.position
-        # self._km_sector.value = self._car.position
+        if self._ready:
+            self._is_in_pit.value = self._car.is_in_pit
+            self._has_penalty.value = self._car.has_penalty
+            self._position.value = self._car.position
+            self._flag.value = self._session.flag
+            self._lap.value = self._timing.lap
+            self._sector.value = self._timing.current_sector_index
+            # self._mini_sector.value = self._car.position
+            # self._km_sector.value = self._car.position
 
-        self._compound.value = self._tyres.compound
-
-        # Only check when car is in the box.
-        if self._is_in_pit:
             self._compound.value = self._tyres.compound
+
+            # Only check when car is in the box.
+            if self._is_in_pit:
+                self._compound.value = self._tyres.compound
 
     def shutdown(self):
         pass
