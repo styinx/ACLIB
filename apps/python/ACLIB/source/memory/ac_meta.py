@@ -4,17 +4,28 @@ from memory.meta.environment import Environment
 from memory.meta.tyres import Tyres
 from settings import get, AC_CAR_DIR, METADATA_DIR, path
 from util.acd import write_ACD, decrypt_ACD
+from util.event import EventListener
 
 
-# def active_car_only(func):
-#     if ac.getFocusedCar() == 0:
-#         return func()
-#     else:
-#         return - 1
+class ACMeta(EventListener):
+    class EVENT:
+        READY = 'READY'
 
-class ACMeta:
     def __init__(self, data: ACData):
-        car_model = data.car.model
+        super().__init__()
+
+        self._data = data
+        self._acd = None
+        self._ready = False
+
+        self._car = None
+        self._tyres = None
+        self._environment = None
+
+        data.on(ACData.EVENT.READY, self.init)
+
+    def init(self):
+        car_model = self._data.car.model
         self._acd = decrypt_ACD(path(AC_CAR_DIR, car_model, 'data.acd'))
 
         if get('write_acd'):
@@ -22,9 +33,11 @@ class ACMeta:
             target_dir = path(METADATA_DIR, car_model)
             write_ACD(source_dir, target_dir, self._acd)
 
-        self._car = Car(data, self._acd[1])
-        self._tyres = Tyres(data, self._acd[1])
-        self._environment = Environment(data)
+        self._car = Car(self._data, self._acd[1])
+        self._tyres = Tyres(self._data, self._acd[1])
+        self._environment = Environment(self._data)
+
+        self._fire(ACMeta.EVENT.READY)
 
     @property
     def car(self):

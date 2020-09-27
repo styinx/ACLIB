@@ -92,8 +92,10 @@ class Config(Storage):
         if file is not None:
             self._file = file
 
-        if not os.path.exists(self.file):
-            os.makedirs(self.file)
+        path = self._file[:self._file.rfind('/')]
+
+        if not os.path.exists(path):
+            os.makedirs(path)
 
         h = open(self.file, 'w+')
 
