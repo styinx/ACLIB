@@ -127,5 +127,5 @@ class ACGrid(ACLayout):
 
         self._children.insert(y * self._cols + x, widget)
         widget.parent = self
-        widget.position = (self.position[0] + self._cell_width * x, self.position[1] + self._cell_height * y)
         widget.size = (self._cell_width * w, self._cell_height * h)
+        widget.position = (self.position[0] + self._cell_width * x, self.position[1] + self._cell_height * y)

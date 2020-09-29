@@ -92,14 +92,14 @@ class ACWidget(ACAnimation):
         self._id = _id
 
         # Properties like color, text, ... can only be applied when the id is available.
-        self.position = self._position
-        self.size = self._size
-        self.visible = self._visible
-        self.background = self._background
-        self.border = self._border
-        self.background_texture = self._background_texture
-        self.background_color = self._background_color
-        self.border_color = self._border_color
+        self.size = self.size
+        self.position = self.position
+        self.visible = self.visible
+        self.background = self.background
+        self.border = self.border
+        self.background_texture = self.background_texture
+        self.background_color = self.background_color
+        self.border_color = self.border_color
 
         # Overwrite position and size if parent is available.
         self.parent = self._parent
@@ -113,8 +113,8 @@ class ACWidget(ACAnimation):
         if isinstance(parent, ACWidget):
             if parent.child != self:
                 self._parent = parent
-                self.position = (0, 0) if isinstance(parent, ACApp) else self._parent._position
                 self.size = self._parent.size
+                self.position = (0, 0) if isinstance(parent, ACApp) else self._parent._position
                 self.parent.child = self
 
     @property
@@ -126,14 +126,16 @@ class ACWidget(ACAnimation):
         if isinstance(child, ACWidget):
             if child.parent != self:
                 self._child = child
-                self.child.position = (0, 0) if isinstance(self, ACApp) else self._position
                 self.child.size = self._size
+                self.child.position = (0, 0) if isinstance(self, ACApp) else self._position
                 self.child.parent = self
 
     @property
     def position(self) -> tuple:
         if self.id:
-            return ac.getPosition(self.id)
+            position = ac.getPosition(self.id)
+            if position != -1:
+                return position
         return self._position
 
     @position.setter
@@ -145,6 +147,10 @@ class ACWidget(ACAnimation):
 
     @property
     def size(self) -> tuple:
+        if self.id:
+            size = ac.getSize(self.id)
+            if size != -1:
+                return size
         return self._size
 
     @size.setter
@@ -220,7 +226,7 @@ class ACWidget(ACAnimation):
 
     @property
     def border_color(self) -> Color:
-        return self.border_color
+        return self._border_color
 
     @border_color.setter
     def border_color(self, border_color: Color):
@@ -375,7 +381,8 @@ class ACTextWidget(ACWidget, Observer):
         self._font = font
         self._h_alignment = h_alignment
         self._v_alignment = v_alignment
-        self._alignment_offset = 0
+        self._v_offset = 0
+        self._h_offset = 0
 
     def update_observer(self, subject):
         if isinstance(subject, Font):
@@ -386,18 +393,19 @@ class ACTextWidget(ACWidget, Observer):
         self._id = _id
 
         # Properties like color, text, ... can only be applied when the id is available.
-        self.position = self._position
-        self.size = self._size
-        self.visible = self._visible
-        self.background = self._background
-        self.border = self._border
-        self.background_texture = self._background_texture
-        self.background_color = self._background_color
-        self.border_color = self._border_color
-        self.font = self._font
-        self.text = self._text
-        self.h_alignment = self._h_alignment
-        self.v_alignment = self._v_alignment
+        self.size = self.size
+        self.position = self.position
+        self.visible = self.visible
+        self.background = self.background
+        self.border = self.border
+        self.background_texture = self.background_texture
+        self.background_color = self.background_color
+        self.border_color = self.border_color
+        self.font = self.font
+        self.text = self.text
+
+        self.h_alignment = self.h_alignment
+        self.v_alignment = self.v_alignment
 
         # Overwrite position and size if parent is available.
         self.parent = self._parent
@@ -407,7 +415,16 @@ class ACTextWidget(ACWidget, Observer):
         self._position = position
 
         if self.id and len(position) == 2:
-            ac.setPosition(self.id, position[0], position[1] + self._alignment_offset)
+            ac.setPosition(self.id, position[0], position[1] + self._v_offset)
+
+    @ACWidget.size.setter
+    def size(self, size: tuple):
+        self._size = size
+
+        if self.id and len(size) == 2:
+            ac.setSize(self.id, size[0], size[1])
+
+        self.v_alignment = self._v_alignment
 
     @property
     def text(self) -> str:
@@ -451,8 +468,6 @@ class ACTextWidget(ACWidget, Observer):
         if self.id:
             ac.setFontAlignment(self.id, self._h_alignment)
 
-        self._set_text_alignment()
-
     @property
     def v_alignment(self):
         return self._v_alignment
@@ -461,28 +476,16 @@ class ACTextWidget(ACWidget, Observer):
     def v_alignment(self, v_alignment: str):
         self._v_alignment = v_alignment
 
-        if self.font and pt2px(self.font.size) < self.size[1]:
+        self._v_offset = 0
+        used_height = pt2px(12) if self.font is None else pt2px(self.font.size)
+
+        if used_height < self.size[1]:
             if self._v_alignment == 'top':
-                self._alignment_offset = 0
+                self._v_offset = 0
             elif self._v_alignment == 'middle':
-                self._alignment_offset = round(self.size[1] / 2 - pt2px(self.font.size) / 2)
+                self._v_offset = round(self.size[1] / 2 - used_height / 2)
             elif self._v_alignment == 'bottom':
-                self._alignment_offset = self.size[1] - pt2px(self.font.size)
-
-        self._set_text_alignment()
-
-    def _set_text_alignment(self):
-        x, y = self._position
-
-        if self._h_alignment == 'left':
-            pass
-        elif self._h_alignment == 'center':
-            x += round(self.size[0] / 2)
-        elif self._h_alignment == 'right':
-            x += self.size[0]
-
-        self.position = (x, y)
-        pass
+                self._v_offset = self.size[1] - used_height
 
 
 class ACLabel(ACTextWidget):
