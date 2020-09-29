@@ -48,7 +48,7 @@ class AnimationColor:
         return self
 
     def __add__(self, other):
-        return Color(max(min(self.r + other.r, 1.0), -1.0),
+        return AnimationColor(max(min(self.r + other.r, 1.0), -1.0),
                      max(min(self.g + other.g, 1.0), -1.0),
                      max(min(self.b + other.b, 1.0), -1.0),
                      max(min(self.a + other.a, 1.0), -1.0))
@@ -58,6 +58,15 @@ class AnimationColor:
 
     def __ne__(self, other):
         return not (self == other)
+
+    def __mul__(self, other: float):
+        c = AnimationColor(self.r, self.g, self.b, self.a)
+        if -1 <= other <= 1:
+            c.r *= other
+            c.g *= other
+            c.b *= other
+            c.a *= other
+        return c
 
     def __imul__(self, other: float):
         if -1 <= other <= 1:

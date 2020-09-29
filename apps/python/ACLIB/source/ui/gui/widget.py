@@ -26,6 +26,14 @@ class ACAnimation:
         self._active = None
         self._queue = []
 
+    @property
+    def animation(self):
+        return self._active
+
+    @animation.setter
+    def animation(self, animation):
+        self._active = animation
+
     def add_animation(self, animation: Animation):
         self._queue.append(animation)
 
