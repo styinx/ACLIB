@@ -7,7 +7,8 @@ class Subject:
         self._observers = []
 
     def remove_observer(self, observer: Observer):
-        self._observers.remove(observer)
+        if observer in self._observers:
+            self._observers.remove(observer)
 
     def add_observer(self, observer: Observer):
         self._observers.append(observer)
