@@ -94,18 +94,18 @@ class Config(Storage):
 
         path = self._file[:self._file.rfind('/')]
 
-        if not os.path.exists(path):
+        if path.find('/') > -1 and not os.path.exists(path):
             os.makedirs(path)
 
-        h = open(self.file, 'w+')
+        handle = open(self.file, 'w+')
 
         for section, values in self._dict.items():
-            h.write('[{}]\n'.format(section))
+            handle.write('[{}]\n'.format(section))
             for key, val in values.items():
-                h.write(str(key) + ' = ' + str(val) + '\n')
-            h.write('\n')
+                handle.write(str(key) + ' = ' + str(val) + '\n')
+            handle.write('\n')
 
-        h.close()
+        handle.close()
 
     def set(self, key: str, value, topic: str = ''):
         if topic:

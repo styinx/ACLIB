@@ -29,11 +29,11 @@ class Driver(ACApp):
         self._grid = ACGrid(6, 6, self)
         self._box = ACVBox(self)
 
-        self._gear = ACLabel('', self._big_font, 'center', 'middle', self)
-        self._rpm = ACLabel('', self._medium_font, 'right', 'top', self)
-        self._drs = ACLabel('DRS', self._medium_font, 'center', 'middle', self)
-        self._ers = ACLabel('ERS', self._medium_font, 'center', 'middle', self)
-        self._kers = ACLabel('KERS', self._medium_font, 'center', 'bottom', self)
+        self._gear = ACLabel('', 'center', 'middle', self._big_font, self)
+        self._rpm = ACLabel('', 'right', 'top', self._medium_font, self)
+        self._drs = ACLabel('DRS', 'center', 'middle', self._medium_font, self)
+        self._ers = ACLabel('ERS', 'center', 'middle', self._medium_font, self)
+        self._kers = ACLabel('KERS', 'center', 'bottom', self._medium_font, self)
 
         self._box.background_texture = 'apps/python/ACLIB/resources/textures/car_hud_circle.png'
 

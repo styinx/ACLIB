@@ -13,8 +13,7 @@ class Tyres(ACApp):
 
         self.hide_decoration()
         self.background_color = TRANSPARENT
-        self.background = False
-        self.border = False
+        self.border_color = TRANSPARENT
 
         data.on(ACData.EVENT.READY, self.init)
 
@@ -45,10 +44,10 @@ class Tyres(ACApp):
         self.rr.init()
 
     def update(self, delta: int):
-        self._grid.update(delta)
+        super().update(delta)
 
     def render(self, delta: int):
-        self._grid.render(delta)
+        super().render(delta)
 
 
 class Tyre(ACWidget):
@@ -59,10 +58,9 @@ class Tyre(ACWidget):
     RR = 3
 
     def __init__(self, index: int, data: ACData, meta: ACMeta):
-        super().__init__('')
+        super().__init__(None)
 
-        self.background_color = Color(0, 0, 0, 0.25)
-        self.background = True
+        self.background_color = TRANSPARENT
 
         self._index = index
         self._data = data
@@ -114,12 +112,10 @@ class Tyre(ACWidget):
         return color
 
     def update(self, delta: int):
-        if self._grid:
-            self._grid.update(delta)
+        super().update(delta)
 
     def render(self, delta: int):
-        if self._grid:
-            self._grid.render(delta)
+        super().render(delta)
 
 
 class TyreTile(ACWidget):
@@ -141,6 +137,8 @@ class TyreTile(ACWidget):
     def __init__(self, index: int, tyre: int, data: ACData, meta: ACMeta):
         super().__init__(None)
 
+        self.background_color = TRANSPARENT
+
         self._index = index
         self._tyre = tyre
         self._data = data
@@ -159,11 +157,15 @@ class TyreTile(ACWidget):
         self._compound_loaded = False
 
     def update(self, delta: int):
+        super().update(delta)
+
         if not self._compound_loaded and len(self._data.tyres.compound) > 5:
             self.init()
             self._compound_loaded = True
 
     def render(self, delta: int):
+        super().render(delta)
+
         x, y = self.position
         w, h = self.size
         texture_rect(x, y, w, h, self._texture, self.temp_color(self.temp()))

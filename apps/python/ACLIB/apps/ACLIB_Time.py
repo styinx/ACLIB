@@ -12,6 +12,9 @@ class Time(ACApp):
     def __init__(self, data: ACData = None, meta: ACMeta = None):
         super().__init__('ACLIB_Time', 200, 200, 160, 80)
 
+        self.hide_decoration()
+        self.border = False
+
         self._data = data
         self._font = Font("Roboto Mono")
         self._font.color = Color(1.0, 1.0, 1.0)
@@ -21,9 +24,9 @@ class Time(ACApp):
         self._col = 0
 
         self._grid = ACGrid(2, 3, self)
-        self._local_time = ACLabel('', self._font, 'right', 'top', parent=self)
-        self._session_time = ACLabel('', self._font, 'right', 'middle', parent=self)
-        self._time_left = ACLabel('', self._font, 'right', 'bottom', parent=self)
+        self._local_time = ACLabel('', 'right', 'top', self._font, self)
+        self._session_time = ACLabel('', 'right', 'middle', self._font, self)
+        self._time_left = ACLabel('', 'right', 'bottom', self._font, self)
 
         self._grid.add(ACLabel('Local time:', parent=self), self.col(), self.row())
         self._grid.add(self._local_time, self.col(1), self.row())
@@ -39,8 +42,6 @@ class Time(ACApp):
         else:
             self._session_time.text = Format.s(self._data.session.laps, ' Lap')
 
-        self.hide_decoration()
-
     def row(self, add: int = 0):
         self._row += add
         return self._row
@@ -50,6 +51,8 @@ class Time(ACApp):
         return self._col
 
     def update(self, delta: int):
+        super().update(delta)
+
         self._local_time.text = Format.time()
 
         if self._data.session.is_timed_race:
@@ -59,4 +62,4 @@ class Time(ACApp):
                 self._time_left.text = Format.s(self._data.session.laps - self._data.timing.lap, ' Lap')
 
     def render(self, delta: int):
-        pass
+        super().render(delta)
