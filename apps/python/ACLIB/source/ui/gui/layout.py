@@ -20,17 +20,23 @@ class ACLayout(ACWidget):
 
     @property
     def child(self):
-        raise Exception('Layout can not have a single explicit child.')
+        if len(self._children) > 0:
+            return self._children[0]
+        return None
 
     @child.setter
     def child(self, child: ACWidget):
-        raise Exception('Layout can not have a single explicit child.')
+        pass
 
     def update(self, delta: int):
+        super().update(delta)
+
         for child in self.children:
             child.update(delta)
 
     def render(self, delta: int):
+        super().render(delta)
+
         for child in self.children:
             child.render(delta)
 
@@ -58,24 +64,12 @@ class ACBox(ACLayout):
         self._children.append(widget)
         widget.parent = self
 
-    def update(self, delta: int):
-        super().update(delta)
-
-        for child in self._children:
-            child.update(delta)
-
-    def render(self, delta: int):
-        super().render(delta)
-
-        for child in self._children:
-            child.render(delta)
-
 
 class ACHBox(ACBox):
     def __init__(self, parent: ACWidget = None):
-        super().__init__(0, parent)
+        super().__init__(ACBox.HORIZONTAL, parent)
 
-    def add(self, widget):
+    def add(self, widget: ACWidget):
         super().add(widget)
 
         x, y = self.position
@@ -90,7 +84,7 @@ class ACHBox(ACBox):
 
 class ACVBox(ACBox):
     def __init__(self, parent: ACWidget = None):
-        super().__init__(1, parent)
+        super().__init__(ACBox.VERTICAL, parent)
 
     def add(self, widget: ACWidget):
         super().add(widget)

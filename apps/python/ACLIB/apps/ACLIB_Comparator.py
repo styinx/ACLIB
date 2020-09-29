@@ -5,7 +5,7 @@ from ui.gui.widget import ACApp, ACLabel, ACIcon, ACWidget
 from ui.gui.font import Font
 from ui.gui.layout import ACGrid, ACHBox
 
-from ui.color import Color, TRANSPARENT
+from ui.color import Color
 
 
 class Comparator(ACApp):
@@ -65,7 +65,7 @@ class ComparatorRow(ACWidget):
 
     def init(self):
         self._grid = ACGrid(10, 3, self)
-        self._label = ACLabel('', self._header_font, parent=self)
+        self._label = ACLabel('', font=self._header_font, parent=self)
 
         self._top_box = ACHBox(self)
         self._bottom_box = ACHBox(self)

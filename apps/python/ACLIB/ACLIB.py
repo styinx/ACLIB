@@ -64,6 +64,8 @@ def acMain(version: int = 0):
                 log('Problems while initializing {0:s}'.format(file_name))
                 tb(e)
 
+        Log.HANDLE.flush()
+
     except Exception as e:
         tb(e)
 
@@ -81,6 +83,8 @@ def acUpdate(delta: int = 0):
             except Exception as e:
                 log('Problems while updating app "{0:s}"'.format(app.title))
                 tb(e)
+
+        Log.HANDLE.flush()
     except Exception as e:
         tb(e)
 
