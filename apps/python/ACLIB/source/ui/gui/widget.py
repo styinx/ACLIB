@@ -113,6 +113,7 @@ class ACWidget(ACAnimation):
         if isinstance(parent, ACWidget):
             if parent.child != self:
                 self._parent = parent
+                
                 self.size = self._parent.size
                 self.position = (0, 0) if isinstance(parent, ACApp) else self._parent._position
                 self.parent.child = self
@@ -126,6 +127,7 @@ class ACWidget(ACAnimation):
         if isinstance(child, ACWidget):
             if child.parent != self:
                 self._child = child
+
                 self.child.size = self._size
                 self.child.position = (0, 0) if isinstance(self, ACApp) else self._position
                 self.child.parent = self
@@ -381,6 +383,7 @@ class ACTextWidget(ACWidget, Observer):
         self._font = font
         self._h_alignment = h_alignment
         self._v_alignment = v_alignment
+
         self._v_offset = 0
         self._h_offset = 0
 
@@ -404,8 +407,6 @@ class ACTextWidget(ACWidget, Observer):
         self.font = self.font
         self.text = self.text
 
-        self.h_alignment = self.h_alignment
-        self.v_alignment = self.v_alignment
 
         # Overwrite position and size if parent is available.
         self.parent = self._parent
