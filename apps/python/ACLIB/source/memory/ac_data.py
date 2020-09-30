@@ -97,7 +97,7 @@ class ACData(EventListener):
         self._position = Property(self, 0, ACData.EVENT.POSITION_CHANGED)
         self._compound = Property(self, 0, ACData.EVENT.COMPOUND_CHANGED, '_compound.value')
         self._flag = Property(self, 0, ACData.EVENT.FLAG_CHANGED, '_flag.value')
-        self._lap = Property(self, 0, ACData.EVENT.LAP_CHANGED)
+        self._lap = Property(self, 0, ACData.EVENT.LAP_CHANGED, '_lap.value')
         self._sector = Property(self, 0, ACData.EVENT.SECTOR_CHANGED)
         self._mini_sector = Property(self, 0, ACData.EVENT.MINISECTOR_CHANGED)
         self._km_sector = Property(self, 0, ACData.EVENT.KM_CHANGED)

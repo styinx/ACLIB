@@ -35,12 +35,6 @@ class Comparator(ACApp):
         self._opponent1.init()
         self._opponent2.init()
 
-    def update(self, delta: int):
-        super().update(delta)
-
-    def render(self, delta: int):
-        pass
-
 
 class ComparatorRow(ACWidget):
     def __init__(self, parent: ACApp, data: ACData, driver: int):

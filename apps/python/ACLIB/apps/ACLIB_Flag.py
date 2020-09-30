@@ -3,7 +3,6 @@ from memory.ac_meta import ACMeta
 from ui.animation import Animation
 from ui.color import AnimationColor, TRANSPARENT
 from ui.gui.widget import ACApp
-from util.log import log
 
 
 class Flag(ACApp):
@@ -27,10 +26,9 @@ class Flag(ACApp):
         start, step, stop = None, None, None
         granularity = 0.1
 
-        log(flag)
-
         # If there is an active animation remove it.
         self.animation = None
+        self.background_color = TRANSPARENT
 
         if 1 <= flag <= 6:
             # Start color of the animation
@@ -49,6 +47,3 @@ class Flag(ACApp):
             if step is None:
                 step = stop * granularity
             self.add_animation(Animation(self, 'background_color', start, step, stop, 10, 'Alternate'))
-
-    def update(self, delta: int):
-        super().update(delta)

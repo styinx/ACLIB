@@ -9,19 +9,24 @@ from util.log import log, console, tb
 from util.observer import Observer
 
 
-class GUI_EVENT:
-    ON_POSITION_CHANGED = 0
-    ON_SIZE_CHANGED = 1
-    ON_CHILD_CHANGED = 2
-    ON_PARENT_CHANGED = 3
-    ON_VISIBILITY_CHANGED = 4
-    ON_CLICK = 5
-    ON_TEXT_CHANGED = 6
-    ON_CONFIG_CHANGED = 7
-    ON_STYLE_CHANGED = 8
-
-
 class ACAnimation:
+    class EVENT:
+        POSITION_CHANGED = 0
+        SIZE_CHANGED = 1
+        CHILD_CHANGED = 2
+        PARENT_CHANGED = 3
+        VISIBILITY_CHANGED = 4
+        CLICK = 5
+        TEXT_CHANGED = 6
+        CONFIG_CHANGED = 7
+        STYLE_CHANGED = 8
+
+    class PROPERTY:
+        BACKGROUND = 'background'
+        BACKGROUND_COLOR = 'background_color'
+        BORDER = 'border'
+        BORDER_COLOR = 'border_color'
+
     def __init__(self):
         self._active = None
         self._queue = []
@@ -113,7 +118,6 @@ class ACWidget(ACAnimation):
         if isinstance(parent, ACWidget):
             if parent.child != self:
                 self._parent = parent
-                
                 self.size = self._parent.size
                 self.position = (0, 0) if isinstance(parent, ACApp) else self._parent._position
                 self.parent.child = self
@@ -125,16 +129,14 @@ class ACWidget(ACAnimation):
     @child.setter
     def child(self, child):
         if isinstance(child, ACWidget):
-            if child.parent != self:
-                self._child = child
-
-                self.child.size = self._size
-                self.child.position = (0, 0) if isinstance(self, ACApp) else self._position
-                self.child.parent = self
+            self._child = child
+            self.child.size = self._size
+            self.child.position = (0, 0) if isinstance(self, ACApp) else self._position
+            self.child.parent = self
 
     @property
     def position(self) -> tuple:
-        if self.id:
+        if self.id != -1:
             position = ac.getPosition(self.id)
             if position != -1:
                 return position
@@ -144,12 +146,12 @@ class ACWidget(ACAnimation):
     def position(self, position: tuple):
         self._position = position
 
-        if self.id and len(position) == 2:
+        if self.id != -1 and len(position) == 2:
             ac.setPosition(self.id, position[0], position[1])
 
     @property
     def size(self) -> tuple:
-        if self.id:
+        if self.id != -1:
             size = ac.getSize(self.id)
             if size != -1:
                 return size
@@ -159,7 +161,7 @@ class ACWidget(ACAnimation):
     def size(self, size: tuple):
         self._size = size
 
-        if self.id and len(size) == 2:
+        if self.id != -1 and len(size) == 2:
             ac.setSize(self.id, size[0], size[1])
 
     @property
@@ -170,7 +172,7 @@ class ACWidget(ACAnimation):
     def visible(self, visible: bool):
         self._visible = visible
 
-        if self.id:
+        if self.id != -1:
             ac.setVisible(self.id, True)
 
     @property
@@ -181,7 +183,7 @@ class ACWidget(ACAnimation):
     def background(self, background: bool):
         self._background = background
 
-        if self.id:
+        if self.id != -1:
             ac.drawBackground(self.id, 1 if background else 0)
 
     @property
@@ -192,7 +194,7 @@ class ACWidget(ACAnimation):
     def border(self, border: bool):
         self._border = border
 
-        if self.id:
+        if self.id != -1:
             ac.drawBorder(self.id, 1 if border else 0)
 
     @property
@@ -205,7 +207,7 @@ class ACWidget(ACAnimation):
 
         self.background = True if background_texture else False
 
-        if self.id:
+        if self.id != -1:
             ac.drawBackground(self.id, 1)
             if background_texture is not '' and ac.setBackgroundTexture(self.id, background_texture) == -1:
                 console('Texture "{}" could not be set.'.format(background_texture))
@@ -218,7 +220,7 @@ class ACWidget(ACAnimation):
     def background_color(self, background_color: Color):
         self._background_color = background_color
 
-        if self.id:
+        if self.id != -1:
             c = background_color
             success = ac.setBackgroundColor(self.id, c.r, c.g, c.b) != -1
             success &= ac.setBackgroundOpacity(self.id, c.a) != -1
@@ -252,7 +254,7 @@ class ACWidget(ACAnimation):
         if self.border:
             x, y = self.position
             w, h = self.size
-            gl.rect(x, y, w - 1, h - 1, self.border_color, False)
+            gl.rect(x, y, w, h, self.border_color, False)
 
         if self.child:
             self.child.render(delta)
@@ -299,7 +301,7 @@ class ACApp(ACWidget):
     def title(self, title: str):
         self._title = title
 
-        if self.id:
+        if self.id != -1:
             ac.setTitle(self.id, title)
 
     @property
@@ -310,7 +312,7 @@ class ACApp(ACWidget):
     def title_pos(self, title_pos: tuple):
         self._title_pos = title_pos
 
-        if self.id and len(title_pos) == 2:
+        if self.id != -1 and len(title_pos) == 2:
             ac.setTitlePosition(self.id, title_pos[0], title_pos[1])
 
     @property
@@ -321,7 +323,7 @@ class ACApp(ACWidget):
     def icon_pos(self, icon_pos: tuple):
         self._icon_pos = icon_pos
 
-        if self.id and len(icon_pos) == 2:
+        if self.id != -1 and len(icon_pos) == 2:
             ac.setIconPosition(self.id, icon_pos[0], icon_pos[1])
 
     @property
@@ -332,7 +334,7 @@ class ACApp(ACWidget):
     def render_callback(self, render_callback: callable):
         self._render_callback = render_callback
 
-        if self.id:
+        if self.id != -1:
             ac.addRenderCallback(self.id, render_callback)
 
     @property
@@ -343,7 +345,7 @@ class ACApp(ACWidget):
     def activation_callback(self, activation_callback: callable):
         self._activation_callback = activation_callback
 
-        if self.id:
+        if self.id != -1:
             ac.addOnAppActivatedListener(self.id, activation_callback)
 
     @property
@@ -354,7 +356,7 @@ class ACApp(ACWidget):
     def shutdown_callback(self, shutdown_callback: callable):
         self._shutdown_callback = shutdown_callback
 
-        if self.id:
+        if self.id != -1:
             ac.addOnAppDismissedListener(self.id, shutdown_callback)
 
     def hide_decoration(self):
@@ -366,9 +368,6 @@ class ACApp(ACWidget):
 
         # Required since an app movement will draw the default background again.
         self.background_color = self.background_color
-
-    def render(self, delta: int):
-        super().render(delta)
 
     def shutdown(self):
         self._write_config()
@@ -383,7 +382,6 @@ class ACTextWidget(ACWidget, Observer):
         self._font = font
         self._h_alignment = h_alignment
         self._v_alignment = v_alignment
-
         self._v_offset = 0
         self._h_offset = 0
 
@@ -407,6 +405,8 @@ class ACTextWidget(ACWidget, Observer):
         self.font = self.font
         self.text = self.text
 
+        self.h_alignment = self.h_alignment
+        self.v_alignment = self.v_alignment
 
         # Overwrite position and size if parent is available.
         self.parent = self._parent
@@ -415,14 +415,14 @@ class ACTextWidget(ACWidget, Observer):
     def position(self, position: tuple):
         self._position = position
 
-        if self.id and len(position) == 2:
+        if self.id != -1 and len(position) == 2:
             ac.setPosition(self.id, position[0], position[1] + self._v_offset)
 
     @ACWidget.size.setter
     def size(self, size: tuple):
         self._size = size
 
-        if self.id and len(size) == 2:
+        if self.id != -1 and len(size) == 2:
             ac.setSize(self.id, size[0], size[1])
 
         self.v_alignment = self._v_alignment
@@ -435,7 +435,7 @@ class ACTextWidget(ACWidget, Observer):
     def text(self, text: str):
         self._text = text
 
-        if self.id:
+        if self.id != -1:
             ac.setText(self.id, text)
 
     @property
@@ -451,7 +451,7 @@ class ACTextWidget(ACWidget, Observer):
             self._font = font
             self._font.add_observer(self)
 
-            if self.id:
+            if self.id != -1:
                 ac.setFontSize(self.id, font.size)
                 ac.setFontColor(self.id, font.color.r, font.color.g, font.color.b, font.color.a)
                 ac.setCustomFont(self.id, font.name, font.italic, font.bold)
@@ -466,7 +466,7 @@ class ACTextWidget(ACWidget, Observer):
     def h_alignment(self, h_alignment: str):
         self._h_alignment = h_alignment
 
-        if self.id:
+        if self.id != -1:
             ac.setFontAlignment(self.id, self._h_alignment)
 
     @property
@@ -537,13 +537,13 @@ class ACGraph(ACWidget):
     @range.setter
     def range(self, value_range: tuple):
         self._range = value_range
-        if self.id:
+        if self.id != -1:
             ac.setRange(self.id, self._range[0], self._range[1])
 
     def add_series(self, color: Color):
-        if self.id:
+        if self.id != -1:
             ac.addSerieToGraph(self.id, color.r, color.g, color.b)
 
     def add_value(self, value: float, series: int):
-        if self.id:
+        if self.id != -1:
             ac.addValueToGraph(self.id, series, value)
