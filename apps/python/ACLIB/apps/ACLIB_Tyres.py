@@ -16,6 +16,7 @@ class Tyres(ACApp):
         self.border_color = TRANSPARENT
 
         data.on(ACData.EVENT.READY, self.init)
+        data.on(ACData.EVENT.COMPOUND_CHANGED, self.reload)
 
         self._data = data
         self._meta = meta
@@ -42,6 +43,12 @@ class Tyres(ACApp):
         self.fr.init()
         self.rl.init()
         self.rr.init()
+
+    def reload(self, *args):
+        self.fl.reload()
+        self.fr.reload()
+        self.rl.reload()
+        self.rr.reload()
 
 
 class Tyre(ACLabel):
@@ -93,6 +100,15 @@ class Tyre(ACLabel):
             self._grid.add(self._center_bot, 4, 7, 2, 3)
             self._grid.add(self._right, 7, 0, 2, 10)
             self._grid.add(self._brake, 0, 2, 1, 6)
+
+    def reload(self):
+        self._left.init()
+        self._right.init()
+        self._center_top.init()
+        self._core.init()
+        self._center_bot.init()
+        self._right.init()
+        self._brake.init()
 
     def wear(self):
         return self._data.tyres.wear[self._index]
@@ -201,7 +217,7 @@ class TyreTile(ACLabel):
             if val < self._t_t_min:
                 color = interpolate(val, self._t_t_low, self._t_t_min, BLUE, GREEN)
             elif val > self._t_t_max:
-                color = interpolate(val, self._t_t_max, self._t_t_high, BLUE, GREEN)
+                color = interpolate(val, self._t_t_max, self._t_t_high, GREEN, RED)
             else:
                 color = GREEN
 
