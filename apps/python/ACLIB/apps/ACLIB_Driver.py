@@ -12,8 +12,7 @@ class Driver(ACApp):
         super().__init__('ACLIB_Driver', 200, 200, 600, 200)
 
         self.hide_decoration()
-        self.background_color = TRANSPARENT
-        self.background = False
+        self.background_color = BLACK
         self.border = False
 
         self._data = data
