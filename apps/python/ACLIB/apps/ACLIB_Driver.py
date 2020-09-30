@@ -12,10 +12,11 @@ class Driver(ACApp):
         super().__init__('ACLIB_Driver', 200, 200, 600, 200)
 
         self.hide_decoration()
-        self.background_color = BLACK
+        self.background_color = TRANSPARENT
         self.border = False
 
         self._data = data
+        self._meta = meta
         self._medium_font = Font("Roboto Mono")
         self._medium_font.color = WHITE
         self._medium_font.size = 14
@@ -29,10 +30,10 @@ class Driver(ACApp):
         self._box = ACVBox(self)
 
         self._gear = ACLabel('', 'center', 'middle', self._big_font, self)
-        self._rpm = ACLabel('', 'right', 'top', self._medium_font, self)
-        self._drs = ACLabel('DRS', 'center', 'middle', self._medium_font, self)
-        self._ers = ACLabel('ERS', 'center', 'middle', self._medium_font, self)
-        self._kers = ACLabel('KERS', 'center', 'bottom', self._medium_font, self)
+        self._rpm = ACLabel('', 'right', font=self._medium_font, parent=self)
+        self._drs = ACLabel('', 'right', font=self._medium_font, parent=self)
+        self._ers = ACLabel('', 'right', font=self._medium_font, parent=self)
+        self._kers = ACLabel('', 'right', font=self._medium_font, parent=self)
 
         self._box.background_texture = 'apps/python/ACLIB/resources/textures/car_hud_circle.png'
 
@@ -53,6 +54,3 @@ class Driver(ACApp):
 
         self._gear.text = Format.gear(self._data.car.gear)
         self._rpm.text = Format.rpm(self._data.car.rpm)
-
-    def render(self, delta: int):
-        super().render(delta)

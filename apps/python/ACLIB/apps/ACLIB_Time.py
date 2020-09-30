@@ -1,10 +1,8 @@
 from memory.ac_data import ACData
 from memory.ac_meta import ACMeta
 from ui.gui.widget import ACApp, ACLabel
-from ui.gui.font import Font
 from ui.gui.layout import ACGrid
 
-from ui.color import Color
 from util.format import Format
 
 
@@ -16,17 +14,15 @@ class Time(ACApp):
         self.border = False
 
         self._data = data
-        self._font = Font("Roboto Mono")
-        self._font.color = Color(1.0, 1.0, 1.0)
-        self._font.size = 12
+        self._meta = meta
 
         self._row = 0
         self._col = 0
 
         self._grid = ACGrid(2, 3, self)
-        self._local_time = ACLabel('', 'right', 'top', self._font, self)
-        self._session_time = ACLabel('', 'right', 'middle', self._font, self)
-        self._time_left = ACLabel('', 'right', 'bottom', self._font, self)
+        self._local_time = ACLabel('', 'right', parent=self)
+        self._session_time = ACLabel('', 'right', parent=self)
+        self._time_left = ACLabel('', 'right', 'bottom', parent=self)
 
         self._grid.add(ACLabel('Local time:', parent=self), self.col(), self.row())
         self._grid.add(self._local_time, self.col(1), self.row())
@@ -60,6 +56,3 @@ class Time(ACApp):
         else:
             if self._data.session.laps > 0:
                 self._time_left.text = Format.s(self._data.session.laps - self._data.timing.lap, ' Lap')
-
-    def render(self, delta: int):
-        super().render(delta)
