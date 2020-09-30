@@ -9,19 +9,24 @@ from util.log import log, console, tb
 from util.observer import Observer
 
 
-class GUI_EVENT:
-    ON_POSITION_CHANGED = 0
-    ON_SIZE_CHANGED = 1
-    ON_CHILD_CHANGED = 2
-    ON_PARENT_CHANGED = 3
-    ON_VISIBILITY_CHANGED = 4
-    ON_CLICK = 5
-    ON_TEXT_CHANGED = 6
-    ON_CONFIG_CHANGED = 7
-    ON_STYLE_CHANGED = 8
-
-
 class ACAnimation:
+    class EVENT:
+        POSITION_CHANGED = 0
+        SIZE_CHANGED = 1
+        CHILD_CHANGED = 2
+        PARENT_CHANGED = 3
+        VISIBILITY_CHANGED = 4
+        CLICK = 5
+        TEXT_CHANGED = 6
+        CONFIG_CHANGED = 7
+        STYLE_CHANGED = 8
+
+    class PROPERTY:
+        BACKGROUND = 'background'
+        BACKGROUND_COLOR = 'background_color'
+        BORDER = 'border'
+        BORDER_COLOR = 'border_color'
+
     def __init__(self):
         self._active = None
         self._queue = []
