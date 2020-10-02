@@ -2,7 +2,7 @@ from memory.ac_data import ACData
 from memory.ac_meta import ACMeta
 from ui.animation import Animation
 from ui.color import AnimationColor, TRANSPARENT
-from ui.gui.widget import ACApp
+from ui.gui.ac_widget import ACApp
 
 
 class Flag(ACApp):

@@ -2,7 +2,7 @@ from settings import TEXTURE_DIR, path
 from memory.ac_data import ACData
 from memory.ac_meta import ACMeta
 from ui.gl import Texture, texture_rect
-from ui.gui.widget import ACApp, ACLabel, ACWidget
+from ui.gui.ac_widget import ACApp, ACLabel, ACWidget
 from ui.gui.layout import ACGrid
 from ui.color import *
 
@@ -59,7 +59,7 @@ class Tyre(ACLabel):
     RR = 3
 
     def __init__(self, index: int, parent: ACWidget, data: ACData, meta: ACMeta):
-        super().__init__(parent=parent)
+        super().__init__(parent)
 
         self.background_color = TRANSPARENT
 
@@ -147,7 +147,7 @@ class TyreTile(ACLabel):
     BRAKE = 4
 
     def __init__(self, index: int, parent: ACWidget, tyre: int, data: ACData, meta: ACMeta):
-        super().__init__('', parent=parent)
+        super().__init__(parent)
 
         self._index = index
         self._tyre = tyre

@@ -1,6 +1,6 @@
 from memory.ac_data import ACData
 from memory.ac_meta import ACMeta
-from ui.gui.widget import ACApp, ACLabel
+from ui.gui.ac_widget import ACApp, ACLabel
 from ui.gui.layout import ACGrid
 
 from util.format import Format
@@ -20,17 +20,17 @@ class Time(ACApp):
         self._col = 0
 
         self._grid = ACGrid(2, 3, self)
-        self._local_time = ACLabel('', 'right', parent=self)
-        self._session_time = ACLabel('', 'right', parent=self)
-        self._time_left = ACLabel('', 'right', 'bottom', parent=self)
+        self._local_time = ACLabel(self._grid, '', 'right')
+        self._session_time = ACLabel(self._grid, '', 'right')
+        self._time_left = ACLabel(self._grid, '', 'right', 'bottom')
 
-        self._grid.add(ACLabel('Local time:', parent=self), self.col(), self.row())
+        self._grid.add(ACLabel(self._grid, 'Local time:'), self.col(), self.row())
         self._grid.add(self._local_time, self.col(1), self.row())
 
-        self._grid.add(ACLabel('Session time:', parent=self), self.col(-1), self.row(1))
+        self._grid.add(ACLabel(self._grid, 'Session time:'), self.col(-1), self.row(1))
         self._grid.add(self._session_time, self.col(1), self.row())
 
-        self._grid.add(ACLabel('Time left:', parent=self), self.col(-1), self.row(1))
+        self._grid.add(ACLabel(self._grid, 'Time left:'), self.col(-1), self.row(1))
         self._grid.add(self._time_left, self.col(1), self.row())
 
         if self._data.session.is_timed_race:

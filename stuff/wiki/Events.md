@@ -12,7 +12,7 @@ Here is an example how you can use this event to have a proper error-free app:
 ```python
 from memory.ac_data import ACData
 from memory.ac_meta import ACMeta
-from ui.gui.widget import ACApp, ACLabel
+from ui.gui.ac_widget import ACApp, ACLabel
 
 
 class Test(ACApp):
@@ -41,7 +41,7 @@ For properties that rarely change you should the appropriate events from ACData 
 ```python
 from memory.ac_data import ACData
 from memory.ac_meta import ACMeta
-from ui.gui.widget import ACApp, ACLabel
+from ui.gui.ac_widget import ACApp, ACLabel
 
 
 class Test(ACApp):

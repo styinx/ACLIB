@@ -3,7 +3,7 @@ class EventListener:
         self._callbacks = {}
         self._callback_id = 0
 
-    def _fire(self, event: str, *args):
+    def fire(self, event: str, *args):
         if event in self._callbacks:
             for _, callback in self._callbacks[event].items():
                 if len(args) > 0:

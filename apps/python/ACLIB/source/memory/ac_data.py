@@ -9,6 +9,7 @@ from memory.data.session import Session
 from memory.data.environment import Environment
 from memory.data.timing import Timing
 from util.event import EventListener
+from util.observer import BoolObservable, Observable
 
 
 def get_property(obj, property_str: str):
@@ -18,60 +19,19 @@ def get_property(obj, property_str: str):
     return obj
 
 
-class Property:
-    def __init__(self, parent, value: int, event: str, callback_param: str = ''):
-        self._parent = parent
-        self._value = value
-        self._event = event
-        self._callback_param = callback_param
-
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, new_value: int):
-        if self._value != new_value:
-            self._value = new_value
-
-            if self._callback_param == '':
-                self._parent.fire(self._event)
-            else:
-                self._parent.fire(self._event, get_property(self._parent, self._callback_param))
-
-
-class BoolProperty:
-    def __init__(self, parent, value: bool, event1: str, event2: str):
-        self._parent = parent
-        self._value = value
-        self._event1 = event1
-        self._event2 = event2
-
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, new_value: bool):
-        if self._value != new_value:
-            self._value = new_value
-            if self._value:
-                self._parent.fire(self._event1)
-            else:
-                self._parent.fire(self._event2)
-
-
 class ACData(EventListener):
     class EVENT:
         READY = 'READY'
         LAP_CHANGED = 'Lap Changed'
         SECTOR_CHANGED = 'Sector Changed'
-        MINISECTOR_CHANGED = 'Minisector Changed'
+        MINI_SECTOR_CHANGED = 'Minisector Changed'
+        KM_SECTOR_CHANGED = 'KM Sector Changed'
         KM_CHANGED = 'KM Changed'
         POSITION_CHANGED = 'Position Changed'
         POSITION_GAINED = 'Position Gained'
         POSITION_LOST = 'Position Lost'
         FLAG_CHANGED = 'Flag Changed'
+        FUEL_CHANGED = 'Fuel Changed'
         PIT_ENTERED = 'Pit Entered'
         PIT_LEFT = 'Pit Left'
         COMPOUND_CHANGED = 'Compound Changed'
@@ -92,15 +52,17 @@ class ACData(EventListener):
         self._environment = Environment(self._info)
         self._timing = Timing(self._info)
 
-        self._is_in_pit = BoolProperty(self, False, ACData.EVENT.PIT_ENTERED, ACData.EVENT.PIT_LEFT)
-        self._has_penalty = BoolProperty(self, False, ACData.EVENT.PENALTY_RECEIVED, ACData.EVENT.PENALTY_SERVED)
-        self._position = Property(self, 0, ACData.EVENT.POSITION_CHANGED)
-        self._compound = Property(self, 0, ACData.EVENT.COMPOUND_CHANGED, '_compound.value')
-        self._flag = Property(self, 0, ACData.EVENT.FLAG_CHANGED, '_flag.value')
-        self._lap = Property(self, 0, ACData.EVENT.LAP_CHANGED, '_lap.value')
-        self._sector = Property(self, 0, ACData.EVENT.SECTOR_CHANGED)
-        self._mini_sector = Property(self, 0, ACData.EVENT.MINISECTOR_CHANGED)
-        self._km_sector = Property(self, 0, ACData.EVENT.KM_CHANGED)
+        self._is_in_pit = BoolObservable(self, False, ACData.EVENT.PIT_ENTERED, ACData.EVENT.PIT_LEFT)
+        self._has_penalty = BoolObservable(self, False, ACData.EVENT.PENALTY_RECEIVED, ACData.EVENT.PENALTY_SERVED)
+        self._position = Observable(self, 0, ACData.EVENT.POSITION_CHANGED)
+        self._compound = Observable(self, 0, ACData.EVENT.COMPOUND_CHANGED)
+        self._flag = Observable(self, 0, ACData.EVENT.FLAG_CHANGED)
+        self._fuel = Observable(self, 0, ACData.EVENT.FUEL_CHANGED)
+        self._lap = Observable(self, 0, ACData.EVENT.LAP_CHANGED)
+        self._sector = Observable(self, 0, ACData.EVENT.SECTOR_CHANGED)
+        self._mini_sector = Observable(self, 0, ACData.EVENT.MINI_SECTOR_CHANGED)
+        self._km_sector = Observable(self, 0, ACData.EVENT.KM_SECTOR_CHANGED)
+        self._km_traveled = Observable(self, 0, ACData.EVENT.KM_CHANGED)
 
         self._check_ready()
 
@@ -111,11 +73,8 @@ class ACData(EventListener):
     def _check_ready_loop(self):
         while len(self._tyres.compound) < 5:
             time.sleep(0.1)
-        self._fire(ACData.EVENT.READY)
+        self.fire(ACData.EVENT.READY)
         self._ready = True
-
-    def fire(self, event: str, *args):
-        self._fire(event, *args)
 
     # Checks if any values have changed and call the callback functions.
     def update(self, delta: int):
@@ -124,10 +83,12 @@ class ACData(EventListener):
             self._has_penalty.value = self._car.has_penalty
             self._position.value = self._car.position
             self._flag.value = self._session.flag
+            self._fuel.value = self._car.fuel
             self._lap.value = self._timing.lap
             self._sector.value = self._timing.current_sector_index
-            # self._mini_sector.value = self._car.position
-            # self._km_sector.value = self._car.position
+            self._mini_sector.value = int(self._car.location * 12)
+            self._km_sector.value = int(self._car.location * self._environment.track_length / 1000)
+            self._km_traveled.value = int(self._car.distance_traveled / 1000)
 
             self._compound.value = self._tyres.compound
 
@@ -161,6 +122,14 @@ class ACData(EventListener):
     @property
     def timing(self):
         return self._timing
+
+    @property
+    def minisector(self):
+        return self._mini_sector.value
+
+    @property
+    def km(self):
+        return self._km_sector.value
 #
 #         # # Time and Distance to next and previous cars (relative and absolute)
 #         min_prev = float('-inf')

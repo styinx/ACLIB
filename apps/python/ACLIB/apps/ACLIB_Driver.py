@@ -1,5 +1,5 @@
 from memory.ac_data import ACData
-from ui.gui.widget import ACApp, ACLabel
+from ui.gui.ac_widget import ACApp, ACLabel
 from ui.gui.font import Font
 from ui.gui.layout import ACGrid, ACVBox
 
@@ -27,15 +27,14 @@ class Driver(ACApp):
         self._big_font.color = BLACK
 
         self._grid = ACGrid(6, 6, self)
-        self._box = ACVBox(self)
-
-        self._gear = ACLabel('', 'center', 'middle', self._big_font, self)
-        self._rpm = ACLabel('', 'right', font=self._medium_font, parent=self)
-        self._drs = ACLabel('', 'right', font=self._medium_font, parent=self)
-        self._ers = ACLabel('', 'right', font=self._medium_font, parent=self)
-        self._kers = ACLabel('', 'right', font=self._medium_font, parent=self)
-
+        self._box = ACVBox(self._grid)
         self._box.background_texture = 'apps/python/ACLIB/resources/textures/car_hud_circle.png'
+
+        self._gear = ACLabel(self._box, '', 'center', 'middle', self._big_font)
+        self._rpm = ACLabel(self._grid, '', 'right', font=self._medium_font)
+        self._drs = ACLabel(self._grid, '', 'right', font=self._medium_font)
+        self._ers = ACLabel(self._grid, '', 'right', font=self._medium_font)
+        self._kers = ACLabel(self._grid, '', 'right', font=self._medium_font)
 
         self._grid.add(self._box, 0, 0, 2, 6)
         self._grid.add(self._rpm, 5, 1)

@@ -1,7 +1,8 @@
 from memory.ac_data import ACData
 from memory.ac_meta import ACMeta
 from settings import RESOURCE_DIR, path
-from ui.gui.widget import ACApp, ACLabel, ACIcon, ACWidget
+from ui.gui.ac_widget import ACApp, ACLabel, ACWidget
+from ui.gui.aclib_widget import ACLIBIcon
 from ui.gui.font import Font
 from ui.gui.layout import ACGrid, ACHBox
 
@@ -59,12 +60,12 @@ class ComparatorRow(ACWidget):
 
     def init(self):
         self._grid = ACGrid(10, 3, self)
-        self._label = ACLabel('', font=self._header_font, parent=self)
+        self._label = ACLabel(self._grid, font=self._header_font)
 
-        self._top_box = ACHBox(self)
-        self._bottom_box = ACHBox(self)
-        self._left = ACIcon(path(RESOURCE_DIR, 'textures', 'arrow-left-slim.png'), self)
-        self._right = ACIcon(path(RESOURCE_DIR, 'textures', 'arrow-right-slim.png'), self)
+        self._top_box = ACHBox(self._grid)
+        self._bottom_box = ACHBox(self._grid)
+        self._left = ACLIBIcon(path(RESOURCE_DIR, 'textures', 'arrow-left-slim.png'), self._grid)
+        self._right = ACLIBIcon(path(RESOURCE_DIR, 'textures', 'arrow-right-slim.png'), self._grid)
         self._top = []
         self._bottom = []
 
@@ -75,8 +76,8 @@ class ComparatorRow(ACWidget):
         self._grid.add(self._bottom_box, 1, 2, 8, 1)
 
         for i in range(0, 4):
-            temp1 = ACLabel('--:--', h_alignment='center', parent=self)
-            temp2 = ACLabel('--:--', h_alignment='center', parent=self)
+            temp1 = ACLabel(self._top_box, '--:--', h_alignment='center')
+            temp2 = ACLabel(self._bottom_box, '--:--', h_alignment='center')
             self._top.append(temp1)
             self._top_box.add(self._top[i])
 

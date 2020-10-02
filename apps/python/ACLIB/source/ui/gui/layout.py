@@ -1,6 +1,6 @@
 import ac
 
-from ui.gui.widget import ACWidget
+from ui.gui.ac_widget import ACWidget
 
 
 class ACLayout(ACWidget):
@@ -31,13 +31,13 @@ class ACLayout(ACWidget):
     def update(self, delta: int):
         super().update(delta)
 
-        for child in self.children:
+        for child in self._children:
             child.update(delta)
 
     def render(self, delta: int):
         super().render(delta)
 
-        for child in self.children:
+        for child in self._children:
             child.render(delta)
 
 

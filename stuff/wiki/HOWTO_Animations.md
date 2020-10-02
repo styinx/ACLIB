@@ -92,7 +92,7 @@ The following animation produces the animation shown in the image below:
 from memory.ac_data import ACData
 from memory.ac_meta import ACMeta
 from ui.animation import Animation
-from ui.gui.widget import ACApp
+from ui.gui.ac_widget import ACApp
 from ui.color import RED, GREEN, AnimationColor
 
 class Test(ACApp):
