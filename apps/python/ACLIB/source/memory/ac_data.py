@@ -1,22 +1,17 @@
 import time
 from threading import Thread
 
+from memory.data.server import Server
 from memory.sim_info import SimInfo
-from memory.data.driver import Driver
 from memory.data.car import Car
-from memory.data.tyres import Tyres
-from memory.data.session import Session
+from memory.data.driver import Driver
 from memory.data.environment import Environment
+from memory.data.players import Players
+from memory.data.session import Session
 from memory.data.timing import Timing
+from memory.data.tyres import Tyres
 from util.event import EventListener
 from util.observer import BoolObservable, Observable
-
-
-def get_property(obj, property_str: str):
-    for sub_property in property_str.split('.'):
-        if hasattr(obj, sub_property):
-            obj = getattr(obj, sub_property)
-    return obj
 
 
 class ACData(EventListener):
@@ -34,10 +29,14 @@ class ACData(EventListener):
         FUEL_CHANGED = 'Fuel Changed'
         PIT_ENTERED = 'Pit Entered'
         PIT_LEFT = 'Pit Left'
+        PITLINE_ENTERED = 'Box Entered'
+        PITLINE_LEFT = 'Box Left'
         COMPOUND_CHANGED = 'Compound Changed'
         LAP_INVALIDATED = 'Lap Invalidated'
         PENALTY_RECEIVED = 'Penalty Received'
         PENALTY_SERVED = 'Penalty Served'
+        PLAYER_JOINED = 'Player Joined'
+        PLAYER_LEFT = 'Player Left'
 
     def __init__(self):
         super().__init__()
@@ -45,14 +44,18 @@ class ACData(EventListener):
         self._ready = False
 
         self._info = SimInfo()
-        self._driver = Driver(self._info)
         self._car = Car(self._info)
-        self._tyres = Tyres(self._info)
-        self._session = Session(self._info)
+        self._driver = Driver(self._info)
         self._environment = Environment(self._info)
+        self._session = Session(self._info)
         self._timing = Timing(self._info)
+        self._tyres = Tyres(self._info)
+
+        self._server = Server()
+        self._players = Players(self._server)
 
         self._is_in_pit = BoolObservable(self, False, ACData.EVENT.PIT_ENTERED, ACData.EVENT.PIT_LEFT)
+        self._is_in_pitline = BoolObservable(self, False, ACData.EVENT.PITLINE_ENTERED, ACData.EVENT.PITLINE_LEFT)
         self._has_penalty = BoolObservable(self, False, ACData.EVENT.PENALTY_RECEIVED, ACData.EVENT.PENALTY_SERVED)
         self._position = Observable(self, 0, ACData.EVENT.POSITION_CHANGED)
         self._compound = Observable(self, 0, ACData.EVENT.COMPOUND_CHANGED)
@@ -64,22 +67,21 @@ class ACData(EventListener):
         self._km_sector = Observable(self, 0, ACData.EVENT.KM_SECTOR_CHANGED)
         self._km_traveled = Observable(self, 0, ACData.EVENT.KM_CHANGED)
 
-        self._check_ready()
-
-    def _check_ready(self):
+    def init(self):
         thread = Thread(target=self._check_ready_loop, daemon=True)
         thread.start()
 
     def _check_ready_loop(self):
         while len(self._tyres.compound) < 5:
             time.sleep(0.1)
-        self.fire(ACData.EVENT.READY)
         self._ready = True
+        self.fire(ACData.EVENT.READY)
 
     # Checks if any values have changed and call the callback functions.
     def update(self, delta: int):
         if self._ready:
             self._is_in_pit.value = self._car.is_in_pit
+            self._is_in_pitline.value = self._car.is_in_pit_line
             self._has_penalty.value = self._car.has_penalty
             self._position.value = self._car.position
             self._flag.value = self._session.flag
@@ -91,10 +93,6 @@ class ACData(EventListener):
             self._km_traveled.value = int(self._car.distance_traveled / 1000)
 
             self._compound.value = self._tyres.compound
-
-            # Only check when car is in the box.
-            if self._is_in_pit:
-                self._compound.value = self._tyres.compound
 
     def shutdown(self):
         pass
