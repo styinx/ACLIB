@@ -86,7 +86,7 @@ class ACWidget(ACAnimation):
             tb(e)
 
     def __str__(self):
-        return '{} ({})'.format(self.__class__.__name__ , self._id)
+        return '{} ({})'.format(self.__class__.__name__, self._id)
 
     @property
     def app(self):
@@ -241,7 +241,7 @@ class ACWidget(ACAnimation):
         if self.has_id:
             c = background_color
             if ac.setBackgroundColor(self.id, c.r, c.g, c.b) == -1 and ac.setBackgroundOpacity(self.id, c.a) == -1:
-                console('{}: Background color could not be set.'. format(self))
+                console('{}: Background color could not be set.'.format(self))
 
     @property
     def border_color(self) -> Color:
@@ -277,10 +277,14 @@ class ACWidget(ACAnimation):
             self.child.update(delta)
 
     def render(self, delta: int):
-        if self.border:
+        if self.border or self.background:
             x, y = self.position
             w, h = self.size
-            gl.rect(x, y, w, h, self.border_color, False)
+            # todo render function draws on top of text
+            # if self.background:
+            #     gl.rect(x, y, w, h, self.background_color)
+            if self.border:
+                gl.rect(x, y, w + 1, h + 1, self.border_color, False)
 
         if self.child:
             self.child.render(delta)
@@ -402,10 +406,10 @@ class ACApp(ACWidget):
         self.icon_pos = (-100000, -100000)
 
     def update(self, delta: int):
+        super().update(delta)
+
         # Required since an app movement will draw the default background again.
         self.background_color = self.background_color
-
-        super().update(delta)
 
     def activate(self, _id: int):
         self._active = True
@@ -597,7 +601,6 @@ class ACValueWidget(ACWidget):
         self._value = value
         self._range = (_min, _max, points)
 
-
     @ACWidget.id.setter
     def id(self, _id: int):
         self._id = _id
@@ -643,7 +646,7 @@ class ACValueWidget(ACWidget):
                 ac.setRange(self.id, self._range[0], self._range[1], self._range[2])
             else:
                 ac.setRange(self.id, self._range[0], self._range[1])
-            
+
 
 class ACCheckbox(ACValueWidget):
     def __init__(self, parent: ACWidget, value: float = 0):
@@ -723,7 +726,12 @@ class ACListBox(ACWidget):
     def __init__(self, parent: ACWidget):
         super().__init__(parent)
 
+        self._multi_selection = False
+        self._deselection = False
+        self._items_per_page = 0
 
+        self._selection_callback = None
+        self._deselection_callback = None
 
         self.id = ac.addListBox(self.app, '')
 
@@ -732,6 +740,61 @@ class ACListBox(ACWidget):
         if self.has_id:
             return ac.getItemCount(self.id)
         return 0
+
+    @property
+    def multi_selection(self):
+        return self._multi_selection
+
+    @multi_selection.setter
+    def multi_selection(self, multi_selection: bool):
+        self._multi_selection = multi_selection
+
+        if self.has_id:
+            ac.setAllowMultiSelection(self.id, 1 if multi_selection else 0)
+
+    @property
+    def deselection(self):
+        return self._deselection
+
+    @deselection.setter
+    def deselection(self, deselection: bool):
+        self._deselection = deselection
+
+        if self.has_id:
+            ac.setAllowDeselection(self.id, 1 if deselection else 0)
+
+    @property
+    def items_per_page(self):
+        return self._items_per_page
+
+    @items_per_page.setter
+    def items_per_page(self, items_per_page: int):
+        self._items_per_page = items_per_page
+
+        if self.id:
+            ac.setItemNumberPerPage(self.id, items_per_page)
+
+    @property
+    def selection_callback(self):
+        return self._selection_callback
+
+    @selection_callback.setter
+    def selection_callback(self, selection_callback: callable):
+        self._selection_callback = selection_callback
+
+        if self.has_id:
+            ac.addOnListBoxSelectionListener(self.id, selection_callback)
+
+    @property
+    def deselection_callback(self):
+        return self._deselection_callback
+
+    @deselection_callback.setter
+    def deselection_callback(self, deselection_callback: callable):
+        self._deselection_callback = deselection_callback
+
+        if self.has_id:
+            ac.addOnListBoxDeselectionListener(self.id, deselection_callback)
 
     def add(self, name: str):
         if self.has_id:
