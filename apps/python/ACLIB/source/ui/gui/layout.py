@@ -19,14 +19,6 @@ class ACLayout(ACWidget):
     def children(self) -> list:
         return self._children
 
-    @property
-    def child(self):
-        return None
-
-    @child.setter
-    def child(self, child: ACWidget):
-        pass
-
     def update(self, delta: int):
         self.update_animation()
 

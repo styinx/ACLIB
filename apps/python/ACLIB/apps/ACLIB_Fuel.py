@@ -110,7 +110,7 @@ class Fuel(ACApp):
 
         self._fuel_lap.text = '{}  l/L'.format(self._fuel_lap_val)
         self._avg_lap.text = 'Ø {}  l/L'.format(self._fuel_per_lap_avg)
-        self._laps.text = '+ {} Laps'.format(round(self._data.car.fuel / max(1.0, self._fuel_per_lap_avg), 1))
+        self._laps.text = '+ {} Laps'.format(round(self._data.car.fuel / max(1.0, self._fuel_lap_val), 1))
         self._fuel_per_lap_ref = self._data.car.fuel
 
     def on_km(self, km: int):
@@ -123,5 +123,5 @@ class Fuel(ACApp):
 
         self._fuel_km.text = '{} l/km'.format(self._fuel_km_val)
         self._avg_km.text = 'Ø {} l/km'.format(self._fuel_per_km_avg)
-        self._km.text = '+ {}   km'.format(round(self._data.car.fuel / max(1.0, self._fuel_per_km_avg), 1))
+        self._km.text = '+ {}   km'.format(round(self._data.car.fuel / max(1.0, self._fuel_km_val), 1))
         self._fuel_per_km_ref = self._data.car.fuel
