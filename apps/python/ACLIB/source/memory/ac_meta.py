@@ -22,7 +22,7 @@ class ACMeta(EventListener):
         self._tyres = None
         self._environment = None
 
-        data.on(ACData.EVENT.READY, self.init)
+        self._data.on(ACData.EVENT.READY, self.init)
 
     def init(self):
         car_model = self._data.car.model
@@ -37,7 +37,7 @@ class ACMeta(EventListener):
         self._tyres = Tyres(self._data, self._acd[1])
         self._environment = Environment(self._data)
 
-        self._fire(ACMeta.EVENT.READY)
+        self.fire(ACMeta.EVENT.READY)
 
     @property
     def car(self):

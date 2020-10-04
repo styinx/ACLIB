@@ -1,6 +1,7 @@
 import ac
 
-from ui.gui.widget import ACWidget
+from ui import gl
+from ui.gui.ac_widget import ACWidget
 
 
 class ACLayout(ACWidget):
@@ -18,26 +19,19 @@ class ACLayout(ACWidget):
     def children(self) -> list:
         return self._children
 
-    @property
-    def child(self):
-        if len(self._children) > 0:
-            return self._children[0]
-        return None
-
-    @child.setter
-    def child(self, child: ACWidget):
-        pass
-
     def update(self, delta: int):
-        super().update(delta)
+        self.update_animation()
 
-        for child in self.children:
+        for child in self._children:
             child.update(delta)
 
     def render(self, delta: int):
-        super().render(delta)
+        if self.border:
+            x, y = self.position
+            w, h = self.size
+            gl.rect(x, y, w, h, self.border_color, False)
 
-        for child in self.children:
+        for child in self._children:
             child.render(delta)
 
 

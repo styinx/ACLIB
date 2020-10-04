@@ -19,10 +19,12 @@ class Car:
         self._car_meta.set('brand_badge', 'content/cars/' + data.car.model + '/ui/badge.png')
 
         self._car_meta.select('Engine')
-        engine_file = Config(acd['engine.ini']).dict
-        self._car_meta.set('rpm_min', engine_file['ENGINE_DATA']['MINIMUM'])
-        self._car_meta.set('rpm_max', engine_file['ENGINE_DATA']['LIMITER'])
-        self._car_meta.set('rpm_damage', engine_file['DAMAGE']['RPM_THRESHOLD'])
+        engine_file = Config(acd['engine.ini'])
+        engine_file.select('ENGINE_DATA')
+        self._car_meta.set('rpm_min', engine_file.get('MINIMUM'))
+        self._car_meta.set('rpm_max', engine_file.get('LIMITER'))
+        engine_file.select('DAMAGE')
+        self._car_meta.set('rpm_damage', engine_file.get('RPM_THRESHOLD'))
 
     @property
     def name(self):

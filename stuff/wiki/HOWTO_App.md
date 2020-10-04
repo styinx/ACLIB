@@ -31,7 +31,7 @@ from time import time
 
 from memory.ac_data import ACData                                           # Only import the first two modules if you care
 from memory.ac_meta import ACMeta                                           # about proper typing signatures.
-from ui.gui.widget import ACApp, ACLabel
+from ui.gui.ac_widget import ACApp, ACLabel
 from ui.gui.layout import ACGrid
 from util.format import Format
 

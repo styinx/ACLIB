@@ -26,11 +26,15 @@ class Car:
 
     @property
     def location(self):
-        return 0  # todo
+        return self._info.graphics.normalizedCarPosition
 
     @property
     def speed(self):
         return self._info.physics.speedKmh
+
+    @property
+    def distance_traveled(self):
+        return self._info.graphics.distanceTraveled
 
     @property
     def velocity(self):
