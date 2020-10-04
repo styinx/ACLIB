@@ -39,6 +39,26 @@ class Observable:
             self._parent.fire(self._event, self._value)
 
 
+class IntervalObservable(Observable):
+    def __init__(self, parent: EventListener, initial_value: int, less_event: str, more_event: str):
+        super().__init__(parent, initial_value, '')
+
+        self._parent = parent
+        self._value = initial_value
+        self._less_event = less_event
+        self._more_event = more_event
+
+    @Observable.value.setter
+    def value(self, new_value: int):
+        if self._value != new_value:
+            if self._value < new_value:
+                self._value = new_value
+                self._parent.fire(self._more_event, self._value)
+            else:
+                self._value = new_value
+                self._parent.fire(self._less_event, self._value)
+
+
 class BoolObservable(Observable):
     def __init__(self, parent, initial_value: bool, true_event: str, false_event: str):
         super().__init__(parent, initial_value, '')

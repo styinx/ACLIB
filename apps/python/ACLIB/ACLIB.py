@@ -17,8 +17,8 @@ from memory.ac_meta import ACMeta
 
 class ACLIB:
     APPS = {}
-    DATA = None
-    META = None
+    AC_DATA = None
+    AC_META = None
 
     @staticmethod
     def init():
@@ -30,8 +30,8 @@ class ACLIB:
 
         Log.LOG_2_AC = get('log_to_AC')
 
-        ACLIB.DATA = ACData()
-        ACLIB.META = ACMeta(ACLIB.DATA)
+        ACLIB.AC_DATA = ACData()
+        ACLIB.AC_META = ACMeta(ACLIB.AC_DATA)
 
     @staticmethod
     def shutdown():
@@ -56,13 +56,15 @@ def acMain(version: int = 0):
 
                     # Initialize the class with the constructor and store it in the app list.
                     class_ctor = getattr(sys.modules[module], module[module.find('ACLIB_') + 6:])
-                    class_obj = class_ctor(ACLIB.DATA, ACLIB.META)
+                    class_obj = class_ctor(ACLIB.AC_DATA, ACLIB.AC_META)
                     ACLIB.APPS[class_ctor] = class_obj
                     log('Init {0:s}'.format(module))
 
             except Exception as e:
                 log('Problems while initializing {0:s}'.format(file_name))
                 tb(e)
+
+        ACLIB.AC_DATA.init()
 
     except Exception as e:
         tb(e)
@@ -72,7 +74,7 @@ def acMain(version: int = 0):
 
 def acUpdate(delta: int = 0):
     try:
-        ACLIB.DATA.update(delta)
+        ACLIB.AC_DATA.update(delta)
 
         # Call the update function for every app stored in the app list.
         for _, app in ACLIB.APPS.items():
@@ -88,7 +90,7 @@ def acUpdate(delta: int = 0):
 
 def acShutdown():
     try:
-        ACLIB.DATA.shutdown()
+        ACLIB.AC_DATA.shutdown()
 
         # Call the update function for every app stored in the app list.
         for _, app in ACLIB.APPS.items():

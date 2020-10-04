@@ -1,7 +1,7 @@
 from settings import TEXTURE_DIR, path
 from memory.ac_data import ACData
 from memory.ac_meta import ACMeta
-from ui.gl import Texture, texture_rect
+from ui.gl import Texture, texture_rect, rect
 from ui.gui.ac_widget import ACApp, ACLabel, ACWidget
 from ui.gui.layout import ACGrid
 from ui.color import *
@@ -15,13 +15,12 @@ class Tyres(ACApp):
         self.background_color = TRANSPARENT
         self.border_color = TRANSPARENT
 
-        data.on(ACData.EVENT.READY, self.init)
-        data.on(ACData.EVENT.COMPOUND_CHANGED, self.reload)
-
         self._data = data
         self._meta = meta
 
-        self._grid = ACGrid(5, 5, self)
+        self._data.on(ACData.EVENT.READY, self.init)
+
+        self._grid = None
 
         self.fl = None
         self.fr = None
@@ -29,20 +28,24 @@ class Tyres(ACApp):
         self.rr = None
 
     def init(self):
+        self._grid = ACGrid(5, 9, self)
+
         self.fl = Tyre(Tyre.FL, self._grid, self._data, self._meta)
         self.fr = Tyre(Tyre.FR, self._grid, self._data, self._meta)
         self.rl = Tyre(Tyre.RL, self._grid, self._data, self._meta)
         self.rr = Tyre(Tyre.RR, self._grid, self._data, self._meta)
 
-        self._grid.add(self.fl, 0, 0, 2, 2)
-        self._grid.add(self.fr, 3, 0, 2, 2)
-        self._grid.add(self.rl, 0, 3, 2, 2)
-        self._grid.add(self.rr, 3, 3, 2, 2)
+        self._grid.add(self.fl, 0, 0, 2, 4)
+        self._grid.add(self.fr, 3, 0, 2, 4)
+        self._grid.add(self.rl, 0, 5, 2, 4)
+        self._grid.add(self.rr, 3, 5, 2, 4)
 
         self.fl.init()
         self.fr.init()
         self.rl.init()
         self.rr.init()
+
+        self._data.on(ACData.EVENT.COMPOUND_CHANGED, self.reload)
 
     def reload(self, *args):
         self.fl.reload()
@@ -110,6 +113,13 @@ class Tyre(ACLabel):
         self._right.init()
         self._brake.init()
 
+    def render(self, delta: int):
+        super().render(delta)
+
+        x, y = self.position
+        w, h = self.size
+        rect(x, y + h + 8, w, 5, self.wear_color(self.wear()))
+
     def wear(self):
         return self._data.tyres.wear[self._index]
 
@@ -164,7 +174,6 @@ class TyreTile(ACLabel):
         self._b_t_low, self._b_t_high = 300, 600
         self._b_t_mid = 450
         self._b_t_range = 100
-        self._compound_loaded = False
 
     def init(self):
         front = self._tyre < 2
@@ -182,11 +191,6 @@ class TyreTile(ACLabel):
         self._b_t_high = self._b_t_max + self._b_t_range
 
         TyreTile.TYRE_COLORS = {}
-
-    def update(self, delta: int):
-        if not self._compound_loaded and len(self._data.tyres.compound) > 5:
-            self.init()
-            self._compound_loaded = True
 
     def render(self, delta: int):
         super().render(delta)
