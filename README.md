@@ -47,6 +47,7 @@ If you detect any issues please create an [Issue](https://github.com/styinx/ACLI
 
 ## Apps that are shipped with ACLIB
 
+- [ACLIB_Fuel](https://github.com/styinx/ACLIB/wiki/ACLIB_Fuel)
 - [ACLIB_Tyres](https://github.com/styinx/ACLIB/wiki/ACLIB_Tyres)
 
 <br>
