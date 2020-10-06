@@ -8,7 +8,7 @@ class Font(Subject):
         super().__init__()
 
         self._name = font_name
-        self._size = 0
+        self._size = 12
         self._is_italic = False
         self._is_bold = False
 
