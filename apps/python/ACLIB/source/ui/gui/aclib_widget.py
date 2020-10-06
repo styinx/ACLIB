@@ -1,6 +1,8 @@
+from settings import TEXTURE_DIR, path
 from ui.color import *
 from ui.gui.ac_widget import ACWidget, ACButton, ACLabel
 from ui.gui.font import Font, px2pt
+from ui.gui.layout import ACBox
 
 
 class ACLIBIcon(ACButton):
@@ -96,3 +98,23 @@ class ACLIBProgressBar(ACLabel):
         w, h = self.size
 
         self._progress.size = w * progress, h
+
+
+class ACLIBScaler(ACBox):
+    TEXTURES = {
+        'plus': path(TEXTURE_DIR, 'plus.png'),
+        'minus': path(TEXTURE_DIR, 'minus.png')
+    }
+
+    def __init__(self, parent: ACWidget, target: ACWidget, scale: int = 1, orientation: int = ACBox.VERTICAL):
+        super().__init__(orientation, parent)
+
+        self._target = target
+        self._scale = scale
+
+        self._plus = ACLIBIcon(ACLIBScaler.TEXTURES['plus'])
+        self._minus = ACLIBIcon(ACLIBScaler.TEXTURES['minus'])
+
+        self.add(self._plus)
+        self.add(self._minus)
+
