@@ -21,7 +21,7 @@ class Test(ACApp):
 
         self._ready = False
         self._data = data
-        self._compound = ACLabel('', parent=self)
+        self._compound = ACLabel(self)
 
         meta.on(ACMeta.EVENT.READY, self.init)
 
@@ -49,7 +49,7 @@ class Test(ACApp):
         super().__init__('ACLIB_Test', 200, 200, 300, 300)
 
         self._data = data
-        self._compound = ACLabel('', parent=self)
+        self._compound = ACLabel(self)
 
         data.on(ACData.EVENT.READY, self.init)
 
@@ -58,8 +58,4 @@ class Test(ACApp):
 
     def set_compound(self, name: str):
         self._compound.text = name
-
-    def update(self, delta: int):
-        super().update(delta)
-            
 ```
