@@ -24,6 +24,7 @@ class Fuel(ACApp):
 
         self._data = data
         self._meta = meta
+        self._init = False
 
         self._normal_font = Font('Roboto Mono')
         self._normal_font.bold = 1
@@ -79,6 +80,7 @@ class Fuel(ACApp):
         self._data.on(ACData.EVENT.FUEL_CHANGED, self.on_fuel)
 
     def init(self):
+        self._init = True
         self._fuel_lap_ref = self._data.car.fuel
         self._fuel_km_ref = self._data.car.fuel
 
@@ -96,29 +98,31 @@ class Fuel(ACApp):
         self._fuel_bar.value = fuel
 
     def on_lap(self, lap: int):
-        self._fuel_lap_val = self._fuel_lap_ref - self._data.car.fuel
-        self._fuel_lap_ref = self._data.car.fuel
+        if self._init:
+            self._fuel_lap_val = self._fuel_lap_ref - self._data.car.fuel
+            self._fuel_lap_ref = self._data.car.fuel
 
-        if self._fuel_lap_avg == 0:
-            self._fuel_lap_avg = self._fuel_lap_val
-        else:
-            self._fuel_lap_avg = (self._fuel_lap_avg + self._fuel_lap_val) / 2
+            if self._fuel_lap_avg == 0:
+                self._fuel_lap_avg = self._fuel_lap_val
+            else:
+                self._fuel_lap_avg = (self._fuel_lap_avg + self._fuel_lap_val) / 2
 
-        self._fuel_lap.text = '{}  l/L'.format(round(self._fuel_lap_val, 1))
-        self._avg_lap.text = 'Ø {}  l/L'.format(round(self._fuel_lap_avg, 1))
-        if self._fuel_lap_val > 0:
-            self._laps.text = '+ {} Laps'.format(round(self._data.car.fuel / self._fuel_lap_val, 1))
+            self._fuel_lap.text = '{}  l/L'.format(round(self._fuel_lap_val, 1))
+            self._avg_lap.text = 'Ø {}  l/L'.format(round(self._fuel_lap_avg, 1))
+            if self._fuel_lap_val > 0:
+                self._laps.text = '+ {} Laps'.format(round(self._data.car.fuel / self._fuel_lap_val, 1))
 
     def on_km(self, km: int):
-        self._fuel_km_val = self._fuel_km_ref - self._data.car.fuel
-        self._fuel_km_ref = self._data.car.fuel
+        if self._init:
+            self._fuel_km_val = self._fuel_km_ref - self._data.car.fuel
+            self._fuel_km_ref = self._data.car.fuel
 
-        if self._fuel_km_avg == 0:
-            self._fuel_km_avg = self._fuel_km_val
-        else:
-            self._fuel_km_avg = (self._fuel_km_avg + self._fuel_km_val) / 2
+            if self._fuel_km_avg == 0:
+                self._fuel_km_avg = self._fuel_km_val
+            else:
+                self._fuel_km_avg = (self._fuel_km_avg + self._fuel_km_val) / 2
 
-        self._fuel_km.text = '{} l/km'.format(round(self._fuel_km_val, 1))
-        self._avg_km.text = 'Ø {} l/km'.format(round(self._fuel_km_avg, 1))
-        if self._fuel_km_val > 0:
-            self._km.text = '+ {}   km'.format(round(self._data.car.fuel / self._fuel_km_val, 1))
+            self._fuel_km.text = '{} l/km'.format(round(self._fuel_km_val, 1))
+            self._avg_km.text = 'Ø {} l/km'.format(round(self._fuel_km_avg, 1))
+            if self._fuel_km_val > 0:
+                self._km.text = '+ {}   km'.format(round(self._data.car.fuel / self._fuel_km_val, 1))
