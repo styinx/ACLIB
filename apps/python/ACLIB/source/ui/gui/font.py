@@ -65,9 +65,9 @@ class Font(Subject):
         self.notify_observers()
 
 
-def pt2px(pt: int) -> float:
-    return pt * 4/3
+def pt2px(pt: int) -> int:
+    return round(pt * 4/3)
 
 
-def px2pt(pt: int) -> float:
-    return pt * 0.75
+def px2pt(px: int) -> int:
+    return round(px * 0.75)

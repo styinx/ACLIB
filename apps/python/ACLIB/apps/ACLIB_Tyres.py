@@ -18,14 +18,14 @@ class Tyres(ACApp):
         self._data = data
         self._meta = meta
 
-        self._data.on(ACData.EVENT.READY, self.init)
-
         self._grid = None
 
         self.fl = None
         self.fr = None
         self.rl = None
         self.rr = None
+
+        self._data.on(ACData.EVENT.READY, self.init)
 
     def init(self):
         self._grid = ACGrid(5, 9, self)
@@ -118,7 +118,7 @@ class Tyre(ACLabel):
 
         x, y = self.position
         w, h = self.size
-        rect(x, y + h + 8, w, 5, self.wear_color(self.wear()))
+        rect(x, y + h + 5, w, 5, self.wear_color(self.wear()))
 
     def wear(self):
         return self._data.tyres.wear[self._index]

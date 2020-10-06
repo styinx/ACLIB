@@ -25,7 +25,7 @@ CONFIG = Config(path(CONFIG_DIR, 'ACLIB.ini'))
 
 
 def get(key: str):
-    return CONFIG.get(key) or False
+    return CONFIG.get(key)
 
 
 def get_or_set(key: str, value):

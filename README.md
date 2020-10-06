@@ -28,8 +28,8 @@ If you detect any issues please create an [Issue](https://github.com/styinx/ACLI
 
 ## Install
 
-- **1**
-  - Either: [Download](https://github.com/styinx/ACLIB/archive/master.zip) 
+- **1**:
+  - Either: [Download](https://github.com/styinx/ACLIB/archive/master.zip) the latest version
   - Or clone the repository manually: `git clone https://github.com/styinx/ACLIB`
   - Or take a look at specific [releases](https://github.com/styinx/ACLIB/releases).
 
@@ -37,18 +37,31 @@ If you detect any issues please create an [Issue](https://github.com/styinx/ACLI
   - Remove the folder /stuff and the `README.md` file.
 
 - **2**
-  - Extract the folders /apps and /contents into the Assetto Corsa installation folder (usually `C:/Program Files (x86)/Steam/steamapps/common/assettocorsa`).
+  - Extract the folders `/apps` and `/contents` into the Assetto Corsa installation folder (usually `C:/Program Files (x86)/Steam/steamapps/common/assettocorsa`).
 
 - **3**
-  - Run Assetto Corsa.
   - Enable ACLIB in the settings.
+  - Assetto Corsa Launcher:
+    - ![Settings](https://github.com/styinx/ACLIB/blob/master/stuff/images/ac_settings.png)
+    - ![ACLIB](https://github.com/styinx/ACLIB/blob/master/stuff/images/ac_aclib.png)
+  - Content Manager:
+    - ![Settings](https://github.com/styinx/ACLIB/blob/master/stuff/images/cm_settings.png)
+    - ![Assetto Corsa](https://github.com/styinx/ACLIB/blob/master/stuff/images/cm_assetto_corsa.png)
+    - ![Apps](https://github.com/styinx/ACLIB/blob/master/stuff/images/cm_apps.png)
+    - ![ACLIB](https://github.com/styinx/ACLIB/blob/master/stuff/images/cm_aclib.png)
   
 <br>
 
 ## Apps that are shipped with ACLIB
 
-- [ACLIB_Fuel](https://github.com/styinx/ACLIB/wiki/ACLIB_Fuel)
-- [ACLIB_Tyres](https://github.com/styinx/ACLIB/wiki/ACLIB_Tyres)
+![ACLIB_Fuel](https://github.com/styinx/ACLIB/blob/master/stuff/images/fuel_2.png 'ACLIB_Fuel')
+
+[ACLIB_Fuel](https://github.com/styinx/ACLIB/wiki/ACLIB_Fuel)
+
+
+![ACLIB_Tyres](https://github.com/styinx/ACLIB/blob/master/stuff/images/tyres_1.png 'ACLIB_Tyres')
+
+[ACLIB_Tyres](https://github.com/styinx/ACLIB/wiki/ACLIB_Tyres)
 
 <br>
 

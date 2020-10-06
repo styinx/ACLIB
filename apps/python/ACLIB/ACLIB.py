@@ -13,6 +13,7 @@ from settings import *
 from util.log import log, tb, Log
 from memory.ac_data import ACData
 from memory.ac_meta import ACMeta
+from ui.gui.ac_widget import ACApp
 
 
 class ACLIB:
@@ -32,6 +33,11 @@ class ACLIB:
 
         ACLIB.AC_DATA = ACData()
         ACLIB.AC_META = ACMeta(ACLIB.AC_DATA)
+
+        # Dummy used to put apps in the same category.
+        aclib = ACApp('ACLIB', -10000, -10000, 0, 0)
+        aclib.visible = False
+        ACLIB.APPS[aclib.title] = aclib
 
     @staticmethod
     def shutdown():
@@ -56,8 +62,9 @@ def acMain(version: int = 0):
 
                     # Initialize the class with the constructor and store it in the app list.
                     class_ctor = getattr(sys.modules[module], module[module.find('ACLIB_') + 6:])
+
                     class_obj = class_ctor(ACLIB.AC_DATA, ACLIB.AC_META)
-                    ACLIB.APPS[class_ctor] = class_obj
+                    ACLIB.APPS[class_obj.title] = class_obj
                     log('Init {0:s}'.format(module))
 
             except Exception as e:
