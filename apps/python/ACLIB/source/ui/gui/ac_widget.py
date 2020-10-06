@@ -3,7 +3,7 @@ from ui import gl
 from ui.animation import Animation
 
 from ui.color import Color
-from ui.gui.font import Font, pt2px
+from ui.gui.font import Font, pt2px, px2pt
 from ui.gui.defaults import WidgetStyle, WidgetConfig
 from util.event import EventListener
 from util.log import log, console, tb
@@ -44,6 +44,8 @@ class ACWidget(EventListener):
         BACKGROUND_COLOR = 'background_color'
         BORDER = 'border'
         BORDER_COLOR = 'border_color'
+
+    IDS = {}
 
     def __init__(self, parent=None):
         super().__init__()
@@ -92,11 +94,10 @@ class ACWidget(EventListener):
 
         self.parent = self._parent
 
+    def on_click(self, callback: callable):
         if self.has_id:
-            ac.addOnClickedListener(self.id, self._on_click)
-
-    def _on_click(self, *args):
-        self.fire(ACWidget.EVENT.CLICK, *args)
+            ac.addOnClickedListener(self.id, callback)
+        #self.fire(ACWidget.EVENT.CLICK, *args)
 
     def _on_parent_changed(self):
         self.position = (0, 0) if isinstance(self.parent, ACApp) else self.parent.position
@@ -140,6 +141,8 @@ class ACWidget(EventListener):
     @id.setter
     def id(self, _id: int):
         self._id = _id
+
+        ACWidget.IDS[self.id] = self
 
         self._on_id()
 
@@ -483,8 +486,8 @@ class ACTextWidget(ACWidget, Observer):
     def _on_size_changed(self):
         super()._on_size_changed()
 
-        # if self.font:
-        #     self.font.size = max(16, px2pt(self.size[1])) #todo
+        if self.font:
+            ac.setFontSize(self.id, px2pt(self.size[1]) * 0.75)
 
     @property
     def text(self) -> str:

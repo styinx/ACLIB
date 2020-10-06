@@ -87,7 +87,7 @@
 | addOnAppDismissedListener | | |
 | addOnChatMessageListener | a <br> b | |
 | addOnCheckBoxChanged | | |
-| addOnClickListener | | |
+| addOnClickedListener | | |
 | addOnListBoxDeselectionListener | | |
 | addOnListBoxSelectionListener | | |
 | addOnValidateListener | | |
