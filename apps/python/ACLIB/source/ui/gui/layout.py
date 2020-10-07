@@ -56,7 +56,6 @@ class ACBox(ACLayout):
 
     def add(self, widget: ACWidget):
         self._children.append(widget)
-        widget.parent = self
 
 
 class ACHBox(ACBox):
@@ -71,7 +70,7 @@ class ACHBox(ACBox):
         width_per_child = round(w / len(self._children))
 
         for c in self._children:
-            c.position = (x, h)
+            c.position = (x, y)
             c.size = (width_per_child, h)
             x += width_per_child
 
@@ -120,6 +119,5 @@ class ACGrid(ACLayout):
             return
 
         self._children.insert(y * self._cols + x, widget)
-        widget.parent = self
         widget.size = (self._cell_width * w, self._cell_height * h)
         widget.position = (self.position[0] + self._cell_width * x, self.position[1] + self._cell_height * y)

@@ -94,10 +94,16 @@ class ACWidget(EventListener):
 
         self.parent = self._parent
 
-    def on_click(self, callback: callable):
         if self.has_id:
-            ac.addOnClickedListener(self.id, callback)
-        #self.fire(ACWidget.EVENT.CLICK, *args)
+            ac.addOnClickedListener(self.id, ACWidget.on_click_function(self.id))
+
+    @staticmethod
+    def on_click_function(_id: int):
+        def func(x, y):
+            ACWidget.IDS[_id].fire(ACWidget.EVENT.CLICK)
+
+        globals()['onclick_' + str(_id)] = func
+        return func
 
     def _on_parent_changed(self):
         self.position = (0, 0) if isinstance(self.parent, ACApp) else self.parent.position
