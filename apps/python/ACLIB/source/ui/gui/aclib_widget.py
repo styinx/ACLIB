@@ -2,7 +2,7 @@ from settings import TEXTURE_DIR, path
 from ui.color import *
 from ui.gui.ac_widget import ACWidget, ACButton, ACLabel
 from ui.gui.font import Font, px2pt
-from ui.gui.layout import ACBox
+from ui.gui.layout import ACGrid
 
 
 class ACLIBIcon(ACButton):
@@ -40,6 +40,7 @@ class ACLIBProgressBar(ACLabel):
         if hasattr(self, '_progress'):
             self._progress.position = self.position
             self._text.position = self.position
+            self.value = self.value
 
     def _on_size_changed(self):
         super()._on_size_changed()
@@ -48,6 +49,7 @@ class ACLIBProgressBar(ACLabel):
             self._progress.size = self.size
             self._text.size = self.size
             self._text.font.size = px2pt(self.size[1])
+            self.value = self.value
 
     @property
     def show_progress(self):
@@ -100,21 +102,51 @@ class ACLIBProgressBar(ACLabel):
         self._progress.size = w * progress, h
 
 
-class ACLIBScaler(ACBox):
+class ACLIBScaler(ACGrid):
+    """
+    Use this widget to get a plus and minus button that scales another widget.
+    Use 'absolute = True' to have an absolute scale to increase/decrease the widget with pixel size.
+    'scale = 1' means that the target will scale 1 pixel in width and height.
+    Using 'absolute = False' will scale the target relative.
+    'scale = 0.1' will increase/decrease the target by 10%.
+    """
+
     TEXTURES = {
         'plus': path(TEXTURE_DIR, 'plus.png'),
         'minus': path(TEXTURE_DIR, 'minus.png')
     }
 
-    def __init__(self, parent: ACWidget, target: ACWidget, scale: int = 1, orientation: int = ACBox.VERTICAL):
-        super().__init__(orientation, parent)
+    def __init__(self, parent: ACWidget, target: ACWidget, scale: float = 1, absolute: bool = False):
+        super().__init__(1, 2, parent)
 
         self._target = target
         self._scale = scale
+        self._absolute = absolute
 
-        self._plus = ACLIBIcon(ACLIBScaler.TEXTURES['plus'])
-        self._minus = ACLIBIcon(ACLIBScaler.TEXTURES['minus'])
+        self._plus = ACLabel(self)
+        self._minus = ACLabel(self)
 
-        self.add(self._plus)
-        self.add(self._minus)
+        self._plus.background_texture = ACLIBScaler.TEXTURES['plus']
+        self._plus.background_color = GREEN
+        self._minus.background_texture = ACLIBScaler.TEXTURES['minus']
+        self._minus.background_color = RED
 
+        self.add(self._plus, 0, 0)
+        self.add(self._minus, 0, 1)
+
+        self._plus.on(ACWidget.EVENT.CLICK, self.on_plus)
+        self._minus.on(ACWidget.EVENT.CLICK, self.on_minus)
+
+    def on_plus(self, _id: int):
+        w, h = self._target.size
+        if self._absolute:
+            self._target.size = (w + self._scale, h + self._scale)
+        else:
+            self._target.size = (w * (1 + self._scale), h * (1 + self._scale))
+
+    def on_minus(self, _id: int):
+        w, h = self._target.size
+        if self._absolute:
+            self._target.size = (w - self._scale, h - self._scale)
+        else:
+            self._target.size = (w * (1 - self._scale), h * (1 - self._scale))

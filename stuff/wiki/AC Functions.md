@@ -83,22 +83,22 @@
 
 | Function Name | Arguments | Description |
 | :--- | :--- | :--- |
-| addOnAppActivatedListener | | |
-| addOnAppDismissedListener | | |
-| addOnChatMessageListener | a <br> b | |
+| addOnAppActivatedListener | app_id: int <br> callback: callable | The callback function receives the id of the app control. |
+| addOnAppDismissedListener | app_id: int <br> callback: callable | The callback function receives the id of the app control. |
+| addOnChatMessageListener | app_id: int <br> callback: callable | The callback function receives the message and the author. |
 | addOnCheckBoxChanged | | |
-| addOnClickedListener | | |
+| addOnClickedListener | control_id: int <br> callback: callable | The callback function receives the x and y coordinates of the click. |
 | addOnListBoxDeselectionListener | | |
 | addOnListBoxSelectionListener | | |
 | addOnValidateListener | | |
 | addOnValueChangeListener | | |
-| addRenderCallback | | |
+| addRenderCallback | app_id: int <br> callback: callable | The callback function receives the delta time since the last render call. |
 
 ### Camera
 
 | Function Name | Arguments | Description |
 | :--- | :--- | :--- |
-| focusCar  | | |
+| focusCar | | |
 | freeCameraMoveForward | a <br> b <br> args | |
 | freeCameraMoveRight | | |
 | freeCameraMoveUpWorld | | |

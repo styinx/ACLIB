@@ -1,5 +1,41 @@
 ## Events
 
+### GUI Events
+
+The gui library offers a number of events that can be used to attach callback functions.
+Here is a selection of the ones that are currently implemented: 
+
+```python
+class EVENT:
+    ACTIVATED = 'Activated'
+    ANIMATION_ADDED = 'Animation Added'
+    ANIMATION_FINISHED = 'Animation Finished'
+    CHILD_CHANGED = 'Child Changed'
+    CLICK = 'Click'
+    DISMISSED = 'Dismissed'
+    SIZE_CHANGED = 'Size Changed'
+    STYLE_CHANGED = 'Style Changed'
+```
+
+Any subclass of `ACWidget` is able to register a callback with the following code:
+
+```python
+from ui.gui.ac_widget import ACWidget, ACLabel
+
+# ... Definition of the app ...
+
+def on_click_listener(_id_of_widget):
+    # Any widget is registered in the static member of ACWidget
+    ACWidget.IDS[_id_of_widget].text = 'I have been clicked!'
+
+my_widget = ACLabel(self.app, 'text')
+my_widget.on(ACWidget.EVENT.CLICK, on_click_listener)
+```
+
+If this label is clicked the text of it will change to `I have been clicked!`.
+
+### Data and Meta Events
+
 For some reason some parts of the shared memory module are sometimes not loaded instantly but with a delay.
 As a result some properties from ACData or ACMeta are not loaded properly and access to those will result in errors.
 The best example for this is the tyre compound.
