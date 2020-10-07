@@ -68,20 +68,21 @@ class Tyres:
         if compound in self._tyre_meta.dict:
             key = 'front' if front else 'rear'
             return self._tyre_meta.dict[compound][key + '_ideal_pressure']
-        else:
-            return 26
+        return 26
 
     def ideal_temperature(self, compound: str, front: bool):
         if compound in self._tyre_meta.dict:
             key = 'front' if front else 'rear'
             d = self._tyre_meta.dict[compound][key + '_temp_curve']
             min_max = [float(k) for k, v in d.items() if v in ['1', '1.0']]
-            return min(min_max), max(min_max)
-        else:
-            return 80, 100
+            if min_max:
+                return min(min_max), max(min_max)
+        return 80, 100
 
     def ideal_brake_temperature(self, front: bool):
         key = 'front' if front else 'rear'
         d = self._tyre_meta.dict['Brakes'][key + '_brake_temp_curve']
         min_max = [float(k) for k, v in d.items() if v in ['1', '1.0']]
-        return min(min_max), max(min_max)
+        if min_max:
+            return min(min_max), max(min_max)
+        return 500, 600

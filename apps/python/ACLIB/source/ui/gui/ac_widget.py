@@ -100,7 +100,7 @@ class ACWidget(EventListener):
     @staticmethod
     def on_click_function(_id: int):
         def func(x, y):
-            ACWidget.IDS[_id].fire(ACWidget.EVENT.CLICK)
+            ACWidget.IDS[_id].fire(ACWidget.EVENT.CLICK, _id)
 
         globals()['onclick_' + str(_id)] = func
         return func

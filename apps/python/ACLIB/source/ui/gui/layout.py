@@ -62,6 +62,22 @@ class ACHBox(ACBox):
     def __init__(self, parent: ACWidget = None):
         super().__init__(ACBox.HORIZONTAL, parent)
 
+    def _on_position_changed(self):
+        x, y = self.position
+        w, h = self.size
+        width_per_child = round(w / len(self._children))
+
+        for c in self._children:
+            c.position = (x, y)
+            x += width_per_child
+
+    def _on_size_changed(self):
+        w, h = self.size
+        width_per_child = round(w / len(self._children))
+
+        for c in self._children:
+            c.size = (width_per_child, h)
+
     def add(self, widget: ACWidget):
         super().add(widget)
 
@@ -78,6 +94,26 @@ class ACHBox(ACBox):
 class ACVBox(ACBox):
     def __init__(self, parent: ACWidget = None):
         super().__init__(ACBox.VERTICAL, parent)
+
+    def _on_position_changed(self):
+        if hasattr(self, 'children'):
+            x, y = self.position
+            w, h = self.size
+            height_per_child = round(h / len(self.children))
+
+            for child in self.children:
+                child.position = (x, y)
+                y += height_per_child
+
+    def _on_size_changed(self):
+        if hasattr(self, 'children'):
+            x, y = self.position
+            w, h = self.size
+            height_per_child = round(h / len(self.children))
+
+            for child in self.children:
+                child.size = (w, height_per_child)
+                y += height_per_child
 
     def add(self, widget: ACWidget):
         super().add(widget)
@@ -96,10 +132,29 @@ class ACGrid(ACLayout):
     def __init__(self, cols: int = 1, rows: int = 1, parent: ACWidget = None):
         super().__init__(parent)
 
+        self._indices = {}
+
         self._cols = max(1, cols)
         self._rows = max(1, rows)
         self._cell_width = round(self.size[0] / self.cols)
         self._cell_height = round(self.size[1] / self.rows)
+
+    def _on_position_changed(self):
+        if hasattr(self, '_indices'):
+            x, y = self.position
+
+            for idx, child in self._indices.items():
+                child.position = (x + idx[0] * self._cell_width, y + idx[1] * self._cell_height)
+
+    def _on_size_changed(self):
+        if hasattr(self, '_indices'):
+            self._cell_width = round(self.size[0] / self.cols)
+            self._cell_height = round(self.size[1] / self.rows)
+            x, y = self.position
+
+            for idx, child in self._indices.items():
+                child.position = (x + idx[0] * self._cell_width, y + idx[1] * self._cell_height)
+                child.size = (idx[2] * self._cell_width, idx[3] * self._cell_height)
 
     @property
     def cols(self) -> int:
@@ -119,5 +174,6 @@ class ACGrid(ACLayout):
             return
 
         self._children.insert(y * self._cols + x, widget)
+        self._indices[(x, y, w, h)] = widget
         widget.size = (self._cell_width * w, self._cell_height * h)
         widget.position = (self.position[0] + self._cell_width * x, self.position[1] + self._cell_height * y)
