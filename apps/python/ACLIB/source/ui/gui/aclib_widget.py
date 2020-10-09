@@ -144,7 +144,7 @@ class ACLIBScaler(ACGrid):
         self._target.size = size
         self._original_size = size
 
-    def on_plus(self, widget: ACWidget):
+    def on_plus(self, widget: ACWidget, *args):
         self._scale += self._step
 
         if self._absolute:
@@ -154,7 +154,7 @@ class ACLIBScaler(ACGrid):
             w, h = self._original_size
             self._target.size = (round(w * self._scale), round(h * self._scale))
 
-    def on_minus(self, widget: ACWidget):
+    def on_minus(self, widget: ACWidget, *args):
         if self._absolute:
             self._scale -= self._step
             w, h = self._original_size

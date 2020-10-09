@@ -34,7 +34,7 @@ class Fuel(ACApp):
         self._small_font.color = BLACK
 
 
-        self._main_grid = ACGrid(16, 6, self)
+        self._main_grid = ACGrid(31, 6, self)
 
         self._grid = ACGrid(3, 3, self._main_grid)
         self._fuel_bar = ACLIBProgressBar(self._grid, 0)
@@ -61,7 +61,7 @@ class Fuel(ACApp):
         self._scaler = ACLIBScaler(self._grid, self._grid, 0.1)
 
         self._main_grid.add(self._scaler, 0, 0, 1, 2)
-        self._main_grid.add(self._grid, 1, 0, 15, 6)
+        self._main_grid.add(self._grid, 1, 0, 30, 6)
 
         self._grid.add(self._fuel, 0, 0, 1, 1)
         self._grid.add(self._fuel_bar, 1, 0, 2, 1)
