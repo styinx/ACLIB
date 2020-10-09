@@ -157,6 +157,10 @@ class ACGrid(ACLayout):
                 child.size = (idx[2] * self._cell_width, idx[3] * self._cell_height)
 
     @property
+    def cell_size(self):
+        return self._cell_width, self._cell_height
+
+    @property
     def cols(self) -> int:
         return self._cols
 

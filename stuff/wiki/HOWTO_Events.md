@@ -24,15 +24,20 @@ from ui.gui.ac_widget import ACWidget, ACLabel
 
 # ... Definition of the app ...
 
-def on_click_listener(_id_of_widget):
-    # Any widget is registered in the static member of ACWidget
-    ACWidget.IDS[_id_of_widget].text = 'I have been clicked!'
+def on_click_listener(widget: ACWidget):
+    widget.text = 'I have been clicked!'
 
+class AnotherWidget(ACWidget):
+    def another_callback(self, widget: ACWidget):
+        self.background_color = widget.background_color
+
+another_widget = AnotherWidget(self.app)
 my_widget = ACLabel(self.app, 'text')
 my_widget.on(ACWidget.EVENT.CLICK, on_click_listener)
+my_widget.on(ACWidget.EVENT.CLICK, another_widget.another_callback)
 ```
 
-If this label is clicked the text of it will change to `I have been clicked!`.
+If the `my_widget` label is clicked the text of it will change to `I have been clicked!` and the background color of `another_widget` will have the same value as `my_widget`.
 
 ### Data and Meta Events
 

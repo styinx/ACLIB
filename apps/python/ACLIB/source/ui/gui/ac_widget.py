@@ -95,15 +95,7 @@ class ACWidget(EventListener):
         self.parent = self._parent
 
         if self.has_id:
-            ac.addOnClickedListener(self.id, ACWidget.on_click_function(self.id))
-
-    @staticmethod
-    def on_click_function(_id: int):
-        def func(x, y):
-            ACWidget.IDS[_id].fire(ACWidget.EVENT.CLICK, _id)
-
-        globals()['onclick_' + str(_id)] = func
-        return func
+            ac.addOnClickedListener(self.id, ACWidget._event_function(ACWidget.EVENT.CLICK, self))
 
     def _on_parent_changed(self):
         self.position = (0, 0) if isinstance(self.parent, ACApp) else self.parent.position
@@ -116,6 +108,15 @@ class ACWidget(EventListener):
     def _on_size_changed(self):
         if self.child:
             self.child.size = self.size
+
+    @staticmethod
+    def _event_function(event: str, widget):
+        def func(x, y):
+            if widget.has_id:
+                ACWidget.IDS[widget.id].fire(event, widget)
+
+        globals()['on{}_{}'.format(event.replace(' ', '_'), widget.id)] = func
+        return func
 
     # Public
 
@@ -148,9 +149,12 @@ class ACWidget(EventListener):
     def id(self, _id: int):
         self._id = _id
 
-        ACWidget.IDS[self.id] = self
+        if _id != -1:
+            ACWidget.IDS[self.id] = self
 
-        self._on_id()
+            self._on_id()
+        else:
+            console('{}: Id could not be set.'.format(self))
 
     @property
     def parent(self):
@@ -335,9 +339,6 @@ class ACApp(ACWidget):
     This class represents an application that holds a collection of controls and layouts.
     It is used for relative positioning of controls and is responsible for storing configurations.
     """
-
-    INSTANCES = {}
-
     def __init__(self, app_name: str, x: int, y: int, w: int, h: int):
         super().__init__()
 
@@ -358,11 +359,10 @@ class ACApp(ACWidget):
         self.position = (x, y)
         self.size = (w, h)
 
-        ACApp.INSTANCES[self.id] = self
         self.render_callback = self.render
 
-        self.on(ACWidget.EVENT.ACTIVATED, self.activate)
-        self.on(ACWidget.EVENT.DISMISSED, self.dismiss)
+        self.on(ACWidget.EVENT.ACTIVATED, self._on_activate)
+        self.on(ACWidget.EVENT.DISMISSED, self._on_dismiss)
 
         self._load_config()
 
@@ -374,18 +374,16 @@ class ACApp(ACWidget):
         super()._on_id()
 
         if self.has_id:
-            if ac.addOnAppActivatedListener(self.id, self._on_activation) == -1:
+            if ac.addOnAppActivatedListener(self.id, ACWidget._event_function(ACWidget.EVENT.ACTIVATED, self)) == -1:
                 console('Failed to add activation listener for {}.'.format(self.title))
-            if ac.addOnAppDismissedListener(self.id, self._on_dismissed) == -1:
+            if ac.addOnAppDismissedListener(self.id, ACWidget._event_function(ACWidget.EVENT.DISMISSED, self)) == -1:
                 console('Failed to add dismissed listener for {}.'.format(self.title))
 
-    @staticmethod
-    def _on_activation(_id: int):
-        ACApp.INSTANCES[_id].fire(ACWidget.EVENT.ACTIVATED, _id)
+    def _on_activate(self, widget: ACWidget):
+        self.active = True
 
-    @staticmethod
-    def _on_dismissed(_id: int):
-        ACApp.INSTANCES[_id].fire(ACWidget.EVENT.DISMISSED, _id)
+    def _on_dismiss(self, widget: ACWidget):
+        self.active = False
 
     def _load_config(self):
         log('Load config for app "{}"'.format(self.title))
@@ -398,6 +396,10 @@ class ACApp(ACWidget):
         self._cfg.write()
 
     # Public
+
+    @property
+    def cfg(self):
+        return self._cfg
 
     @property
     def active(self):
@@ -460,12 +462,6 @@ class ACApp(ACWidget):
 
         # Required since an app movement will draw the default background again.
         self.background_color = self.background_color
-
-    def activate(self, _id: int):
-        self.active = True
-
-    def dismiss(self, _id: int):
-        self.active = False
 
     def shutdown(self):
         self._write_config()
@@ -608,7 +604,7 @@ class ACInput(ACTextWidget):
         self._focus = False
         self._validation_callback = None
 
-        self.id = ac.addInputText(self.app, text)
+        self.id = ac.addTextInput(self.app, text)
 
     @property
     def focus(self):
@@ -637,7 +633,7 @@ class ACTextBox(ACTextWidget):
     def __init__(self, parent: ACWidget, text: str = ''):
         super().__init__(parent, text)
 
-        self.id = ac.addTextBox(self.app, '')
+        self.id = ac.addTextBox(self.app, text)
 
 
 class ACValueWidget(ACWidget):
@@ -717,9 +713,11 @@ class ACSpinner(ACValueWidget):
 
         self.id = ac.addSpinner(self.app, '')
 
+        self.step = self.step
+
     @property
     def step(self):
-        return self.step
+        return self._step
 
     @step.setter
     def step(self, step: float):
@@ -767,6 +765,9 @@ class ACListBox(ACWidget):
         self._deselection_callback = None
 
         self.id = ac.addListBox(self.app, '')
+
+        self.multi_selection = False
+        self.items_per_page = 5
 
     @property
     def count(self):

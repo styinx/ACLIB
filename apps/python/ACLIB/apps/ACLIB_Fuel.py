@@ -34,7 +34,7 @@ class Fuel(ACApp):
         self._small_font.color = BLACK
 
 
-        self._main_grid = ACGrid(10, 3, self)
+        self._main_grid = ACGrid(16, 6, self)
 
         self._grid = ACGrid(3, 3, self._main_grid)
         self._fuel_bar = ACLIBProgressBar(self._grid, 0)
@@ -61,7 +61,7 @@ class Fuel(ACApp):
         self._scaler = ACLIBScaler(self._grid, self._grid, 0.1)
 
         self._main_grid.add(self._scaler, 0, 0, 1, 2)
-        self._main_grid.add(self._grid, 1, 0, 9, 3)
+        self._main_grid.add(self._grid, 1, 0, 15, 6)
 
         self._grid.add(self._fuel, 0, 0, 1, 1)
         self._grid.add(self._fuel_bar, 1, 0, 2, 1)
@@ -74,6 +74,8 @@ class Fuel(ACApp):
         self._grid.add(self._avg_lap, 1, 2)
         self._grid.add(self._laps, 2, 2)
 
+        self._scaler.initial_size(self.cfg.get('grid_size', self._grid.size) or self._grid.size)
+
         self._fuel_lap_val = 0
         self._fuel_lap_avg = 0
         self._fuel_lap_ref = 0
@@ -82,7 +84,7 @@ class Fuel(ACApp):
         self._fuel_km_ref = 0
 
         self._data.on(ACData.EVENT.READY, self.init)
-        self._data.on(ACData.EVENT.PIT_ENTERED, self.init)
+        self._data.on(ACData.EVENT.PIT_ENTERED, self.on_pit)
         self._data.on(ACData.EVENT.KM_CHANGED, self.on_km)
         self._data.on(ACData.EVENT.LAP_CHANGED, self.on_lap)
         self._data.on(ACData.EVENT.FUEL_CHANGED, self.on_fuel)
@@ -103,6 +105,13 @@ class Fuel(ACApp):
         self._fuel_lap.text = '0.0  l/L'
         self._laps.text = '+ 0.0 Laps'
 
+    def on_pit(self):
+        self._fuel_lap_ref = self._data.car.fuel
+        self._fuel_km_ref = self._data.car.fuel
+
+        self._fuel.text = '{} l'.format(round(self._data.car.fuel, 1))
+        self._fuel_bar.value = self._data.car.fuel
+
     def on_fuel(self, fuel: float):
         self._fuel.text = '{} l'.format(round(fuel, 1))
         self._fuel_bar.value = fuel
@@ -120,7 +129,7 @@ class Fuel(ACApp):
             self._fuel_lap.text = '{}  l/L'.format(round(self._fuel_lap_val, 1))
             self._avg_lap.text = 'Ø {}  l/L'.format(round(self._fuel_lap_avg, 1))
             if self._fuel_lap_val > 0:
-                self._laps.text = '+ {} Laps'.format(round(self._data.car.fuel / self._fuel_lap_val, 1))
+                self._laps.text = '+ {} Laps'.format(round(self._data.car.fuel / self._fuel_lap_avg, 1))
 
     def on_km(self, km: int):
         if self._init:
@@ -135,4 +144,9 @@ class Fuel(ACApp):
             self._fuel_km.text = '{} l/km'.format(round(self._fuel_km_val, 1))
             self._avg_km.text = 'Ø {} l/km'.format(round(self._fuel_km_avg, 1))
             if self._fuel_km_val > 0:
-                self._km.text = '+ {}   km'.format(round(self._data.car.fuel / self._fuel_km_val, 1))
+                self._km.text = '+ {}   km'.format(round(self._data.car.fuel / self._fuel_km_avg, 1))
+
+    def shutdown(self):
+        self.cfg.set('grid_size', self._grid.size)
+
+        super().shutdown()
