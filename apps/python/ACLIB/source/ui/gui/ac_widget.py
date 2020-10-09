@@ -111,9 +111,9 @@ class ACWidget(EventListener):
 
     @staticmethod
     def _event_function(event: str, widget):
-        def func(x, y):
+        def func(*args):
             if widget.has_id:
-                ACWidget.IDS[widget.id].fire(event, widget)
+                ACWidget.IDS[widget.id].fire(event, widget, *args)
 
         globals()['on{}_{}'.format(event.replace(' ', '_'), widget.id)] = func
         return func
@@ -379,10 +379,10 @@ class ACApp(ACWidget):
             if ac.addOnAppDismissedListener(self.id, ACWidget._event_function(ACWidget.EVENT.DISMISSED, self)) == -1:
                 console('Failed to add dismissed listener for {}.'.format(self.title))
 
-    def _on_activate(self, widget: ACWidget):
+    def _on_activate(self, widget: ACWidget, *args):
         self.active = True
 
-    def _on_dismiss(self, widget: ACWidget):
+    def _on_dismiss(self, widget: ACWidget, *args):
         self.active = False
 
     def _load_config(self):
@@ -462,6 +462,16 @@ class ACApp(ACWidget):
 
         # Required since an app movement will draw the default background again.
         self.background_color = self.background_color
+
+    def render(self, delta: int):
+        if self.border or self.background:
+            w, h = self.size
+
+            if self.border:
+                gl.rect(0, 0, w, h, self.border_color, False)
+
+        if self.child:
+            self.child.render(delta)
 
     def shutdown(self):
         self._write_config()

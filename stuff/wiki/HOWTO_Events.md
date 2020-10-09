@@ -24,11 +24,11 @@ from ui.gui.ac_widget import ACWidget, ACLabel
 
 # ... Definition of the app ...
 
-def on_click_listener(widget: ACWidget):
+def on_click_listener(widget: ACWidget, *args):
     widget.text = 'I have been clicked!'
 
 class AnotherWidget(ACWidget):
-    def another_callback(self, widget: ACWidget):
+    def another_callback(self, widget: ACWidget, *args):
         self.background_color = widget.background_color
 
 another_widget = AnotherWidget(self.app)
