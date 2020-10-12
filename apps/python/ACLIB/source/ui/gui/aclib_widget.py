@@ -1,8 +1,10 @@
+from apps.python.ACLIB import ac
 from settings import TEXTURE_DIR, path
 from ui.color import *
-from ui.gui.ac_widget import ACWidget, ACButton, ACLabel
+from ui.gui.ac_widget import ACWidget, ACButton, ACLabel, ACValueWidget
 from ui.gui.font import Font, px2pt
-from ui.gui.layout import ACGrid
+from ui.gui.layout import ACGrid, ACLayout
+from util.log import console
 
 
 class ACLIBIcon(ACButton):
@@ -126,8 +128,8 @@ class ACLIBScaler(ACGrid):
         self._original_size = target.size
         self._current_size = target.size
 
-        self._plus = ACLabel(self)
-        self._minus = ACLabel(self)
+        self._plus = ACButton(self)
+        self._minus = ACButton(self)
 
         self._plus.background_color = WHITE
         self._plus.background_texture = ACLIBScaler.TEXTURES['plus']
@@ -165,7 +167,7 @@ class ACLIBScaler(ACGrid):
             self._target.size = (round(w * self._scale), round(h * self._scale))
 
 
-class ACLIBCollapsable(ACWidget):
+class ACLIBCollapsable(ACLabel):
     TEXTURES = {
         'plus':  path(TEXTURE_DIR, 'plus.png'),
         'minus': path(TEXTURE_DIR, 'minus.png')
@@ -212,7 +214,7 @@ class ACLIBCollapsable(ACWidget):
             self._content.visible = True
 
 
-class ACLIBListBox(ACWidget):
+class ACLIBListBox(ACLayout):
     TEXTURES = {
         'up':  path(TEXTURE_DIR, 'triangle_up.png'),
         'down': path(TEXTURE_DIR, 'triangle_down.png')
@@ -222,44 +224,101 @@ class ACLIBListBox(ACWidget):
         super().__init__(parent)
 
         self._elements = elements
+        self._bar_width = 10
         self._index = 0
         self._widgets = []
 
-        self._grid = ACGrid(5, elements, self)
-        self._up = ACButton(self._grid)
-        self._down = ACButton(self._grid)
+        self._bar = ACButton(self)
+        self._up = ACButton(self)
+        self._down = ACButton(self)
 
+        self._bar.background_color = WHITE
         self._up.background_texture = ACLIBListBox.TEXTURES['up']
-        self._up.background_color = WHITE
+        self._up.background_color = LIGHTGRAY
+        self._up.size = self._bar_width, self._bar_width
         self._down.background_texture = ACLIBListBox.TEXTURES['down']
-        self._down.background_color = WHITE
+        self._down.background_color = LIGHTGRAY
+        self._down.size = self._bar_width, self._bar_width
 
-        self._grid.add(self._up, 4, 0)
-        self._grid.add(self._down, 4, elements - 1)
+        self._up.on(ACWidget.EVENT.CLICK, self._on_up)
+        self._down.on(ACWidget.EVENT.CLICK, self._on_down)
 
-        self._up.on(ACWidget.EVENT.CLICK, self._up)
-        self._down.on(ACWidget.EVENT.CLICK, self._down)
+    # Private
 
-        self._reposition()
+    def _on_position_changed(self):
+        if hasattr(self, '_up'):
+            x, y = self.position
+            w, h = self.size
+            self._bar.position = w - self._bar_width, y + self._bar_width
+            self._up.position = w - self._bar_width, y
+            self._down.position = w - self._bar_width, y + h - self._bar_width
+
+    def _on_size_changed(self):
+        if hasattr(self, '_up'):
+            x, y = self.position
+            w, h = self.size
+            self._bar.position = w - self._bar_width, y + self._bar_width
+            self._bar.size = self._bar_width, h - self._bar_width * 2
+            self._up.position = w - self._bar_width, y
+            self._down.position = w - self._bar_width, y + h - self._bar_width
 
     def _reposition(self):
         x, y = self.position
-        w, h = self._grid.cell_size
-        for i in range(self._index, min(len(self._widgets), self._index + 5)):
-            self._widgets[i].position = x, y
-            y += h
+        w, h = self.size
 
-    def _up(self, widget: ACWidget):
+        element_height = h / self._elements
+
+        for i in range(0, self._index):
+            self._widgets[i].visible = False
+        for i in range(self._index + self._elements, max(self._index + self._elements, len(self._widgets))):
+            self._widgets[i].visible = False
+
+        for i in range(self._index, min(len(self._widgets), self._index + self._elements)):
+            self._widgets[i].position = x, y
+            self._widgets[i].size = w - self._bar_width, element_height
+            self._widgets[i].visible = True
+            y += element_height
+
+    def _on_up(self, widget: ACWidget, *args):
         if self._index > 0:
             self._index -= 1
         self._reposition()
 
-    def _down(self, widget: ACWidget):
-        if self._index < len(self._widgets) - 5:
+    def _on_down(self, widget: ACWidget, *args):
+        if self._index < len(self._widgets) - self._elements:
             self._index += 1
+        self._reposition()
+
+    # Public
+
+    @property
+    def index(self):
+        return self._index
+
+    @index.setter
+    def index(self, index: int):
+        if 0 <= index < len(self._widgets):
+            self.index = index
+            self._reposition()
+
+    @property
+    def count(self):
+        return self._elements
+
+    @count.setter
+    def count(self, count: int):
+        self._elements = count
         self._reposition()
 
     def add(self, widget: ACWidget):
         self._widgets.append(widget)
+
+        self._reposition()
+
+    def remove(self, widget: ACWidget = None, index: int = -1):
+        if widget:
+            self._widgets.remove(widget)
+        elif 0 <= index < len(self._widgets):
+            del self._widgets[index]
 
         self._reposition()

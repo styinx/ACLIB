@@ -113,12 +113,19 @@ class ACWidget(EventListener):
     def _event_function(event: str, widget):
         def func(*args):
             if widget.has_id:
-                ACWidget.IDS[widget.id].fire(event, widget, *args)
+                widget.fire(event, widget, *args)
 
-        globals()['on{}_{}'.format(event.replace(' ', '_'), widget.id)] = func
+        if widget.has_id:
+            globals()['on{}_{}'.format(event.replace(' ', '_'), widget.id)] = func
         return func
 
     # Public
+
+    @staticmethod
+    def get_control(_id: int):
+        if _id in ACWidget.IDS:
+            return ACWidget.IDS[_id]
+        return None
 
     @property
     def app(self):
@@ -503,6 +510,8 @@ class ACTextWidget(ACWidget, Observer):
 
     @property
     def text(self) -> str:
+        if self.has_id:
+            return ac.getText(self.id)
         return self._text
 
     @text.setter
@@ -615,6 +624,7 @@ class ACInput(ACTextWidget):
         self._validation_callback = None
 
         self.id = ac.addTextInput(self.app, text)
+        self.text = text
 
     @property
     def focus(self):
