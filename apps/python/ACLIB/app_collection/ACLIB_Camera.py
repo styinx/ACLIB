@@ -74,16 +74,16 @@ class Camera(ACApp):
             self._labels[self._cam_id].font = self._active_font
             self._labels[self._cam_id].background_color = RED
 
-    def select(self, _id):
-        self.by_id(ACWidget.IDS[_id].cam)
+    def select(self, widget: ACWidget, *args):
+        self.by_id(widget.cam)
 
-    def next(self, _id):
+    def next(self, widget: ACWidget, *args):
         if self._cam_id == 9:
             self.by_id(0)
         else:
             self.by_id(self._cam_id + 1)
 
-    def prev(self, _id):
+    def prev(self, widget: ACWidget, *args):
         if self._cam_id == 0:
             self.by_id(9)
         else:
