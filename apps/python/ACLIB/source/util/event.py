@@ -37,7 +37,7 @@ class EventListener:
 
         return event, callback_id
 
-    def remove(self, unique_id: tuple):
+    def remove_listener(self, unique_id: tuple):
         """
         Removes an event from the EventListener
         :param unique_id: tuple     Contains the name of the event and the unique id assigned in 'on'.
