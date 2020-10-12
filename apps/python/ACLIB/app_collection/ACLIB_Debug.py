@@ -1,6 +1,6 @@
 from memory.ac_data import ACData
 from memory.ac_meta import ACMeta
-from ui.color import RED, TRANSPARENT, DARKGRAY, BLACK, WHITE
+from ui.color import RED, TRANSPARENT, DARKGRAY, BLACK, WHITE, YELLOW
 from ui.gui.font import Font
 from ui.gui.layout import ACGrid
 from ui.gui.ac_widget import ACApp, ACLabel, ACWidget, ACTextWidget
@@ -57,12 +57,18 @@ class Debug(ACApp):
         if self.active:
             if self._widget and self._widget == widget:
                 self._widget.border_color = self._widget_bg
-            elif self._widget and widget.child == self._widget:
+
+            elif self._widget and widget == self._widget.parent:
                 self._chain.append(widget)
+                widget.border_color = YELLOW
                 self._chain_text.text = self._chain_text.text + str(widget) + ' -> '
+
             else:
-                self._chain = []
                 self._chain_text = ''
+                for w in self._chain:
+                    w.border_color = TRANSPARENT
+                self._chain = []
+
                 if self._widget:
                     self._widget.border_color = self._widget_bg
                 self._widget = widget
@@ -71,8 +77,7 @@ class Debug(ACApp):
 
                 self._widget_text.text = str(self._widget)
                 self._position_text.text = str(self._widget.position)
-                if isinstance(self._widget, ACTextWidget):
-                    self._size_text.text = str(self._widget.size)
+                self._size_text.text = str(self._widget.size)
 
             console(widget, 'clicked')
 
