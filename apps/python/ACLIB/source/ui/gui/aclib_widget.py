@@ -6,7 +6,7 @@ from ui.gui.layout import ACGrid, ACLayout
 
 
 class ACLIBIcon(ACButton):
-    def __init__(self, file: str, parent: ACWidget = None):
+    def __init__(self, parent: ACWidget, file: str):
         super().__init__(parent)
 
         self.background_texture = file
