@@ -57,6 +57,7 @@ class ACData(EventListener):
         self._is_in_pit = BoolObservable(self, False, ACData.EVENT.PIT_ENTERED, ACData.EVENT.PIT_LEFT)
         self._is_in_pitline = BoolObservable(self, False, ACData.EVENT.PITLINE_ENTERED, ACData.EVENT.PITLINE_LEFT)
         self._has_penalty = BoolObservable(self, False, ACData.EVENT.PENALTY_RECEIVED, ACData.EVENT.PENALTY_SERVED)
+        self._valid = Observable(self, False, ACData.EVENT.LAP_INVALIDATED)
         self._position = Observable(self, 0, ACData.EVENT.POSITION_CHANGED)
         self._compound = Observable(self, 0, ACData.EVENT.COMPOUND_CHANGED)
         self._flag = Observable(self, 0, ACData.EVENT.FLAG_CHANGED)
@@ -83,6 +84,7 @@ class ACData(EventListener):
             self._is_in_pit.value = self._car.is_in_pit
             self._is_in_pitline.value = self._car.is_in_pit_line
             self._has_penalty.value = self._car.has_penalty
+            #self._valid.value = self._timing.
             self._position.value = self._car.position
             self._flag.value = self._session.flag
             self._fuel.value = self._car.fuel
@@ -96,6 +98,14 @@ class ACData(EventListener):
 
     def shutdown(self):
         pass
+
+    @property
+    def players(self):
+        return self._players
+
+    @property
+    def server(self):
+        return self._server
 
     @property
     def driver(self):
