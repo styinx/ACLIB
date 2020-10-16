@@ -173,14 +173,28 @@ class Config(Storage):
             return False
         elif re.match(r'[\w\.]+\(.*\)', arg):
             for match in re.findall(r'([\w\.]+\().*\)', arg):
-                class_path = match[:-1].split('.')
+                class_path = match.split('.')
                 module_name = '.'.join(class_path[:-1])
 
                 arg = arg.replace(module_name + '.', '')
 
-                if module_name not in sys.modules.keys():
+                if module_name and module_name not in sys.modules.keys():
                     importlib.import_module(module_name)
-            print(eval(arg))
+
+                exec('from ' + module_name + ' import ' + arg[:arg.find('(')])
+
+            return eval(arg)
+        elif re.match(r'[\w\.]+', arg):
+            for match in re.findall(r'([\w\.]+)', arg):
+                obj_path = match.split('.')
+                module_name = '.'.join(obj_path[:-1])
+
+                arg = arg.replace(module_name + '.', '')
+
+                if module_name and module_name not in sys.modules.keys():
+                    importlib.import_module(module_name)
+
+                exec('from ' + module_name + ' import ' + arg)
 
             return eval(arg)
         return None

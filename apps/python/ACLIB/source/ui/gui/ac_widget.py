@@ -76,7 +76,7 @@ class ACWidget(EventListener):
         self.on(ACWidget.EVENT.VISIBILITY_CHANGED, self._on_visibility_changed)
 
         try:
-            app_name = None if not self.app else self.app.__class__.__name__
+            app_name = None if self.app not in ACWidget.IDS else ACWidget.IDS[self.app].title
             WidgetStyle.load_style_from_config(self, self.__class__.__name__, app_name)
         except Exception as e:
             console('Problems while loading style for class "{}"'.format(self.__class__.__name__))
