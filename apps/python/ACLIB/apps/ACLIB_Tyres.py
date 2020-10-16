@@ -1,12 +1,9 @@
-from settings import TEXTURE_DIR, path
 from memory.ac_data import ACData
 from memory.ac_meta import ACMeta
-from ui.gl import Texture, texture_rect, rect
 from ui.gui.ac_widget import ACApp, ACLabel, ACWidget
 from ui.gui.aclib_widget import ACLIBProgressBar
 from ui.gui.layout import ACGrid
 from ui.color import *
-from util.log import console
 
 
 class Tyres(ACApp):
