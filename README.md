@@ -34,7 +34,7 @@ If you detect any issues please create an [Issue](https://github.com/styinx/ACLI
   - Or take a look at specific [releases](https://github.com/styinx/ACLIB/releases).
 
 - **optional**
-  - Remove the folder /stuff and the `README.md` file.
+  - Remove the folder `/stuff` and the `README.md` file.
 
 - **2**
   - Extract the folders `/apps` and `/contents` into the Assetto Corsa installation folder (usually `C:/Program Files (x86)/Steam/steamapps/common/assettocorsa`).
@@ -42,23 +42,27 @@ If you detect any issues please create an [Issue](https://github.com/styinx/ACLI
 - **3**
   - Enable ACLIB in the settings.
   - Assetto Corsa Launcher:
-    - Settings: 
+    - Settings: <br>
     ![Settings](https://github.com/styinx/ACLIB/blob/master/stuff/images/ac_settings.png)
-    - Enable ACLIB: 
+    - Enable ACLIB:<br> 
     ![ACLIB](https://github.com/styinx/ACLIB/blob/master/stuff/images/ac_aclib.png)
   - Content Manager:
-    - Settings:
+    - Settings:<br>
     ![Settings](https://github.com/styinx/ACLIB/blob/master/stuff/images/cm_settings.png)
-    - AC Tab:
+    - AC Tab:<br>
     ![Assetto Corsa](https://github.com/styinx/ACLIB/blob/master/stuff/images/cm_assetto_corsa.png)
-    - Apps Menu:
+    - Apps Menu:<br>
     ![Apps](https://github.com/styinx/ACLIB/blob/master/stuff/images/cm_apps.png)
-    - Enable ACLIB:
+    - Enable ACLIB:<br>
     ![ACLIB](https://github.com/styinx/ACLIB/blob/master/stuff/images/cm_aclib.png)
   
 <br>
 
 ## Apps that are shipped with ACLIB
+
+![ACLIB_Comparator](https://github.com/styinx/ACLIB/blob/master/stuff/images/comparator_1.png 'ACLIB_Comparator')
+
+[ACLIB_Comparator](https://github.com/styinx/ACLIB/wiki/ACLIB_Comparator)
 
 ![ACLIB_Fuel](https://github.com/styinx/ACLIB/blob/master/stuff/images/fuel.png 'ACLIB_Fuel')
 
