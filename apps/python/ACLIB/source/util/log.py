@@ -28,13 +28,15 @@ class Log:
         return '{0}{1}'.format(' '.join(map(str, what)), end)
 
 
-def log(*what):
+def log(*what, flush: bool = False):
     if Log.LOGS <= Log.MAX_LOGS:
         Log.LOGS += 1
         if Log.LOG_2_AC:
             return ac.log(Log.stringify(Format.time(), *what))
         else:
             Log.HANDLE.write(Log.stringify(Format.time(), *what))
+            if flush:
+                Log.HANDLE.flush()
 
 
 def tb(e: Exception):

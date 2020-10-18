@@ -28,20 +28,20 @@ class Format:
         return strftime("%H:%M:%S", localtime())
 
     @staticmethod
-    def duration(ms: float = 0, form: str = "{:02d}:{:02d}.{:03d}"):
+    def duration(ms: float = 0, form: str = "{m:02d}:{s:02d}.{ms:03d}"):
         millis = abs(int(ms))
         m = int(millis / 60000)
         s = int((millis % 60000) / 1000)
         ms = millis % 1000
 
-        return form.format(m, s, ms)
+        return form.format(m=m, s=s, ms=ms)
 
     @staticmethod
-    def distance(meters: float = 0, form: str = '{:02d}.{:02.0f} km'):
+    def distance(meters: float = 0, form: str = '{km:02d}.{m:02.0f} km'):
         km = int(meters / 1000)
         m = (meters % 1000) / 10
 
-        return form.format(km, m)
+        return form.format(km=km, m=m)
 
     @staticmethod
     def gear(gear: int):

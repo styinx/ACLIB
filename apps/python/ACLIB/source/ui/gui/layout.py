@@ -15,6 +15,10 @@ class ACLayout(ACWidget):
     def __iter__(self):
         return iter(self._children)
 
+    def _on_visibility_changed(self):
+        for child in self._children:
+            child.visible = self.visible
+
     @property
     def children(self) -> list:
         return self._children
@@ -39,12 +43,43 @@ class ACBox(ACLayout):
     HORIZONTAL = 0
     VERTICAL = 1
 
-    def __init__(self, orientation: int = 0, parent: ACWidget = None):
+    def __init__(self, parent: ACWidget, orientation: int = 0):
         super().__init__(parent)
 
         self._orientation = 0
 
         self.orientation = orientation
+
+    def _on_position_changed(self):
+        if hasattr(self, '_orientation'):
+            x, y = self.position
+            w, h = self.size
+
+            if self.orientation == ACBox.HORIZONTAL:
+                dim = round(w / max(1, len(self._children)))
+            else:
+                dim = round(h / max(1, len(self._children)))
+
+            for c in self._children:
+                c.position = (x, y)
+                if self.orientation == ACBox.HORIZONTAL:
+                    x += dim
+                else:
+                    y += dim
+
+    def _on_size_changed(self):
+        if hasattr(self, '_orientation'):
+            w, h = self.size
+            if self.orientation == ACBox.HORIZONTAL:
+                dim = round(w / max(1, len(self._children)))
+            else:
+                dim = round(h / max(1, len(self._children)))
+
+            for c in self._children:
+                if self.orientation == ACBox.HORIZONTAL:
+                    c.size = (dim, h)
+                else:
+                    c.size = (w, dim)
 
     @property
     def orientation(self) -> int:
@@ -57,75 +92,18 @@ class ACBox(ACLayout):
     def add(self, widget: ACWidget):
         self._children.append(widget)
 
+        self._on_position_changed()
+        self._on_size_changed()
+
 
 class ACHBox(ACBox):
-    def __init__(self, parent: ACWidget = None):
-        super().__init__(ACBox.HORIZONTAL, parent)
-
-    def _on_position_changed(self):
-        x, y = self.position
-        w, h = self.size
-        width_per_child = round(w / len(self._children))
-
-        for c in self._children:
-            c.position = (x, y)
-            x += width_per_child
-
-    def _on_size_changed(self):
-        w, h = self.size
-        width_per_child = round(w / len(self._children))
-
-        for c in self._children:
-            c.size = (width_per_child, h)
-
-    def add(self, widget: ACWidget):
-        super().add(widget)
-
-        x, y = self.position
-        w, h = self.size
-        width_per_child = round(w / len(self._children))
-
-        for c in self._children:
-            c.position = (x, y)
-            c.size = (width_per_child, h)
-            x += width_per_child
+    def __init__(self, parent: ACWidget):
+        super().__init__(parent, ACBox.HORIZONTAL)
 
 
 class ACVBox(ACBox):
-    def __init__(self, parent: ACWidget = None):
-        super().__init__(ACBox.VERTICAL, parent)
-
-    def _on_position_changed(self):
-        if hasattr(self, 'children'):
-            x, y = self.position
-            w, h = self.size
-            height_per_child = round(h / len(self.children))
-
-            for child in self.children:
-                child.position = (x, y)
-                y += height_per_child
-
-    def _on_size_changed(self):
-        if hasattr(self, 'children'):
-            x, y = self.position
-            w, h = self.size
-            height_per_child = round(h / len(self.children))
-
-            for child in self.children:
-                child.size = (w, height_per_child)
-                y += height_per_child
-
-    def add(self, widget: ACWidget):
-        super().add(widget)
-
-        x, y = self.position
-        w, h = self.size
-        height_per_child = round(h / len(self.children))
-
-        for child in self.children:
-            child.position = (x, y)
-            child.size = (w, height_per_child)
-            y += height_per_child
+    def __init__(self, parent: ACWidget):
+        super().__init__(parent, ACBox.VERTICAL)
 
 
 class ACGrid(ACLayout):
@@ -138,6 +116,11 @@ class ACGrid(ACLayout):
         self._rows = max(1, rows)
         self._cell_width = round(self.size[0] / self.cols)
         self._cell_height = round(self.size[1] / self.rows)
+
+        self.on(ACWidget.EVENT.COLS_CHANGED, self._on_cols_changed)
+        self.on(ACWidget.EVENT.ROWS_CHANGED, self._on_rows_changed)
+
+    # Private
 
     def _on_position_changed(self):
         if hasattr(self, '_indices'):
@@ -156,6 +139,14 @@ class ACGrid(ACLayout):
                 child.position = (x + idx[0] * self._cell_width, y + idx[1] * self._cell_height)
                 child.size = (idx[2] * self._cell_width, idx[3] * self._cell_height)
 
+    def _on_cols_changed(self, *args):
+        self._on_size_changed()
+
+    def _on_rows_changed(self, *args):
+        self._on_size_changed()
+
+    # Public
+
     @property
     def cell_size(self):
         return self._cell_width, self._cell_height
@@ -167,6 +158,26 @@ class ACGrid(ACLayout):
     @property
     def rows(self) -> int:
         return self._rows
+
+    def add_cols(self, cols: int):
+        if cols > 0:
+            self._cols += cols
+            self.fire(ACWidget.EVENT.COLS_CHANGED, self._cols)
+
+    def remove_cols(self, cols: int):
+        if cols < 0:
+            self._cols += cols
+            self.fire(ACWidget.EVENT.COLS_CHANGED, self._cols)
+
+    def add_rows(self, rows: int):
+        if rows > 0:
+            self._rows += rows
+            self.fire(ACWidget.EVENT.ROWS_CHANGED, self._rows)
+
+    def remove_rows(self, rows: int):
+        if 0 < rows <= self._rows:
+            self._rows -= rows
+            self.fire(ACWidget.EVENT.ROWS_CHANGED, self._rows)
 
     def child_at(self, x: int, y: int):
         if not (0 <= x < self.cols) or not (0 <= y < self.rows):
@@ -181,3 +192,23 @@ class ACGrid(ACLayout):
         self._indices[(x, y, w, h)] = widget
         widget.size = (self._cell_width * w, self._cell_height * h)
         widget.position = (self.position[0] + self._cell_width * x, self.position[1] + self._cell_height * y)
+
+
+class ACMultiWidget(ACLayout):
+    def __init__(self, parent: ACWidget):
+        super().__init__(parent)
+
+    def add(self, widget: ACWidget):
+        self._children.append(widget)
+
+    def _on_position_changed(self):
+        x, y = self.position
+
+        for c in self._children:
+            c.position = (x, y)
+
+    def _on_size_changed(self):
+        w, h = self.size
+
+        for c in self._children:
+            c.size = (w, h)

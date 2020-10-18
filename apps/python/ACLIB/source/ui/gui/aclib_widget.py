@@ -1,14 +1,12 @@
-from apps.python.ACLIB import ac
 from settings import TEXTURE_DIR, path
 from ui.color import *
-from ui.gui.ac_widget import ACWidget, ACButton, ACLabel, ACValueWidget
+from ui.gui.ac_widget import ACWidget, ACButton, ACLabel
 from ui.gui.font import Font, px2pt
 from ui.gui.layout import ACGrid, ACLayout
-from util.log import console
 
 
 class ACLIBIcon(ACButton):
-    def __init__(self, file: str, parent: ACWidget = None):
+    def __init__(self, parent: ACWidget, file: str):
         super().__init__(parent)
 
         self.background_texture = file
@@ -18,7 +16,7 @@ class ACLIBIcon(ACButton):
 
 # todo range checking
 class ACLIBProgressBar(ACLabel):
-    def __init__(self, parent: ACWidget, value: float, start: float = 0, stop: float = 1):
+    def __init__(self, parent: ACWidget, value: float, start: float = 0, stop: float = 1, progress: bool = False):
         super().__init__(parent)
 
         font = Font('Roboto Mono')
@@ -28,7 +26,7 @@ class ACLIBProgressBar(ACLabel):
 
         self._progress = ACLabel(self)
         self._text = ACLabel(self, '', 'center')
-        self._show_progress = False
+        self._show_progress = progress
         self._range = (min(start, stop), max(start, stop))
         self._value = value if start <= value <= stop else start
 
@@ -215,6 +213,12 @@ class ACLIBCollapsable(ACLabel):
 
 
 class ACLIBListBox(ACLayout):
+    """
+    This widget enables scrolling on a list of items. Items must inherit from ACWidget.
+    The widget has a scrollbar and two buttons. One arrow scrolls the list upwards, the other arrow scrolls downwards.
+    The number of elements that are shown is configurable. Items that are not inside the item range are hidden.
+    """
+
     TEXTURES = {
         'up':  path(TEXTURE_DIR, 'triangle_up.png'),
         'down': path(TEXTURE_DIR, 'triangle_down.png')
@@ -249,18 +253,20 @@ class ACLIBListBox(ACLayout):
         if hasattr(self, '_up'):
             x, y = self.position
             w, h = self.size
-            self._bar.position = w - self._bar_width, y + self._bar_width
-            self._up.position = w - self._bar_width, y
-            self._down.position = w - self._bar_width, y + h - self._bar_width
+            right = w - self._bar_width
+            self._bar.position = right, y + self._bar_width
+            self._up.position = right, y
+            self._down.position = right, y + h - self._bar_width
 
     def _on_size_changed(self):
         if hasattr(self, '_up'):
             x, y = self.position
             w, h = self.size
-            self._bar.position = w - self._bar_width, y + self._bar_width
+            right = w - self._bar_width
             self._bar.size = self._bar_width, h - self._bar_width * 2
-            self._up.position = w - self._bar_width, y
-            self._down.position = w - self._bar_width, y + h - self._bar_width
+            self._bar.position = right, y + self._bar_width
+            self._up.position = right, y
+            self._down.position = right, y + h - self._bar_width
 
     def _reposition(self):
         x, y = self.position
@@ -268,11 +274,13 @@ class ACLIBListBox(ACLayout):
 
         element_height = h / self._elements
 
+        # Hide items that are out of range.
         for i in range(0, self._index):
             self._widgets[i].visible = False
         for i in range(self._index + self._elements, max(self._index + self._elements, len(self._widgets))):
             self._widgets[i].visible = False
 
+        # Set the position and size of the items inside the list.
         for i in range(self._index, min(len(self._widgets), self._index + self._elements)):
             self._widgets[i].position = x, y
             self._widgets[i].size = w - self._bar_width, element_height

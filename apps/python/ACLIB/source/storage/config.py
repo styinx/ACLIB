@@ -13,12 +13,14 @@ class Config(Storage):
     def __init__(self,
                  file: str = '',
                  comments: list = None,
-                 only_strings = False):
+                 only_strings = False,
+                 check_modules = False):
         super().__init__(file)
 
         self._dict = OrderedDict()
         self._comments = comments if comments is not None else [';', '#', '//']
         self._only_strings = only_strings
+        self._check_modules = check_modules
 
         self.topic = 'DEFAULT'
         self._dict['DEFAULT'] = {}
@@ -146,12 +148,11 @@ class Config(Storage):
         if self._only_strings:
             value = str(value)
         else:
-            value = Config.parse_value(value)
+            value = self.parse_value(value)
 
         self.set(key, value, self.topic)
 
-    @staticmethod
-    def parse_value(arg: str):
+    def parse_value(self, arg: str):
         first = arg[0]
         last = arg[-1]
 
@@ -172,15 +173,35 @@ class Config(Storage):
         elif arg.lower() in ['f', 'false', 'n', 'no']:
             return False
         elif re.match(r'[\w\.]+\(.*\)', arg):
+            if not self._check_modules:
+                return str(arg)
+
             for match in re.findall(r'([\w\.]+\().*\)', arg):
-                class_path = match[:-1].split('.')
+                class_path = match.split('.')
                 module_name = '.'.join(class_path[:-1])
 
                 arg = arg.replace(module_name + '.', '')
 
-                if module_name not in sys.modules.keys():
+                if module_name and module_name not in sys.modules.keys():
                     importlib.import_module(module_name)
-            print(eval(arg))
+
+                exec('from ' + module_name + ' import ' + arg[:arg.find('(')])
+
+            return eval(arg)
+        elif re.match(r'[\w\.]+', arg):
+            if not self._check_modules:
+                return str(arg)
+
+            for match in re.findall(r'([\w\.]+)', arg):
+                obj_path = match.split('.')
+                module_name = '.'.join(obj_path[:-1])
+
+                arg = arg.replace(module_name + '.', '')
+
+                if module_name and module_name not in sys.modules.keys():
+                    importlib.import_module(module_name)
+
+                exec('from ' + module_name + ' import ' + arg)
 
             return eval(arg)
         return None

@@ -1,3 +1,5 @@
+import time
+
 import ac
 from ui import gl
 from ui.animation import Animation
@@ -26,11 +28,13 @@ class ACWidget(EventListener):
         BACKGROUND_CHANGED = 'Background Changed'
         CHILD_CHANGED = 'Child Changed'
         CLICK = 'Click'
+        COLS_CHANGED = 'Cols Changed'
         CONFIG_CHANGED = 'Config Changed'
         DISMISSED = 'Dismissed'
         PARENT_CHANGED = 'Parent Changed'
         PROGRESS_CHANGED = 'Progress Changed'
         POSITION_CHANGED = 'Position Changed'
+        ROWS_CHANGED = 'Rows Changed'
         SIZE_CHANGED = 'Size Changed'
         STYLE_CHANGED = 'Style Changed'
         TEXT_CHANGED = 'Text Changed'
@@ -69,9 +73,10 @@ class ACWidget(EventListener):
         self.on(ACWidget.EVENT.PARENT_CHANGED, self._on_parent_changed)
         self.on(ACWidget.EVENT.POSITION_CHANGED, self._on_position_changed)
         self.on(ACWidget.EVENT.SIZE_CHANGED, self._on_size_changed)
+        self.on(ACWidget.EVENT.VISIBILITY_CHANGED, self._on_visibility_changed)
 
         try:
-            app_name = None if not self.app else self.app.__class__.__name__
+            app_name = None if self.app not in ACWidget.IDS else ACWidget.IDS[self.app].title
             WidgetStyle.load_style_from_config(self, self.__class__.__name__, app_name)
         except Exception as e:
             console('Problems while loading style for class "{}"'.format(self.__class__.__name__))
@@ -95,7 +100,8 @@ class ACWidget(EventListener):
         self.parent = self._parent
 
         if self.has_id:
-            ac.addOnClickedListener(self.id, ACWidget._event_function(ACWidget.EVENT.CLICK, self))
+            if ac.addOnClickedListener(self.id, ACWidget._event_function(ACWidget.EVENT.CLICK, self)) == -1:
+                console('Failed to register onClick listener for {}.'.format(self))
 
     def _on_parent_changed(self):
         self.position = (0, 0) if isinstance(self.parent, ACApp) else self.parent.position
@@ -109,14 +115,18 @@ class ACWidget(EventListener):
         if self.child:
             self.child.size = self.size
 
+    def _on_visibility_changed(self):
+        if self.child:
+            self.child.visible = self.visible
+
     @staticmethod
     def _event_function(event: str, widget):
         def func(*args):
             if widget.has_id:
+
                 widget.fire(event, widget, *args)
 
-        if widget.has_id:
-            globals()['on{}_{}'.format(event.replace(' ', '_'), widget.id)] = func
+        globals()['on{}_{}_{}'.format(event.replace(' ', '_'), widget.id, round(time.time() * 1000000))] = func
         return func
 
     # Public
@@ -233,6 +243,8 @@ class ACWidget(EventListener):
         if self.has_id:
             ac.setVisible(self.id, visible)
 
+        self.fire(ACWidget.EVENT.VISIBILITY_CHANGED)
+
     @property
     def background(self) -> bool:
         return self._background
@@ -346,6 +358,7 @@ class ACApp(ACWidget):
     This class represents an application that holds a collection of controls and layouts.
     It is used for relative positioning of controls and is responsible for storing configurations.
     """
+
     def __init__(self, app_name: str, x: int, y: int, w: int, h: int):
         super().__init__()
 
@@ -610,10 +623,13 @@ class ACVLabel(ACLabel):
 
 
 class ACButton(ACTextWidget):
-    def __init__(self, parent: ACWidget, text: str = '', h_alignment: str = 'left', font: Font = None):
+    def __init__(self, parent: ACWidget, text: str = '', h_alignment: str = 'left', font: Font = None,
+                 texture: str = ''):
         super().__init__(parent, text, h_alignment, font)
 
         self.id = ac.addButton(self.app, text)
+
+        self.background_texture = texture
 
 
 class ACInput(ACTextWidget):

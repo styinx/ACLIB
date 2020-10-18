@@ -42,24 +42,30 @@ If you detect any issues please create an [Issue](https://github.com/styinx/ACLI
 - **3**
   - Enable ACLIB in the settings.
   - Assetto Corsa Launcher:
-    - ![Settings](https://github.com/styinx/ACLIB/blob/master/stuff/images/ac_settings.png)
-    - ![ACLIB](https://github.com/styinx/ACLIB/blob/master/stuff/images/ac_aclib.png)
+    - Settings: 
+    ![Settings](https://github.com/styinx/ACLIB/blob/master/stuff/images/ac_settings.png)
+    - Enable ACLIB: 
+    ![ACLIB](https://github.com/styinx/ACLIB/blob/master/stuff/images/ac_aclib.png)
   - Content Manager:
-    - ![Settings](https://github.com/styinx/ACLIB/blob/master/stuff/images/cm_settings.png)
-    - ![Assetto Corsa](https://github.com/styinx/ACLIB/blob/master/stuff/images/cm_assetto_corsa.png)
-    - ![Apps](https://github.com/styinx/ACLIB/blob/master/stuff/images/cm_apps.png)
-    - ![ACLIB](https://github.com/styinx/ACLIB/blob/master/stuff/images/cm_aclib.png)
+    - Settings:
+    ![Settings](https://github.com/styinx/ACLIB/blob/master/stuff/images/cm_settings.png)
+    - AC Tab:
+    ![Assetto Corsa](https://github.com/styinx/ACLIB/blob/master/stuff/images/cm_assetto_corsa.png)
+    - Apps Menu:
+    ![Apps](https://github.com/styinx/ACLIB/blob/master/stuff/images/cm_apps.png)
+    - Enable ACLIB:
+    ![ACLIB](https://github.com/styinx/ACLIB/blob/master/stuff/images/cm_aclib.png)
   
 <br>
 
 ## Apps that are shipped with ACLIB
 
-![ACLIB_Fuel](https://github.com/styinx/ACLIB/blob/master/stuff/images/fuel_2.png 'ACLIB_Fuel')
+![ACLIB_Fuel](https://github.com/styinx/ACLIB/blob/master/stuff/images/fuel.png 'ACLIB_Fuel')
 
 [ACLIB_Fuel](https://github.com/styinx/ACLIB/wiki/ACLIB_Fuel)
 
 
-![ACLIB_Tyres](https://github.com/styinx/ACLIB/blob/master/stuff/images/tyres_1.png 'ACLIB_Tyres')
+![ACLIB_Tyres](https://github.com/styinx/ACLIB/blob/master/stuff/images/tyres.png 'ACLIB_Tyres')
 
 [ACLIB_Tyres](https://github.com/styinx/ACLIB/wiki/ACLIB_Tyres)
 

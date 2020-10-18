@@ -1,9 +1,9 @@
 from memory.ac_data import ACData
 from memory.ac_meta import ACMeta
-from ui.color import RED, TRANSPARENT, DARKGRAY, BLACK, WHITE, YELLOW
+from ui.color import RED, TRANSPARENT, BLACK, WHITE, YELLOW
 from ui.gui.font import Font
 from ui.gui.layout import ACGrid
-from ui.gui.ac_widget import ACApp, ACLabel, ACWidget, ACTextWidget
+from ui.gui.ac_widget import ACApp, ACLabel, ACWidget
 
 from util.log import console
 

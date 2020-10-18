@@ -2,6 +2,7 @@ import os
 
 from settings import STYLE_DIR, CONFIG_DIR, path
 from storage.config import Config
+from util.log import console
 
 
 class WidgetConfig:
@@ -36,13 +37,17 @@ class WidgetStyle:
             if app_name:
                 app_style_file = path(STYLE_DIR, app_name + '.ini')
                 if os.path.isfile(app_style_file):
-                    config = Config(app_style_file)
+                    config = Config(app_style_file, check_modules=True)
+
+                    console('Load App style from ', app_style_file)
 
             # Try to load from widget style config
             if not config:
                 class_style_file = path(STYLE_DIR, class_name + '.ini')
                 if os.path.isfile(class_style_file):
-                    config = Config(class_style_file)
+                    config = Config(class_style_file, check_modules=True)
+
+                    console('Load Widget style from ', class_style_file)
 
             # Store the style
             if config:
@@ -50,6 +55,10 @@ class WidgetStyle:
                     WidgetStyle.STYLE[class_name] = config.dict[class_name]
                 else:
                     WidgetStyle.STYLE[class_name] = config.dict['DEFAULT']
+
+                if app_name:
+                    for widget, values in config.dict.items():
+                        WidgetStyle.STYLE[widget] = values
 
         if class_name in WidgetStyle.STYLE:
             for prop, val in WidgetStyle.STYLE[class_name].items():
