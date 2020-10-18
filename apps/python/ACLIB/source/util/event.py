@@ -1,3 +1,6 @@
+from util.log import tb
+
+
 class EventListener:
     """
     An EventListener holds events and assigned functions to this event.
@@ -15,10 +18,13 @@ class EventListener:
         """
         if event in self._callbacks:
             for _, callback in self._callbacks[event].items():
-                if len(args) > 0:
-                    callback(*args)
-                else:
-                    callback()
+                try:
+                    if len(args) > 0:
+                        callback(*args)
+                    else:
+                        callback()
+                except Exception as e:
+                    tb(e)
 
     def on(self, event: str, callback: callable):
         """
