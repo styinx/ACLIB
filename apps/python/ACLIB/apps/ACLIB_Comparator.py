@@ -265,7 +265,7 @@ class ComparatorRow(ACGrid):
 
             elif self._mode == 1:
                 for i in range(0, 3):
-                    self._sectors[i].text = 'S{}: {}'.format(i, Format.duration(player.sector_time(i),
+                    self._sectors[i].text = 'S{}: {}'.format(i + 1, Format.duration(player.sector_time(i),
                                                                                 form=self._sec_format))
 
                     if i != player.sector_index and player.sector_time(i) > 0:
