@@ -11,7 +11,7 @@ from memory.data.session import Session
 from memory.data.timing import Timing
 from memory.data.tyres import Tyres
 from util.event import EventListener
-from util.observer import BoolObservable, Observable
+from util.observer import BoolObservable, Observable, IntervalObservable
 
 
 class ACData(EventListener):
@@ -38,10 +38,15 @@ class ACData(EventListener):
         PLAYER_JOINED = 'Player Joined'
         PLAYER_LEFT = 'Player Left'
 
+    class PROPERTY:
+        IS_IN_PIT = 'Is in Pit'
+
     def __init__(self):
         super().__init__()
 
         self._ready = False
+
+        # Categories
 
         self._info = SimInfo()
         self._car = Car(self._info)
@@ -54,10 +59,16 @@ class ACData(EventListener):
         self._server = Server()
         self._players = Players(self._server)
 
+        # Properties
+
+        self._properties = {
+            ACData.PROPERTY.IS_IN_PIT: BoolObservable(self, False, ACData.EVENT.PIT_ENTERED, ACData.EVENT.PIT_LEFT)
+        }
+
         self._is_in_pit = BoolObservable(self, False, ACData.EVENT.PIT_ENTERED, ACData.EVENT.PIT_LEFT)
         self._is_in_pitline = BoolObservable(self, False, ACData.EVENT.PITLINE_ENTERED, ACData.EVENT.PITLINE_LEFT)
         self._has_penalty = BoolObservable(self, False, ACData.EVENT.PENALTY_RECEIVED, ACData.EVENT.PENALTY_SERVED)
-        self._valid = Observable(self, False, ACData.EVENT.LAP_INVALIDATED)
+        self._is_lap_valid = Observable(self, False, ACData.EVENT.LAP_INVALIDATED)
         self._position = Observable(self, 0, ACData.EVENT.POSITION_CHANGED)
         self._compound = Observable(self, 0, ACData.EVENT.COMPOUND_CHANGED)
         self._flag = Observable(self, 0, ACData.EVENT.FLAG_CHANGED)
@@ -67,13 +78,14 @@ class ACData(EventListener):
         self._mini_sector = Observable(self, 0, ACData.EVENT.MINI_SECTOR_CHANGED)
         self._km_sector = Observable(self, 0, ACData.EVENT.KM_SECTOR_CHANGED)
         self._km_traveled = Observable(self, 0, ACData.EVENT.KM_CHANGED)
+        self._player_count = IntervalObservable(self, 0, ACData.EVENT.PLAYER_LEFT, ACData.EVENT.PLAYER_JOINED)
 
     def init(self):
         thread = Thread(target=self._check_ready_loop, daemon=True)
         thread.start()
 
     def _check_ready_loop(self):
-        while len(self._tyres.compound) < 5:
+        while len(self._tyres.compound) < 2:
             time.sleep(0.1)
         self._ready = True
         self.fire(ACData.EVENT.READY)
@@ -81,10 +93,12 @@ class ACData(EventListener):
     # Checks if any values have changed and call the callback functions.
     def update(self, delta: int):
         if self._ready:
+            self._players.update(delta)
+
             self._is_in_pit.value = self._car.is_in_pit
             self._is_in_pitline.value = self._car.is_in_pit_line
             self._has_penalty.value = self._car.has_penalty
-            #self._valid.value = self._timing.
+            self._is_lap_valid.value = self._timing.valid_lap
             self._position.value = self._car.position
             self._flag.value = self._session.flag
             self._fuel.value = self._car.fuel
@@ -93,6 +107,7 @@ class ACData(EventListener):
             self._mini_sector.value = int(self._car.location * 12)
             self._km_sector.value = int(self._car.location * self._environment.track_length / 1000)
             self._km_traveled.value = int(self._car.distance_traveled / 1000)
+            self._player_count.value = self._server.slots
 
             self._compound.value = self._tyres.compound
 
