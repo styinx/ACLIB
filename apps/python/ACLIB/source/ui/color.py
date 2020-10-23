@@ -32,6 +32,13 @@ class Color:
             self.a *= other
         return self
 
+    def invert(self, alpha: bool = False):
+        self.r = 1 - self.r
+        self.g = 1 - self.g
+        self.b = 1 - self.b
+        if alpha:
+            self.a = 1 - self.a
+
 
 class AnimationColor:
     def __init__(self, r: float, g: float, b: float, a: float = 1.0):
