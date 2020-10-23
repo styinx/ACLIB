@@ -8,8 +8,8 @@ class Environment:
     @staticmethod
     def parse_track_length(length: str):
         if length.endswith('m'):
-            return int(length[:-1])
-        return int(length)
+            return float(length[:-1])
+        return float(length)
 
     def __init__(self, data):
         track_name = data.environment.track_name
