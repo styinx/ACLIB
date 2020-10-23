@@ -11,8 +11,9 @@ class Tyres(ACApp):
         super().__init__('ACLIB_Tyres', 200, 200, 98, 160)
 
         self.hide_decoration()
-        self.background_color = TRANSPARENT
-        self.border_color = TRANSPARENT
+        self.no_render = True
+        self.background = False
+        self.border = False
 
         self._data = data
         self._meta = meta
@@ -47,7 +48,6 @@ class Tyre(ACLabel):
         self._meta = meta
 
         self._index = index
-        self._timer = 0
         self._wear_min, self._wear_max = 96, 100
 
         self._grid = ACGrid(9, 12, self)
@@ -101,11 +101,9 @@ class Tyre(ACLabel):
     def update(self, delta: int):
         super().update(delta)
 
-        self._timer += delta
-
         # Only update every second. Saves a bit computing power.
-        if self._timer > 1:
-            self._timer = 0
+        if self.update_timer > 1:
+            self.reset_update_timer()
             self._wear.value = self._wear_value()
             self._wear.progress_color = self._wear_color(self._wear_value())
 
@@ -127,7 +125,6 @@ class TyreTile(ACLabel):
 
         self._index = index
         self._tyre = tyre
-        self._timer = 0
 
         # Default temperatures
         self._t_t_min, self._t_t_max = 80, 100
@@ -214,9 +211,7 @@ class TyreTile(ACLabel):
     def update(self, delta: int):
         super().update(delta)
 
-        self._timer += delta
-
         # Use background color instead of texture and only update every 300ms. Saves a bit computing power.
-        if self._timer > 0.3:
-            self._timer = 0
+        if self.update_timer > 1:
+            self.reset_update_timer()
             self.background_color = self._temp_color(self._temp())

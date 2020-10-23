@@ -17,6 +17,7 @@ class Fuel(ACApp):
     def __init__(self, data: ACData = None, meta: ACMeta = None):
         super().__init__('ACLIB_Fuel', 200, 200, 300, 66)
 
+        self.no_render = True
         self.hide_decoration()
 
         self._data = data
@@ -28,7 +29,6 @@ class Fuel(ACApp):
 
         self._small_font = Font('Roboto Mono')
         self._small_font.color = BLACK
-
 
         self._main_grid = ACGrid(31, 6, self)
 

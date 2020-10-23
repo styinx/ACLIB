@@ -9,6 +9,7 @@ from ui.gui.font import Font, pt2px, px2pt
 from ui.gui.defaults import WidgetStyle, WidgetConfig
 from util.event import EventListener
 from util.log import log, console, tb
+from util.math import Point, Size
 from util.observer import Observer
 
 
@@ -48,20 +49,29 @@ class ACWidget(EventListener):
         BACKGROUND_COLOR = 'background_color'
         BORDER = 'border'
         BORDER_COLOR = 'border_color'
+        POSITION = 'position'
+        SIZE = 'size'
+        VISIBILITY = 'visible'
 
     IDS = {}
 
     def __init__(self, parent=None):
         super().__init__()
 
+        # Properties
+
         self._id = -1
+        self._update_timer = 0
+        self._render_timer = 0
         self._parent = parent
         self._child = None
 
-        self._position = (0, 0)
-        self._size = (0, 0)
+        self._position = Point(0, 0)
+        self._size = Size(0, 0)
+        self._no_update = False
+        self._no_render = False
         self._visible = True
-        self._background = True
+        self._background = False
         self._border = False
         self._background_texture = ''
         self._background_color = Color(0.0, 0.0, 0.0, 0.0)
@@ -70,19 +80,14 @@ class ACWidget(EventListener):
         self._active_animation = None
         self._animation_queue = []
 
+        # Event listeners
+
         self.on(ACWidget.EVENT.PARENT_CHANGED, self._on_parent_changed)
         self.on(ACWidget.EVENT.POSITION_CHANGED, self._on_position_changed)
         self.on(ACWidget.EVENT.SIZE_CHANGED, self._on_size_changed)
         self.on(ACWidget.EVENT.VISIBILITY_CHANGED, self._on_visibility_changed)
 
-        try:
-            app_name = None if self.app not in ACWidget.IDS else ACWidget.IDS[self.app].title
-            WidgetStyle.load_style_from_config(self, self.__class__.__name__, app_name)
-        except Exception as e:
-            console('Problems while loading style for class "{}"'.format(self.__class__.__name__))
-            tb(e)
-
-    def __str__(self):
+    def __str__(self) -> str:
         return '{} ({})'.format(self.__class__.__name__, self._id)
 
     # Private
@@ -96,12 +101,18 @@ class ACWidget(EventListener):
         self.background_texture = self.background_texture
         self.background_color = self.background_color
         self.border_color = self.border_color
-
         self.parent = self._parent
 
         if self.has_id:
             if ac.addOnClickedListener(self.id, ACWidget._event_function(ACWidget.EVENT.CLICK, self)) == -1:
                 console('Failed to register onClick listener for {}.'.format(self))
+
+        try:
+            app_name = None if self.app not in ACWidget.IDS else ACWidget.IDS[self.app].title
+            WidgetStyle.load_style_from_config(self, self.__class__.__name__, app_name)
+        except Exception as e:
+            console('Problems while loading style for class "{}"'.format(self.__class__.__name__))
+            tb(e)
 
     def _on_parent_changed(self):
         self.position = (0, 0) if isinstance(self.parent, ACApp) else self.parent.position
@@ -120,7 +131,7 @@ class ACWidget(EventListener):
             self.child.visible = self.visible
 
     @staticmethod
-    def _event_function(event: str, widget):
+    def _event_function(event: str, widget) -> callable:
         def func(*args):
             if widget.has_id:
 
@@ -138,7 +149,7 @@ class ACWidget(EventListener):
         return None
 
     @property
-    def app(self):
+    def app(self) -> int:
         """
         :return:    Returns the id of the app (created with ac.newApp) in order to create new controls and
                     associate it with the app. If the current control is not an instance of ACApp the function
@@ -155,7 +166,7 @@ class ACWidget(EventListener):
         return self._id
 
     @property
-    def has_id(self):
+    def has_id(self) -> bool:
         return self.id != -1
 
     @property
@@ -172,6 +183,20 @@ class ACWidget(EventListener):
             self._on_id()
         else:
             console('{}: Id could not be set.'.format(self))
+
+    @property
+    def update_timer(self):
+        return self._update_timer
+
+    def reset_update_timer(self):
+        self._update_timer = 0
+
+    @property
+    def render_timer(self):
+        return self._render_timer
+
+    def reset_render_timer(self):
+        self._render_timer = 0
 
     @property
     def parent(self):
@@ -204,11 +229,11 @@ class ACWidget(EventListener):
             position = ac.getPosition(self.id)
             if position != -1:
                 return position
-        return self._position
+        return self._position.tuple()
 
     @position.setter
     def position(self, position: tuple):
-        self._position = position
+        self._position.set(position[0], position[1])
 
         if self.has_id and len(position) == 2:
             ac.setPosition(self.id, position[0], position[1])
@@ -221,11 +246,11 @@ class ACWidget(EventListener):
             size = ac.getSize(self.id)
             if size != -1:
                 return size
-        return self._size
+        return self._size.tuple()
 
     @size.setter
     def size(self, size: tuple):
-        self._size = size
+        self._size.set(size[0], size[1])
 
         if self.has_id and len(size) == 2:
             ac.setSize(self.id, size[0], size[1])
@@ -311,7 +336,25 @@ class ACWidget(EventListener):
         self.border = border_color.a > 0
 
     @property
-    def animation(self):
+    def no_update(self) -> bool:
+        return self._no_update
+
+    @no_update.setter
+    def no_update(self, no_update: bool):
+        self._no_update = no_update
+        self.reset_update_timer()
+
+    @property
+    def no_render(self) -> bool:
+        return self._no_render
+
+    @no_render.setter
+    def no_render(self, no_render: bool):
+        self._no_render = no_render
+        self.reset_render_timer()
+
+    @property
+    def animation(self) -> Animation:
         return self._active_animation
 
     @animation.setter
@@ -336,21 +379,27 @@ class ACWidget(EventListener):
                 self.fire(ACWidget.EVENT.ANIMATION_FINISHED)
 
     def update(self, delta: int):
-        self.update_animation()
+        if not self.no_update:
+            self._update_timer += delta
 
-        if self.child:
-            self.child.update(delta)
+            self.update_animation()
+
+            if self.child:
+                self.child.update(delta)
 
     def render(self, delta: int):
-        if self.border or self.background:
-            x, y = self.position
-            w, h = self.size
+        if not self.no_render:
+            self._render_timer += delta
 
-            if self.border:
-                gl.rect(x, y, w, h, self.border_color, False)
+            if self.border or self.background:
+                x, y = self.position
+                w, h = self.size
 
-        if self.child:
-            self.child.render(delta)
+                if self.border:
+                    gl.rect(x, y, w, h, self.border_color, False)
+
+            if self.child:
+                self.child.render(delta)
 
 
 class ACApp(ACWidget):
@@ -360,10 +409,11 @@ class ACApp(ACWidget):
     """
 
     def __init__(self, app_name: str, x: int, y: int, w: int, h: int):
+        self._title = app_name
+
         super().__init__()
 
         self._cfg = None
-        self._title = ''
         self._active = False
 
         self._title_pos = (0, 0)
@@ -399,10 +449,10 @@ class ACApp(ACWidget):
             if ac.addOnAppDismissedListener(self.id, ACWidget._event_function(ACWidget.EVENT.DISMISSED, self)) == -1:
                 console('Failed to add dismissed listener for {}.'.format(self.title))
 
-    def _on_activate(self, widget: ACWidget, *args):
+    def _on_activate(self, *args):
         self.active = True
 
-    def _on_dismiss(self, widget: ACWidget, *args):
+    def _on_dismiss(self, *args):
         self.active = False
 
     def _load_config(self):
@@ -428,6 +478,7 @@ class ACApp(ACWidget):
     @active.setter
     def active(self, active: bool):
         self._active = active
+        self.visible = active
 
     @property
     def title(self) -> str:
@@ -478,30 +529,41 @@ class ACApp(ACWidget):
         self.icon_pos = (-100000, -100000)
 
     def update(self, delta: int):
-        super().update(delta)
+        if not self.no_update and self.active:
+            super().update(delta)
 
-        # Required since an app movement will draw the default background again.
-        self.background_color = self.background_color
+            # Required since an app movement will draw the default background again.
+            self.background_color = self.background_color
 
     def render(self, delta: int):
-        if self.border or self.background:
-            w, h = self.size
+        if not self.no_render and self.active:
+            if self.border or self.background:
+                w, h = self.size
 
-            if self.border:
-                gl.rect(0, 0, w, h, self.border_color, False)
+                if self.border:
+                    gl.rect(0, 0, w, h, self.border_color, False)
 
-        if self.child:
-            self.child.render(delta)
+            if self.child:
+                self.child.render(delta)
 
     def shutdown(self):
         self._write_config()
 
 
 class ACTextWidget(ACWidget, Observer):
+    class ALIGNMENT:
+        TOP = 'top'
+        MIDDLE = 'middle'
+        BOTTOM = 'bottom'
+        LEFT = 'left'
+        CENTER = 'center'
+        RIGHT = 'right'
+
     def __init__(self, parent: ACWidget, text: str = '', h_alignment: str = 'left', font: Font = None):
         super().__init__(parent)
 
         self._text = text
+        self._scale_font = True
         self._font = font
         self._h_alignment = h_alignment
 
@@ -518,7 +580,7 @@ class ACTextWidget(ACWidget, Observer):
     def _on_size_changed(self):
         super()._on_size_changed()
 
-        if self.font:
+        if self.font and self._scale_font:
             ac.setFontSize(self.id, px2pt(self.size[1]) * 0.75)
 
     @property
@@ -533,6 +595,14 @@ class ACTextWidget(ACWidget, Observer):
 
         if self.has_id:
             ac.setText(self.id, text)
+
+    @property
+    def scale_font(self) -> bool:
+        return self._scale_font
+
+    @scale_font.setter
+    def scale_font(self, scale_font: bool):
+        self._scale_font = scale_font
 
     @property
     def font(self) -> Font:
@@ -571,30 +641,39 @@ class ACLabel(ACTextWidget):
         self.id = ac.addLabel(self.app, text)
 
 
-class ACVLabel(ACLabel):
+class ACVLabel(ACTextWidget):
     def __init__(self, parent: ACWidget, text: str = '', h_alignment: str = 'left', v_alignment: str = 'middle',
                  font: Font = None):
         super().__init__(parent, text, h_alignment, font)
 
+        self._background_color = Color(0, 1, 1, 0.5)
         self._v_alignment = v_alignment
         self._v_offset = 0
+        self.scale_font = False
 
-    @property
-    def size(self) -> tuple:
-        if self.has_id:
-            size = ac.getSize(self.id)
-            if size != -1:
-                return size
-        return self._size
+        self.id = ac.addLabel(self.app, text)
 
-    @size.setter
-    def size(self, size: tuple):
-        self._size = size
+        self.on(ACWidget.EVENT.SIZE_CHANGED, self._update_alignment)
 
-        if self.has_id and len(size) == 2:
-            ac.setSize(self.id, size[0], size[1] + self._v_offset)
+    def _on_id(self):
+        self.v_alignment = self.v_alignment
 
-            self.fire(ACWidget.EVENT.SIZE_CHANGED)
+        super()._on_id()
+
+    def _update_alignment(self):
+        self.v_alignment = self.v_alignment
+
+    @ACWidget.position.setter
+    def position(self, position: tuple):
+        self._position.set(position[0], position[1])
+
+        if self.has_id and len(position) == 2:
+            if hasattr(self, '_v_offset'):
+                ac.setPosition(self.id, position[0], position[1] + self._v_offset)
+            else:
+                ac.setPosition(self.id, position[0], position[1])
+
+            self.fire(ACWidget.EVENT.POSITION_CHANGED)
 
     @ACWidget.background.setter
     def background(self, background: bool):
@@ -612,14 +691,22 @@ class ACVLabel(ACLabel):
     def v_alignment(self, v_alignment: str):
         self._v_alignment = v_alignment
 
-        self.position = self.position
+        height = self.size[1]
+        font_height = pt2px(12)
+        if self.font:
+            font_height = pt2px(self.font.size)
 
-        if v_alignment == 'top':
-            pass
-        elif v_alignment == 'middle':
-            self._v_offset = (self.size[1] - pt2px(self.font.size)) / 2
-        elif v_alignment == 'bottom':
-            self._v_offset = (self.size[1] - pt2px(self.font.size))
+        if font_height < height:
+            if v_alignment == 'top':
+                self._v_offset = 0
+            elif v_alignment == 'middle':
+                self._v_offset = (height - font_height) / 2
+            elif v_alignment == 'bottom':
+                self._v_offset = height - font_height
+        else:
+            self._v_offset = 0
+
+        self.position = self.position
 
 
 class ACButton(ACTextWidget):
@@ -664,7 +751,6 @@ class ACInput(ACTextWidget):
             ac.addOnValidateListener(self.id, validation_callback)
 
 
-# todo check if documentation is right that this does not work
 class ACTextBox(ACTextWidget):
     def __init__(self, parent: ACWidget, text: str = ''):
         super().__init__(parent, text)

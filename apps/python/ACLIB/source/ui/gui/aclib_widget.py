@@ -1,3 +1,4 @@
+import ac
 from settings import TEXTURE_DIR, path
 from ui.color import *
 from ui.gui.ac_widget import ACWidget, ACButton, ACLabel
@@ -10,28 +11,28 @@ class ACLIBIcon(ACButton):
         super().__init__(parent)
 
         self.background_texture = file
-        self.background_color = TRANSPARENT
         self.border = False
 
 
-# todo range checking
-class ACLIBProgressBar(ACLabel):
+class ACLIBProgressBar(ACWidget):
     def __init__(self, parent: ACWidget, value: float, start: float = 0, stop: float = 1, progress: bool = False):
         super().__init__(parent)
+
+        self._show_progress = progress
+        self._range = (min(start, stop), max(start, stop))
+        self._value = value if start <= value <= stop else start
+
+        self.id = ac.addLabel(self.app, '')
+
+        self._progress = ACLabel(self)
+        self._text = ACLabel(self, '', 'center')
 
         font = Font('Roboto Mono')
         font.size = 14
         font.bold = 1
         font.color = BLACK
 
-        self._progress = ACLabel(self)
-        self._text = ACLabel(self, '', 'center')
-        self._show_progress = progress
-        self._range = (min(start, stop), max(start, stop))
-        self._value = value if start <= value <= stop else start
-
         self._progress.background_color = GREEN
-
         self._text.font = font
 
     def _on_position_changed(self):
