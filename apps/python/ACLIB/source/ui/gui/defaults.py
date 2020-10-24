@@ -2,7 +2,7 @@ import os
 
 from settings import STYLE_DIR, CONFIG_DIR, path
 from storage.config import Config
-from util.log import console
+from util.log import log
 
 
 class WidgetConfig:
@@ -33,21 +33,20 @@ class WidgetStyle:
         if class_name not in WidgetStyle.STYLE:
             config = None
 
+            if app_name == 'ACLIB_' + class_name:
+                log('Load style for app "{}"'.format(app_name))
+
             # Try to load from app style config
             if app_name:
                 app_style_file = path(STYLE_DIR, app_name + '.ini')
                 if os.path.isfile(app_style_file):
                     config = Config(app_style_file, check_modules=True)
 
-                    console('Load App style from ', app_style_file)
-
             # Try to load from widget style config
             if not config:
                 class_style_file = path(STYLE_DIR, class_name + '.ini')
                 if os.path.isfile(class_style_file):
                     config = Config(class_style_file, check_modules=True)
-
-                    console('Load Widget style from ', class_style_file)
 
             # Store the style
             if config:

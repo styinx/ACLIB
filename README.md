@@ -22,7 +22,7 @@ This app/library makes it easier to install Assetto Corsa apps and extends exist
 
 Please note that the wiki may not hold the most recent updates.
 
-This library is a work in progress.
+> This library is a work in progress.
 
 If you detect any issues please create an [Issue](https://github.com/styinx/ACLIB/issues) or mention it on [RaceDepartment](https://www.racedepartment.com/).
 
@@ -60,29 +60,25 @@ If you detect any issues please create an [Issue](https://github.com/styinx/ACLI
 
 ## Apps that are shipped with ACLIB
 
-![ACLIB_Comparator](https://github.com/styinx/ACLIB/blob/master/stuff/images/comparator_1.png 'ACLIB_Comparator')
-
-[ACLIB_Comparator](https://github.com/styinx/ACLIB/wiki/ACLIB_Comparator)
-
-![ACLIB_Fuel](https://github.com/styinx/ACLIB/blob/master/stuff/images/fuel.png 'ACLIB_Fuel')
-
-[ACLIB_Fuel](https://github.com/styinx/ACLIB/wiki/ACLIB_Fuel)
-
-
-![ACLIB_Tyres](https://github.com/styinx/ACLIB/blob/master/stuff/images/tyres.png 'ACLIB_Tyres')
-
-[ACLIB_Tyres](https://github.com/styinx/ACLIB/wiki/ACLIB_Tyres)
+- [ACLIB_Comparator](https://github.com/styinx/ACLIB/wiki/ACLIB_Comparator)
+- [ACLIB_Fuel](https://github.com/styinx/ACLIB/wiki/ACLIB_Fuel)
+- [ACLIB_Tyres](https://github.com/styinx/ACLIB/wiki/ACLIB_Tyres)
 
 <br>
 
 ## Getting Involved
 
 If you want to make your own apps based on ACLIB you can continue reading in the [wiki](https://github.com/styinx/ACLIB/wiki).
-Otherwise you are done and can start driving.
+Otherwise you are done and can start driving 🚗.
 
+## License and Credits
+Have a look [here](https://github.com/styinx/ACLIB/blob/master/LICENSE) if you are not sure what you can/can't do with this software or what it offers.
+Everyone is free to this software without mentioning the author.
 
-
-
-
-
-
+This project uses the work of:
+- Rombik (shared memory file)
+- Icons from [flaticon.com](flaticon.com):
+    - ACLIB app icon by srip
+    - Comparator app icon by Google
+    - Fuel app icon by Google
+    - Tyre app icon by Freepik

@@ -1,3 +1,4 @@
+import ac
 import os
 import sys
 import platform
@@ -18,6 +19,8 @@ from ui.gui.ac_widget import ACApp
 
 class ACLIB:
     APPS = {}
+    TIMER = 0
+    DEBUG = False
     AC_DATA = None
     AC_META = None
 
@@ -27,9 +30,11 @@ class ACLIB:
             if not os.path.exists(aclib_path):
                 os.makedirs(aclib_path)
 
+        ACLIB.DEBUG = get_or_set('debug', False)
+
         Log.init()
 
-        Log.LOG_2_AC = get('log_to_AC')
+        Log.LOG_2_AC = get_or_set('log_to_AC', False)
 
         ACLIB.AC_DATA = ACData()
         ACLIB.AC_META = ACMeta(ACLIB.AC_DATA)
@@ -37,6 +42,8 @@ class ACLIB:
         # Dummy used to put apps in the same category.
         aclib = ACApp('ACLIB', -10000, -10000, 0, 0)
         aclib.visible = False
+        aclib.no_update = True
+        aclib.no_render = True
         ACLIB.APPS[aclib.title] = aclib
 
     @staticmethod
@@ -80,19 +87,30 @@ def acMain(version: int = 0):
 
 
 def acUpdate(delta: int = 0):
-    try:
-        ACLIB.AC_DATA.update(delta)
+    ACLIB.TIMER += delta
 
-        # Call the update function for every app stored in the app list.
-        for _, app in ACLIB.APPS.items():
-            try:
-                app.update(delta)
-            except Exception as e:
-                log('Problems while updating app "{0:s}"'.format(app.title))
-                tb(e)
+    # update every 100 microseconds
+    if ACLIB.TIMER > 0.1:
+        ACLIB.TIMER = 0
 
-    except Exception as e:
-        tb(e)
+        try:
+            ac.ext_perfBegin('ACLIB_Standalone')
+            ACLIB.AC_DATA.update(delta)
+            ac.ext_perfEnd('ACLIB_Standalone')
+
+            # Call the update function for every app stored in the app list.
+            for _, app in ACLIB.APPS.items():
+                if app.active:
+                    try:
+                        ac.ext_perfBegin(app.title)
+                        app.update(delta)
+                        ac.ext_perfEnd(app.title)
+                    except Exception as e:
+                        log('Problems while updating app "{0:s}"'.format(app.title))
+                        tb(e)
+
+        except Exception as e:
+            tb(e)
 
 
 def acShutdown():

@@ -197,9 +197,9 @@ def polygon(points, color: Color = Color(1, 1, 1, 1), filled: bool = True):
     ac.glEnd()
 
 
-def texture_rect(x: int, y: int, w: int, h: int, color: Color, tex_path: str = '', tex: Texture = None):
+def texture_rect(x: int, y: int, w: int, h: int, color: Color, tex_id: int = -1, tex: Texture = None):
     ac.glColor4f(color.r, color.g, color.b, color.a)
-    if tex_path:
-        ac.glQuadTextured(x, y, w, h, tex_path)
-    else:
+    if tex_id != -1:
+        ac.glQuadTextured(x, y, w, h, tex_id)
+    elif tex:
         ac.glQuadTextured(x, y, w, h, tex.texture)

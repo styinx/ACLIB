@@ -11,7 +11,7 @@ from memory.data.session import Session
 from memory.data.timing import Timing
 from memory.data.tyres import Tyres
 from util.event import EventListener
-from util.observer import BoolObservable, Observable, IntervalObservable
+from util.observer import BoolObservable, Observable, IntervalObservable, RangeObservable
 
 
 class ACData(EventListener):
@@ -45,6 +45,7 @@ class ACData(EventListener):
         super().__init__()
 
         self._ready = False
+        self._timer = 0
 
         # Categories
 
@@ -72,7 +73,7 @@ class ACData(EventListener):
         self._position = Observable(self, 0, ACData.EVENT.POSITION_CHANGED)
         self._compound = Observable(self, 0, ACData.EVENT.COMPOUND_CHANGED)
         self._flag = Observable(self, 0, ACData.EVENT.FLAG_CHANGED)
-        self._fuel = Observable(self, 0, ACData.EVENT.FUEL_CHANGED)
+        self._fuel = RangeObservable(self, 0, 0.01, ACData.EVENT.FUEL_CHANGED)
         self._lap = Observable(self, 0, ACData.EVENT.LAP_CHANGED)
         self._sector = Observable(self, 0, ACData.EVENT.SECTOR_CHANGED)
         self._mini_sector = Observable(self, 0, ACData.EVENT.MINI_SECTOR_CHANGED)
@@ -93,13 +94,16 @@ class ACData(EventListener):
     # Checks if any values have changed and call the callback functions.
     def update(self, delta: int):
         if self._ready:
+
+            self._timer += delta
+            temp_timer = self._timer * 100
+
+            # update every 100 ms
+            if temp_timer % 10:
+                pass
+
             self._players.update(delta)
 
-            self._is_in_pit.value = self._car.is_in_pit
-            self._is_in_pitline.value = self._car.is_in_pit_line
-            self._has_penalty.value = self._car.has_penalty
-            self._is_lap_valid.value = self._timing.valid_lap
-            self._position.value = self._car.position
             self._flag.value = self._session.flag
             self._fuel.value = self._car.fuel
             self._lap.value = self._timing.lap
@@ -107,9 +111,29 @@ class ACData(EventListener):
             self._mini_sector.value = int(self._car.location * 12)
             self._km_sector.value = int(self._car.location * self._environment.track_length / 1000)
             self._km_traveled.value = int(self._car.distance_traveled / 1000)
-            self._player_count.value = self._server.slots
 
             self._compound.value = self._tyres.compound
+
+            # update every 100 ms
+            if temp_timer % 10:
+                pass
+
+            # update every 300 ms
+            if temp_timer % 30:
+                pass
+
+            # update every 500 ms
+            if temp_timer % 50:
+                self._position.value = self._car.position
+                self._is_in_pit.value = self._car.is_in_pit
+                self._is_in_pitline.value = self._car.is_in_pit_line
+                self._has_penalty.value = self._car.has_penalty
+                self._is_lap_valid.value = self._timing.valid_lap
+
+            # update every 5 seconds
+            if self._timer > 500:
+                self._timer = 0
+                self._player_count.value = self._server.slots
 
     def shutdown(self):
         pass
@@ -153,295 +177,3 @@ class ACData(EventListener):
     @property
     def km(self):
         return self._km_sector.value
-#
-#         # # Time and Distance to next and previous cars (relative and absolute)
-#         min_prev = float('-inf')
-#         min_next = float('inf')
-#         for c in range(0, ACLIB.getCarsCount()):
-#             if c != self.number:
-#                 lap = self.lap
-#                 pos = self.location
-#                 track_len = ACLIB.getTrackLength()
-#                 c_pos = ACLIB.getLocation(c)
-#                 c_lap = ACLIB.getLap(c)
-#
-#                 if min_next > c_pos - self.location > 0:
-#                     min_next = c_pos - self.location
-#                     self.rel_next = c
-#                     self.rel_next_dist = max(0, ((c_pos + c_lap) * track_len) - ((pos + lap) * track_len))
-#                     self.rel_next_time = max(0.0, self.rel_next_dist / max(10.0, ACLIB.getSpeed(self.number, 'ms')))
-#
-#                 if min_prev < c_pos - self.location < 0:
-#                     min_prev = c_pos - self.location
-#                     self.rel_prev = c
-#                     self.rel_prev_dist = max(0, ((pos + lap) * track_len) - ((c_pos + c_lap) * track_len))
-#                     self.rel_prev_time = max(0.0, self.rel_prev_dist / max(10.0, ACLIB.getSpeed(self.number, 'ms')))
-#
-#                 if ACLIB.getPosition(c) == self.position - 1:
-#                     self.next = c
-#                     self.next_dist = max(0, ((c_pos + c_lap) * track_len) - ((pos + lap) * track_len))
-#                     self.next_time = max(0.0, self.next_dist / max(10.0, ACLIB.getSpeed(self.number, 'ms')))
-#
-#                 elif ACLIB.getPosition(c) == self.position + 1:
-#                     self.prev = c
-#                     self.prev_dist = max(0, ((pos + lap) * track_len) - ((c_pos + c_lap) * track_len))
-#                     self.prev_time = max(0.0, self.prev_dist / max(10.0, ACLIB.getSpeed(self.number, 'ms')))
-#
-#         # invalid Lap
-#         invalid = ACLIB.isLapInvalidated(self.number)
-#         if invalid != self.lap_invalid and not self.lap_invalid:
-#             self.lap_invalid = invalid
-#
-#             self.dispatchEvent(LIB_EVENT.ON_LAP_INVALIDATED)
-#
-#         # Next lap
-#         lap = ACLIB.getLap(self.number)
-#         if lap != self.lap:
-#
-#             self.benefit = 0
-#
-#             if self.lap_time == self.best_time:
-#                 self.best_performance = self.last_performance
-#
-#             self.last_performance = self.lap_performance
-#             self.lap_performance = {}
-#             self.last_invalid = self.lap_invalid
-#             self.lap_invalid = False
-#             self.lap = ACLIB.getLap(self.number)
-#             self.last_time = ACLIB.getLastLapTime(self.number)
-#             self.best_time = ACLIB.getBestLapTime(self.number)
-#
-#             if not self.last_invalid and 0 < self.last_time < SESSION.best_lap_time and lap > 1:
-#                 SESSION.best_lap_time = self.last_time
-#
-#             self.last_sector_time = self.sector_time
-#             self.last_sector_time[2] = self.last_time - sum(self.sector_time[:2])
-#             self.last_mini_sector_time = self.mini_sector_time
-#             self.last_mini_sector_time[11] = self.last_time - sum(self.mini_sector_time[:11])
-#             self.last_km_time = self.km_time
-#             self.last_km_time[int(ACLIB.getTrackLength() / 1000)] = self.last_time - sum(
-#                 self.km_time[:int(ACLIB.getTrackLength() / 1000)])
-#
-#             if self.lap_fuel_level - self.fuel > 0:
-#                 self.lap_fuel = self.lap_fuel_level - self.fuel
-#                 self.lap_fuel_range = self.fuel / self.lap_fuel
-#                 self.lap_fuel_level = self.fuel
-#
-#             self.dispatchEvent(LIB_EVENT.ON_LAP_CHANGED)
-#
-#         # Next sector
-#         sector = min(int(self.location * 3.33), 2)
-#         if sector != self.sector_index:
-#             sector_time = 0
-#
-#             if sector == 0:
-#                 self.last_sector_time[2] = self.last_time - sum(self.last_sector_time[:2])
-#             else:
-#                 sector_time = self.lap_time - sum(self.sector_time[:self.sector_index])
-#                 self.sector_time[self.sector_index] = sector_time
-#
-#             if 0 < sector_time < self.best_sector_time[self.sector_index] and self.lap > 1:
-#                 self.best_sector_time[self.sector_index] = sector_time
-#
-#                 # if sector_time < SESSION.best_sector_time[self.sector_index]:
-#                 #     SESSION.best_sector_time[self.sector_index] = sector_time
-#
-#             if self.sector_fuel_level - self.fuel > 0:
-#                 self.sector_fuel = self.sector_fuel_level - self.fuel
-#                 self.sector_fuel_range = self.fuel / self.sector_fuel
-#                 self.sector_fuel_level = self.fuel
-#
-#             self.sector_index = sector
-#             self.sector = sector + 1
-#             self.dispatchEvent(LIB_EVENT.ON_SECTOR_CHANGED)
-#
-#         mini_sector = min(int(self.location * 12), 11)
-#         if mini_sector != self.mini_sector_index:
-#
-#             mini_sector_time = 0
-#
-#             if mini_sector == 0:
-#                 self.last_mini_sector_time[11] = self.last_time - sum(self.last_mini_sector_time[:11])
-#             else:
-#                 mini_sector_time = self.lap_time - sum(self.mini_sector_time[:self.mini_sector_index])
-#                 self.mini_sector_time[self.mini_sector_index] = mini_sector_time
-#
-#             if 0 < mini_sector_time < self.best_mini_sector_time[self.mini_sector_index] and self.lap > 1:
-#                 self.best_mini_sector_time[self.mini_sector_index] = mini_sector_time
-#
-#                 # if mini_sector_time < SESSION.best_mini_sector_time[self.mini_sector_index]:
-#                 #     SESSION.best_mini_sector_time[self.mini_sector_index] = mini_sector_time
-#
-#             if self.mini_sector_fuel_level - self.fuel > 0:
-#                 self.mini_sector_fuel = self.mini_sector_fuel_level - self.fuel
-#                 self.mini_sector_fuel_range = self.fuel / self.mini_sector_fuel
-#                 self.mini_sector_fuel_level = self.fuel
-#
-#             self.mini_sector_index = mini_sector
-#             self.mini_sector = mini_sector + 1
-#             self.dispatchEvent(LIB_EVENT.ON_MINISECTOR_CHANGED)
-#
-#         # Next km
-#         km = int(self.location * ACLIB.getTrackLength() / 1000)
-#         if km != self.km_index:
-#
-#             km_time = 0
-#
-#             if km == 0:
-#                 index = int(ACLIB.getTrackLength() / 1000) - 1
-#                 self.last_km_time[index] = self.last_time - sum(self.last_km_time[:index])
-#             else:
-#                 km_time = self.lap_time - sum(self.km_time[:self.km_index])
-#                 self.km_time[self.km_index] = km_time
-#
-#             self.km_time[self.km_index] = km_time
-#             self.last_km_time[self.km_index] = km_time
-#             if 0 < km_time < self.best_km_time[self.km_index] and self.lap > 1:
-#                 self.best_km_time[self.km_index] = km_time
-#
-#                 # if km_time < SESSION.best_km_time[self.km_index]:
-#                 #     SESSION.best_km_time[self.km_index] = km_time
-#
-#             if self.km_fuel_level - self.fuel > 0:
-#                 self.km_fuel = self.km_fuel_level - self.fuel
-#                 self.km_fuel_range = self.fuel / self.km_fuel
-#                 self.km_fuel_level = self.fuel
-#                 self.fuel_session = max(ACLIB.getLaps() - self.lap, 1) * ACLIB.getTrackLength() / 1000 * self.km_fuel
-#
-#             self.km_index = km
-#             self.km = km + 1
-#             self.dispatchEvent(LIB_EVENT.ON_KM_CHANGED)
-#
-#
-# class ACLIB:
-#     @staticmethod
-#     def getRaceTimeLeftFormated():
-#         time = ACLIB.getRaceTimeLeft()
-#
-#         if not isinf(time):
-#             if ACLIB.isTimedRace():
-#                 return 'time left: ' + Format.time(time)
-#             elif time > 0:
-#                 return 'next session in: ' + Format.time(time)
-#         return ''
-#
-#     @staticmethod
-#     def getSector(car=0, form=None):
-#         return int(ACLIB.getLocation(car) * 3.33)
-#
-#     @staticmethod
-#     def getMiniSector(car=0, form=None):
-#         return int(ACLIB.getLocation(car) * 12)
-#
-#     @staticmethod
-#     def getKm(car=0, form=None):
-#         return int(ACLIB.getLocation(car) * ACLIB.getTrackLength() / 1000)
-#
-#     @staticmethod
-#     def getLapDeltaTime(car=0, form=None):
-#         return ac.getCarState(car, AC_PROP.PerformanceMeter)
-#
-#     @staticmethod
-#     def getLapDelta(car=0):
-#         if car == ACLIB.getFocusedCar():
-#             time = ACLIB.getLapDeltaTime(car) * 1000
-#             if time != 0:
-#                 if time < 0:
-#                     return '-' + Format.time(abs(time))
-#                 elif time > 0:
-#                     return '+' + Format.time(abs(time))
-#             else:
-#                 return '-00:00.000'
-#         else:
-#             return -1
-#
-#     @staticmethod
-#     def isLapInvalidated(car=0):
-#         return ac.getCarState(car, AC_PROP.LapInvalidated) or ACLIB.getTyresOut(car) > 2 or ACLIB.isInPit(car)
-#
-#     @staticmethod
-#     def getCarSuspensionDamage(car=0, tyre=0, form=None):
-#         if car == ACLIB.getFocusedCar():
-#             travel = ACLIB.getSuspensionTravel(car, tyre=tyre)
-#             travel_max = ACLIB.getMaxSuspensionTravel(car, tyre=tyre)
-#             if form:
-#                 return form.format(travel / max(1, travel_max))
-#             return travel / max(1, travel_max)
-#         else:
-#             return -1
-#
-#     # other cars
-#
-#     @staticmethod
-#     def getPrevCarDiffTimeDist(car=0, form=None):
-#         if car == ACLIB.getFocusedCar():
-#             time = 0
-#             dist = 0
-#             track_len = ACLIB.getTrackLength()
-#             lap = ACLIB.getLap(0)
-#             pos = ACLIB.getLocation(0)
-#
-#             for car in range(ACLIB.getCarsCount()):
-#                 if ACLIB.getPosition(car) == ACLIB.getPosition(0) - 1:
-#                     lap_next = ACLIB.getLap(car)
-#                     pos_next = ACLIB.getLocation(car)
-#
-#                     dist = max(0, (pos_next * track_len + lap_next * track_len) - (pos * track_len + lap * track_len))
-#                     time = max(0.0, dist / max(10.0, ACLIB.getSpeed(0, 'ms')))
-#                     break
-#             if form:
-#                 if dist > track_len:
-#                     laps = dist / max(track_len, 1)
-#                     if laps > 1:
-#                         return '+{:3.1f}'.format(laps) + ' Laps'
-#                     else:
-#                         return '+{:3.1f}'.format(laps) + '   Lap'
-#                 else:
-#                     if time > 60:
-#                         minute = time / 60
-#                         if minute > 1.05:
-#                             return '+{:3.1f}'.format(minute) + ' Mins'
-#                         elif minute < 1.05:
-#                             return '+{:3.0f}'.format(minute) + '   Min'
-#                     else:
-#                         return '+' + Format.time(int(time * 1000))
-#             return time, dist
-#         else:
-#             return -1
-#
-#     @staticmethod
-#     def getNextCarDiffTimeDist(car=0, form=None):
-#         if car == ACLIB.getFocusedCar():
-#             time = 0
-#             dist = 0
-#             track_len = ACLIB.getTrackLength()
-#             lap = ACLIB.getLap(0)
-#             pos = ACLIB.getLocation(0)
-#
-#             for car in range(ACLIB.getCarsCount()):
-#                 if ACLIB.getPosition(car) == ACLIB.getPosition(0) + 1:
-#                     lap_next = ACLIB.getLap(car)
-#                     pos_next = ACLIB.getLocation(car)
-#
-#                     dist = max(0.0, (pos * track_len + lap * track_len) - (pos_next * track_len + lap_next * track_len))
-#                     time = max(0.0, dist / max(10.0, ACLIB.getSpeed(car, 'ms')))
-#                     break
-#             if form:
-#                 if dist > track_len:
-#                     laps = dist / max(track_len, 1)
-#                     if laps > 1:
-#                         return '-{:3.1f}'.format(laps) + ' Laps'
-#                     else:
-#                         return '-{:3.1f}'.format(laps) + '   Lap'
-#                 else:
-#                     if time > 60:
-#                         minute = time / 60
-#                         if minute > 1.05:
-#                             return '-{:3.1f}'.format(minute) + ' Mins'
-#                         elif minute < 1.05:
-#                             return '-{:3.0f}'.format(minute) + '   Min'
-#                     else:
-#                         return '-' + Format.time(int(time * 1000))
-#             return time, dist
-#         else:
-#             return -1

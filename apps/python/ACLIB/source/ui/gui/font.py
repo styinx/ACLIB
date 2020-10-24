@@ -4,20 +4,24 @@ from util.observer import Subject
 
 
 class Font(Subject):
-    def __init__(self, font_name: str):
+    def __init__(self, font_name: str, color: Color = Color(1, 1, 1, 1), bold: bool = False, italic: bool = False,
+                 size: int = 12):
         super().__init__()
 
         self._name = font_name
-        self._size = 12
-        self._is_italic = False
-        self._is_bold = False
+        self._size = size
+        self._is_italic = italic
+        self._is_bold = bold
 
-        self._color = Color(0, 0, 0, 0)
+        self._color = color
 
-        if ac.initFont(0, font_name, 0, 0) == -1:
+        if ac.initFont(0, font_name, 1 if italic else 0, 1 if bold else 0) == -1:
             raise Exception('Could not load font {}'.format(font_name))
 
-        self.color = Color(1, 1, 1)
+        self.color = self.color
+        self.italic = self.italic
+        self.bold = self.bold
+        self.size = self.size
 
     @property
     def name(self):
@@ -66,7 +70,7 @@ class Font(Subject):
 
 
 def pt2px(pt: int) -> int:
-    return round(pt * 4/3)
+    return round(pt * 4 / 3)
 
 
 def px2pt(px: int) -> int:
