@@ -101,8 +101,8 @@ class Tyre(ACLabel):
     def update(self, delta: int):
         super().update(delta)
 
-        # Only update every second. Saves a bit computing power.
-        if self.update_timer > 1:
+        # Only update every 5 seconds. Saves a bit computing power.
+        if self.update_timer > 0.5:
             self.reset_update_timer()
             self._wear.value = self._wear_value()
             self._wear.progress_color = self._wear_color(self._wear_value())
@@ -214,6 +214,6 @@ class TyreTile(ACLabel):
         super().update(delta)
 
         # Use background color instead of texture and only update every 300ms. Saves a bit computing power.
-        if self.update_timer > 1:
+        if self.update_timer > 0.1:
             self.reset_update_timer()
             self.background_color = self._temp_color(self._temp())

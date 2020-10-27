@@ -733,9 +733,6 @@ class ACVText(ACTextWidget):
 
         self.position = self._position.tuple()
 
-        console(self, font_height, self.position, self.size, self._v_offset, self._v_alignment)
-        log(self, font_height, self.position, self.size, self._v_offset, self._v_alignment)
-
 
 class ACVLabel(ACVText):
     def __init__(self, parent: ACWidget, text: str = '', h_alignment: str = 'left', v_alignment: str = 'middle',

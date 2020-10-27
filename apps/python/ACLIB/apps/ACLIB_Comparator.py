@@ -247,7 +247,7 @@ class ComparatorRow(ACGrid):
         super().update(delta)
 
         # Update every 300 ms
-        if (self.update_timer * 10) % 3 == 0:
+        if (self.update_timer * 100) % 3 == 0:
 
             if self._mode == 1:
                 player = self._player[self._index]
@@ -270,7 +270,7 @@ class ComparatorRow(ACGrid):
                         self._sectors[i].font = CR_Label.BRIGHT
                         self._sectors[i].background_color = BLACK
 
-        if self._update_timer > 1:
+        if self._update_timer > 0.1:
             self.reset_update_timer()
 
             if self._mode == 0:
