@@ -7,7 +7,7 @@ from ui.gui.aclib_widget import ACLIBIcon
 from ui.gui.font import Font
 from ui.gui.layout import ACGrid, ACHBox, ACMultiWidget
 
-from ui.color import Color, LIGHTGRAY, RED, WHITE, BLACK, PURPLE
+from ui.color import Color, BLACK, PURPLE
 from util.format import Format
 
 
@@ -19,7 +19,7 @@ class CR_Header(ACLabel):
 
 
 class CR_Name(ACLabel):
-    FONT = Font("Roboto Mono", Color(0.9, 0.2, 0.2), True)
+    FONT = Font("Roboto Mono", Color(1.0, 0.0, 0.0, 0.75), True)
 
     def __init__(self, parent: ACWidget, text: str):
         super().__init__(parent, text, 'center', CR_Name.FONT)
@@ -57,7 +57,7 @@ class Comparator(ACApp):
     ]
 
     def __init__(self, data: ACData = None, meta: ACMeta = None):
-        super().__init__('ACLIB_Comparator', 200, 200, 300, 55)
+        super().__init__('ACLIB Comparator', 200, 200, 300, 55)
 
         self.no_render = True
         self.hide_decoration()

@@ -15,7 +15,7 @@ class Fuel(ACApp):
     }
 
     def __init__(self, data: ACData = None, meta: ACMeta = None):
-        super().__init__('ACLIB_Fuel', 200, 200, 300, 66)
+        super().__init__('ACLIB Fuel', 200, 200, 300, 66)
 
         self.no_render = True
         self.hide_decoration()
@@ -70,7 +70,7 @@ class Fuel(ACApp):
         self._grid.add(self._avg_lap, 1, 2)
         self._grid.add(self._laps, 2, 2)
 
-        self._scaler.initial_size(self.cfg.get('grid_size', self._grid.size) or self._grid.size)
+        self._scaler.initial_size(self.cfg.get('grid_size') or self._grid.size)
 
         self._fuel_lap_val = 0
         self._fuel_lap_avg = 0

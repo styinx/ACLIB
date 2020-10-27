@@ -8,7 +8,7 @@ from ui.color import *
 
 class Tyres(ACApp):
     def __init__(self, data: ACData = None, meta: ACMeta = None):
-        super().__init__('ACLIB_Tyres', 200, 200, 98, 160)
+        super().__init__('ACLIB Tyres', 200, 200, 98, 160)
 
         self.hide_decoration()
         self.no_render = True
@@ -143,6 +143,8 @@ class TyreTile(ACLabel):
     def _on_ready(self):
         self._init()
         self._data.on(ACData.EVENT.COMPOUND_CHANGED, self._init)
+        # Initial coloring to avoid delay from timer.
+        self.background_color = self._temp_color(self._temp())
 
     def _init(self, *args):
         front = self._tyre < 2
