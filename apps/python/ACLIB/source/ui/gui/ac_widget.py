@@ -29,9 +29,11 @@ class ACWidget(EventListener):
         BACKGROUND_CHANGED = 'Background Changed'
         CHILD_CHANGED = 'Child Changed'
         CLICK = 'Click'
+        DOUBLE_CLICK = 'Double Click'
         COLS_CHANGED = 'Cols Changed'
         CONFIG_CHANGED = 'Config Changed'
         DISMISSED = 'Dismissed'
+        INDEX_CHANGED = 'Index Changed'
         PARENT_CHANGED = 'Parent Changed'
         PROGRESS_CHANGED = 'Progress Changed'
         POSITION_CHANGED = 'Position Changed'
@@ -57,6 +59,9 @@ class ACWidget(EventListener):
 
     def __init__(self, parent=None):
         super().__init__()
+
+        self._db_click_timer = 0
+        self._db_click_timeout = 0.3  # 500 ms
 
         # Properties
 
@@ -85,6 +90,7 @@ class ACWidget(EventListener):
         self.on(ACWidget.EVENT.PARENT_CHANGED, self._on_parent_changed)
         self.on(ACWidget.EVENT.POSITION_CHANGED, self._on_position_changed)
         self.on(ACWidget.EVENT.SIZE_CHANGED, self._on_size_changed)
+        self.on(ACWidget.EVENT.CLICK, self._on_click)
         self.on(ACWidget.EVENT.VISIBILITY_CHANGED, self._on_visibility_changed)
 
     def __str__(self) -> str:
@@ -125,6 +131,12 @@ class ACWidget(EventListener):
     def _on_size_changed(self):
         if self.child:
             self.child.size = self.size
+
+    def _on_click(self, *args):
+        if time.time() - self._db_click_timer < self._db_click_timeout:
+            self.fire(ACWidget.EVENT.DOUBLE_CLICK)
+        else:
+            self._db_click_timer = time.time()
 
     def _on_visibility_changed(self):
         if self.child:
@@ -197,6 +209,14 @@ class ACWidget(EventListener):
 
     def reset_render_timer(self):
         self._render_timer = 0
+
+    @property
+    def db_click_timeout(self):
+        return self._db_click_timeout
+
+    @db_click_timeout.setter
+    def db_click_timeout(self, db_click_timeout: int):
+        self._db_click_timeout = max(0.1, db_click_timeout)
 
     @property
     def parent(self):
@@ -641,15 +661,16 @@ class ACLabel(ACTextWidget):
         self.id = ac.addLabel(self.app, text)
 
 
-class ACVLabel(ACTextWidget):
+class ACVText(ACTextWidget):
     def __init__(self, parent: ACWidget, text: str = '', h_alignment: str = 'left', v_alignment: str = 'middle',
                  font: Font = None):
         super().__init__(parent, text, h_alignment, font)
 
-        self._background_color = Color(0, 1, 1, 0.5)
+        self.background = False
+        self.border = False
+        self.scale_font = False
         self._v_alignment = v_alignment
         self._v_offset = 0
-        self.scale_font = False
 
         self.id = ac.addLabel(self.app, text)
 
@@ -662,6 +683,10 @@ class ACVLabel(ACTextWidget):
 
     def _update_alignment(self):
         self.v_alignment = self.v_alignment
+
+    @ACWidget.position.getter
+    def position(self):
+        return self._position.tuple()
 
     @ACWidget.position.setter
     def position(self, position: tuple):
@@ -677,11 +702,11 @@ class ACVLabel(ACTextWidget):
 
     @ACWidget.background.setter
     def background(self, background: bool):
-        pass
+        self._background = False
 
     @ACWidget.border.setter
     def border(self, border: bool):
-        pass
+        self._border = False
 
     @property
     def v_alignment(self):
@@ -696,6 +721,8 @@ class ACVLabel(ACTextWidget):
         if self.font:
             font_height = pt2px(self.font.size)
 
+        self._v_offset = 0
+
         if font_height < height:
             if v_alignment == 'top':
                 self._v_offset = 0
@@ -703,10 +730,59 @@ class ACVLabel(ACTextWidget):
                 self._v_offset = (height - font_height) / 2
             elif v_alignment == 'bottom':
                 self._v_offset = height - font_height
-        else:
-            self._v_offset = 0
 
-        self.position = self.position
+        self.position = self._position.tuple()
+
+        console(self, font_height, self.position, self.size, self._v_offset, self._v_alignment)
+        log(self, font_height, self.position, self.size, self._v_offset, self._v_alignment)
+
+
+class ACVLabel(ACVText):
+    def __init__(self, parent: ACWidget, text: str = '', h_alignment: str = 'left', v_alignment: str = 'middle',
+                 font: Font = None):
+        super().__init__(parent, '', h_alignment, v_alignment, font)
+
+        self._text_widget = ACVText(self, text, h_alignment, v_alignment, font)
+
+    @ACTextWidget.text.getter
+    def text(self) -> str:
+        if hasattr(self, '_text_widget'):
+            return self._text_widget.text
+
+    @text.setter
+    def text(self, text: str):
+        if hasattr(self, '_text_widget'):
+            self._text_widget.text = text
+
+    @ACVText.v_alignment.getter
+    def v_alignment(self):
+        if hasattr(self, '_text_widget'):
+            return self._text_widget._v_alignment
+
+    @ACVText.v_alignment.setter
+    def v_alignment(self, v_alignment: str):
+        if hasattr(self, '_text_widget'):
+            self._text_widget.v_alignment = v_alignment
+
+    @ACVText.h_alignment.getter
+    def h_alignment(self):
+        if hasattr(self, '_text_widget'):
+            return self._text_widget._h_alignment
+
+    @ACVText.h_alignment.setter
+    def h_alignment(self, h_alignment: str):
+        if hasattr(self, '_text_widget'):
+            self._text_widget.h_alignment = h_alignment
+
+    @ACVText.font.getter
+    def font(self) -> Font:
+        if hasattr(self, '_text_widget'):
+            return self._text_widget._font
+
+    @ACVText.font.setter
+    def font(self, font: Font):
+        if hasattr(self, '_text_widget'):
+            self._text_widget.font = font
 
 
 class ACButton(ACTextWidget):

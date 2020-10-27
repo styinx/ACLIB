@@ -80,5 +80,6 @@ This project uses the work of:
 - Icons from [flaticon.com](flaticon.com):
     - ACLIB app icon by srip
     - Comparator app icon by Google
+    - Car Properties app icon by Freepik
     - Fuel app icon by Google
     - Tyre app icon by Freepik

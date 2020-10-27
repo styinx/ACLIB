@@ -10,7 +10,7 @@ from util.log import console
 
 class Debug(ACApp):
     def __init__(self, data: ACData = None, meta: ACMeta = None):
-        super().__init__('ACLIB_Debug', 200, 200, 400, 100)
+        super().__init__('ACLIB Debug', 200, 200, 400, 100)
 
         self.hide_decoration()
         self.background_color = BLACK

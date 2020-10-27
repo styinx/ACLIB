@@ -13,7 +13,7 @@ class Tyres:
 
     @property
     def pressure(self):
-        return self._info.physics.wheelPressure
+        return self._info.physics.wheelsPressure
 
     @property
     def wear(self):
@@ -40,6 +40,10 @@ class Tyres:
         return self._info.physics.brakeTemp
 
     @property
+    def brake_bias(self):
+        return self._info.physics.brakeBias
+
+    @property
     def suspension_travel(self):
         return self._info.physics.suspensionTravel
 
@@ -49,7 +53,7 @@ class Tyres:
 
     @property
     def camber(self):
-        return self._info.physics.camberRad
+        return self._info.physics.camberRAD
 
     @property
     def contact_point(self):
