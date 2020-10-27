@@ -26,8 +26,8 @@ class CPValue(ACVLabel):
 class CarProperties(ACApp):
     PROPERTIES = [
         # Name in ListBox, Number of values, ac_data category, format
-        ['ABS', 1, 'car.abs', '{:3.2f}'],
-        ['Brake Bias', 1, 'tyres.brake_bias', '{:3.2f}'],
+        ['ABS', 1, 'car.abs', '{:1d}'],
+        ['Brake Bias', 1, 'tyres.brake_bias', '{:1.2f}'],
         ['Brake Temp', 4, 'tyres.brake_temperature', '{:3.2f}°C'],
         ['Camber', 4, 'tyres.camber', '{:3.2f}'],
         ['Compound', 1, 'tyres.compound', '{:s}'],
@@ -37,7 +37,7 @@ class CarProperties(ACApp):
         ['Road Grip', 1, 'environment.surface_grip', '{:3.2f}'],
         ['Road Temp', 1, 'environment.road_temperature', '{:3.2f}'],
         ['Suspension Travel', 4, 'tyres.suspension_travel', '{:3.2f}'],
-        ['TC', 1, 'car.tc', '{:3.2f}'],
+        ['TC', 1, 'car.tc', '{:1d}'],
         ['Tyre Load', 4, 'tyres.load', '{:3.2f}'],
         ['Tyre Slip', 4, 'tyres.slip', '{:3.2f}'],
         ['Tyre Pressure', 4, 'tyres.pressure', '{:3.2f} psi'],
@@ -55,7 +55,6 @@ class CarProperties(ACApp):
 
         self.hide_decoration()
         self.background_color = Color(0, 0, 0, 0.5)
-        self.no_update = True
         self.no_render = True
 
         self._data = data
@@ -130,6 +129,14 @@ class CarProperties(ACApp):
         else:
             for i, value in enumerate(get_property(self._data, prop[2])):
                 element.children[i].text = prop[3].format(value)
+
+    def update(self, delta: int):
+        super().update(delta)
+
+        # Update every 5 seconds
+        if self.update_timer > 0.5:
+            self.reset_update_timer()
+            self._on_index_changed(self._properties.index)
 
     def shutdown(self):
         self.cfg.set('index', self._properties.index)
