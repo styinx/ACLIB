@@ -1,6 +1,7 @@
 import ac
 from settings import TEXTURE_DIR, path
 from ui.color import *
+from ui.gl import rect
 from ui.gui.ac_widget import ACWidget, ACButton, ACLabel
 from ui.gui.font import Font, px2pt
 from ui.gui.layout import ACGrid, ACLayout
@@ -225,25 +226,31 @@ class ACLIBListBox(ACLayout):
         'down': path(TEXTURE_DIR, 'triangle_down.png')
     }
 
-    def __init__(self, parent: ACWidget, elements: int = 5):
+    def __init__(self, parent: ACWidget, elements: int = 5, highlight: bool = True):
         super().__init__(parent)
 
         self._elements = elements
+        self._highlight = highlight
         self._bar_width = 10
         self._index = 0
         self._widgets = []
 
         self._bar = ACButton(self)
-        self._up = ACButton(self)
-        self._down = ACButton(self)
-
         self._bar.background_color = WHITE
+
+        self._up = ACButton(self)
         self._up.background_texture = ACLIBListBox.TEXTURES['up']
         self._up.background_color = LIGHTGRAY
         self._up.size = self._bar_width, self._bar_width
+
+        self._down = ACButton(self)
         self._down.background_texture = ACLIBListBox.TEXTURES['down']
         self._down.background_color = LIGHTGRAY
         self._down.size = self._bar_width, self._bar_width
+
+        if self._highlight:
+            self._highlight_label = ACLabel(self)
+            self._highlight_label.background_color = Color(1.0, 0.0, 0.0, 0.75)
 
         self._up.on(ACWidget.EVENT.CLICK, self._on_up)
         self._down.on(ACWidget.EVENT.CLICK, self._on_down)
@@ -258,6 +265,8 @@ class ACLIBListBox(ACLayout):
             self._bar.position = right, y + self._bar_width
             self._up.position = right, y
             self._down.position = right, y + h - self._bar_width
+            if self._highlight:
+                self._highlight_label.position = x, y
 
     def _on_size_changed(self):
         if hasattr(self, '_up'):
@@ -268,6 +277,8 @@ class ACLIBListBox(ACLayout):
             self._bar.position = right, y + self._bar_width
             self._up.position = right, y
             self._down.position = right, y + h - self._bar_width
+            if self._highlight:
+                self._highlight_label.size = w - self._bar_width, h / self._elements
 
     def _reposition(self):
         x, y = self.position
@@ -288,17 +299,31 @@ class ACLIBListBox(ACLayout):
             self._widgets[i].visible = True
             y += element_height
 
-    def _on_up(self, widget: ACWidget, *args):
+    def _on_up(self, *args):
         if self._index > 0:
-            self._index -= 1
+            self.index = self._index - 1
         self._reposition()
 
-    def _on_down(self, widget: ACWidget, *args):
+    def _on_down(self, *args):
         if self._index < len(self._widgets) - self._elements:
-            self._index += 1
+            self.index = self._index + 1
         self._reposition()
 
     # Public
+
+    def render(self, delta: int):
+        super().render(delta)
+        x, y = self.position
+        w, h = self.size
+
+        element_height = h / self._elements
+        rect(x, y, w - self._bar_width, element_height, RED, False)
+
+    @property
+    def value(self):
+        if 0 <= self._index < len(self._widgets):
+            return self._widgets[self._index]
+        return None
 
     @property
     def index(self):
@@ -307,8 +332,9 @@ class ACLIBListBox(ACLayout):
     @index.setter
     def index(self, index: int):
         if 0 <= index < len(self._widgets):
-            self.index = index
+            self._index = index
             self._reposition()
+            self.fire(ACWidget.EVENT.INDEX_CHANGED, self._index)
 
     @property
     def count(self):
