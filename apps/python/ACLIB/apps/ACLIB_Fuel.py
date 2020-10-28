@@ -15,9 +15,7 @@ class Fuel(ACApp):
     }
 
     def __init__(self, data: ACData = None, meta: ACMeta = None):
-        super().__init__('ACLIB Fuel', 200, 200, 300, 66)
-
-        self.no_render = True
+        super().__init__('ACLIB Fuel', 200, 200, 300, 66, True, True)
         self.hide_decoration()
 
         self._data = data
