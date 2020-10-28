@@ -8,10 +8,9 @@ from ui.color import *
 
 class Tyres(ACApp):
     def __init__(self, data: ACData = None, meta: ACMeta = None):
-        super().__init__('ACLIB Tyres', 200, 200, 98, 160)
+        super().__init__('ACLIB Tyres', 200, 200, 98, 160, True, True)
 
         self.hide_decoration()
-        self.no_render = True
         self.background = False
         self.border = False
 
@@ -81,6 +80,8 @@ class Tyre(ACLabel):
 
         self._grid.add(self._wear, 0, 11, 9, 1)
 
+        self._data.on(ACData.EVENT.TYRE_WEAR_CHANGED, self._calculate_wear)
+
     # Private
     def _wear_value(self):
         return self._data.tyres.wear[self._index]
@@ -96,16 +97,9 @@ class Tyre(ACLabel):
         Tyre.COLORS[val] = color
         return color
 
-    # Public
-
-    def update(self, delta: int):
-        super().update(delta)
-
-        # Only update every 5 seconds. Saves a bit computing power.
-        if self.update_timer > 0.5:
-            self.reset_update_timer()
-            self._wear.value = self._wear_value()
-            self._wear.progress_color = self._wear_color(self._wear_value())
+    def _calculate_wear(self, *args):
+        self._wear.value = self._wear_value()
+        self._wear.progress_color = self._wear_color(self._wear_value())
 
 
 class TyreTile(ACLabel):
@@ -137,6 +131,7 @@ class TyreTile(ACLabel):
         self._b_t_range = 100
 
         self._data.on(ACMeta.EVENT.READY, self._on_ready)
+        self._data.on(ACData.EVENT.TYRE_TEMP_CHANGED, self._calculate_temp)
 
     # Private
 
@@ -208,12 +203,5 @@ class TyreTile(ACLabel):
 
         return color
 
-    # Public
-
-    def update(self, delta: int):
-        super().update(delta)
-
-        # Use background color instead of texture and only update every 300ms. Saves a bit computing power.
-        if self.update_timer > 0.1:
-            self.reset_update_timer()
-            self.background_color = self._temp_color(self._temp())
+    def _calculate_temp(self, *args):
+        self.background_color = self._temp_color(self._temp())

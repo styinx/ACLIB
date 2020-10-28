@@ -60,14 +60,14 @@ class ACWidget(EventListener):
     def __init__(self, parent=None):
         super().__init__()
 
-        self._db_click_timer = 0
+        self._db_click_timer = 0.0
         self._db_click_timeout = 0.3  # 500 ms
 
         # Properties
 
         self._id = -1
-        self._update_timer = 0
-        self._render_timer = 0
+        self._update_timer = 0.0
+        self._render_timer = 0.0
         self._parent = parent
         self._child = None
 
@@ -398,7 +398,7 @@ class ACWidget(EventListener):
                 self._active_animation = None
                 self.fire(ACWidget.EVENT.ANIMATION_FINISHED)
 
-    def update(self, delta: int):
+    def update(self, delta: float):
         if not self.no_update:
             self._update_timer += delta
 
@@ -407,7 +407,7 @@ class ACWidget(EventListener):
             if self.child:
                 self.child.update(delta)
 
-    def render(self, delta: int):
+    def render(self, delta: float):
         if not self.no_render:
             self._render_timer += delta
 
@@ -428,7 +428,7 @@ class ACApp(ACWidget):
     It is used for relative positioning of controls and is responsible for storing configurations.
     """
 
-    def __init__(self, app_name: str, x: int, y: int, w: int, h: int):
+    def __init__(self, app_name: str, x: int, y: int, w: int, h: int, no_render: bool = False, no_update: bool = False):
         self._title = app_name
 
         super().__init__()
@@ -448,8 +448,11 @@ class ACApp(ACWidget):
         self.title = app_name
         self.position = (x, y)
         self.size = (w, h)
+        self.no_render = no_render
+        self.no_update = no_update
 
-        self.render_callback = self.render
+        if not no_render:
+            self.render_callback = self.render
 
         self.on(ACWidget.EVENT.ACTIVATED, self._on_activate)
         self.on(ACWidget.EVENT.DISMISSED, self._on_dismiss)
@@ -548,15 +551,17 @@ class ACApp(ACWidget):
         self.title_pos = (-100000, -100000)
         self.icon_pos = (-100000, -100000)
 
-    def update(self, delta: int):
+    def update(self, delta: float):
         if not self.no_update and self.active:
             super().update(delta)
 
             # Required since an app movement will draw the default background again.
             self.background_color = self.background_color
 
-    def render(self, delta: int):
+    def render(self, delta: float):
         if not self.no_render and self.active:
+            self._render_timer += delta
+
             if self.border or self.background:
                 w, h = self.size
 

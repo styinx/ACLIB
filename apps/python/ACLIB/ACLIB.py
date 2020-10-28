@@ -40,10 +40,8 @@ class ACLIB:
         ACLIB.AC_META = ACMeta(ACLIB.AC_DATA)
 
         # Dummy used to put apps in the same category.
-        aclib = ACApp('ACLIB', -10000, -10000, 0, 0)
+        aclib = ACApp('ACLIB', -10000, -10000, 0, 0, True, True)
         aclib.visible = False
-        aclib.no_update = True
-        aclib.no_render = True
         ACLIB.APPS[aclib.title] = aclib
 
     @staticmethod
@@ -86,11 +84,11 @@ def acMain(version: int = 0):
     return 'ACLIB'
 
 
-def acUpdate(delta: int = 0):
+def acUpdate(delta: float):
     ACLIB.TIMER += delta
 
-    # update every 100 microseconds
-    if ACLIB.TIMER > 0.1:
+    # Update every 10 milliseconds.
+    if ACLIB.TIMER > 0.01:
         ACLIB.TIMER = 0
 
         try:
@@ -102,9 +100,10 @@ def acUpdate(delta: int = 0):
             for _, app in ACLIB.APPS.items():
                 if app.active:
                     try:
-                        ac.ext_perfBegin(app.title)
-                        app.update(delta)
-                        ac.ext_perfEnd(app.title)
+                        if not app.no_update:
+                            ac.ext_perfBegin(app.title)
+                            app.update(delta)
+                            ac.ext_perfEnd(app.title)
                     except Exception as e:
                         log('Problems while updating app "{0:s}"'.format(app.title))
                         tb(e)

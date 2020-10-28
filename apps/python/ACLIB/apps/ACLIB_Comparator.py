@@ -57,9 +57,8 @@ class Comparator(ACApp):
     ]
 
     def __init__(self, data: ACData = None, meta: ACMeta = None):
-        super().__init__('ACLIB Comparator', 200, 200, 300, 55)
+        super().__init__('ACLIB Comparator', 200, 200, 300, 55, True)
 
-        self.no_render = True
         self.hide_decoration()
         self.background_color = Color(0.1, 0.1, 0.1, 0.5)
 
@@ -136,7 +135,7 @@ class Comparator(ACApp):
             w, h = self.size
             self.size = w, h - 40
 
-    def update(self, delta: int):
+    def update(self, delta: float):
         super().update(delta)
 
         for o in self._opponents:
@@ -243,11 +242,11 @@ class ComparatorRow(ACGrid):
         # todo add multiplayer events
         pass
 
-    def update(self, delta: int):
+    def update(self, delta: float):
         super().update(delta)
 
-        # Update every 300 ms
-        if (self.update_timer * 100) % 3 == 0:
+        # Update every 300 ms.
+        if (self.update_timer * 10) % 3 == 0:
 
             if self._mode == 1:
                 player = self._player[self._index]
@@ -270,7 +269,8 @@ class ComparatorRow(ACGrid):
                         self._sectors[i].font = CR_Label.BRIGHT
                         self._sectors[i].background_color = BLACK
 
-        if self._update_timer > 0.1:
+        # Update every second.
+        if self._update_timer > 1.0:
             self.reset_update_timer()
 
             if self._mode == 0:

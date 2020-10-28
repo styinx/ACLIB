@@ -46,7 +46,7 @@ class Players:
             self._player = player
         return self
 
-    def update(self, delta: int):
+    def update(self, delta: float):
         for c in range(0, self._server.cars):
             if ac.isCarInPit(c) or not ac.isConnected(c):
                 continue

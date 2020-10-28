@@ -23,13 +23,13 @@ class ACLayout(ACWidget):
     def children(self) -> list:
         return self._children
 
-    def update(self, delta: int):
+    def update(self, delta: float):
         self.update_animation()
 
         for child in self._children:
             child.update(delta)
 
-    def render(self, delta: int):
+    def render(self, delta: float):
         if self.border:
             x, y = self.position
             w, h = self.size
